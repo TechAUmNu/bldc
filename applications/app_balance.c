@@ -172,7 +172,7 @@ void app_balance_configure(balance_config *conf, imu_config *conf2) {
 	balance_conf = *conf;
 	imu_conf = *conf2;
 	// Set calculated values from config
-	loop_time = US2ST((int)((1000.0 / balance_conf.hertz) * 1000.0));
+	loop_time = TIME_US2I((int)((1000.0 / balance_conf.hertz) * 1000.0));
 
 	motor_timeout = ((1000.0 / balance_conf.hertz)/1000.0) * 20; // Times 20 for a nice long grace period
 
@@ -269,7 +269,7 @@ float app_balance_get_roll_angle(void) {
 	return roll_angle;
 }
 uint32_t app_balance_get_diff_time(void) {
-	return ST2US(diff_time);
+	return TIME_I2US(diff_time);
 }
 float app_balance_get_motor_current(void) {
 	return motor_current;
@@ -347,7 +347,7 @@ static bool check_faults(bool ignoreTimers){
 	// Check switch
 	// Switch fully open
 	if(switch_state == OFF){
-		if(ST2MS(current_time - fault_switch_timer) > balance_conf.fault_delay_switch_full || ignoreTimers){
+		if(TIME_I2MS(current_time - fault_switch_timer) > balance_conf.fault_delay_switch_full || ignoreTimers){
 			state = FAULT_SWITCH_FULL;
 			return true;
 		}
@@ -357,7 +357,7 @@ static bool check_faults(bool ignoreTimers){
 
 	// Switch partially open and stopped
 	if((switch_state == HALF || switch_state == OFF) && abs_erpm < balance_conf.fault_adc_half_erpm){
-		if(ST2MS(current_time - fault_switch_half_timer) > balance_conf.fault_delay_switch_half || ignoreTimers){
+		if(TIME_I2MS(current_time - fault_switch_half_timer) > balance_conf.fault_delay_switch_half || ignoreTimers){
 			state = FAULT_SWITCH_HALF;
 			return true;
 		}
@@ -367,7 +367,7 @@ static bool check_faults(bool ignoreTimers){
 
 	// Check pitch angle
 	if(fabsf(pitch_angle) > balance_conf.fault_pitch){
-		if(ST2MS(current_time - fault_angle_pitch_timer) > balance_conf.fault_delay_pitch || ignoreTimers){
+		if(TIME_I2MS(current_time - fault_angle_pitch_timer) > balance_conf.fault_delay_pitch || ignoreTimers){
 			state = FAULT_ANGLE_PITCH;
 			return true;
 		}
@@ -377,7 +377,7 @@ static bool check_faults(bool ignoreTimers){
 
 	// Check roll angle
 	if(fabsf(roll_angle) > balance_conf.fault_roll){
-		if(ST2MS(current_time - fault_angle_roll_timer) > balance_conf.fault_delay_roll || ignoreTimers){
+		if(TIME_I2MS(current_time - fault_angle_roll_timer) > balance_conf.fault_delay_roll || ignoreTimers){
 			state = FAULT_ANGLE_ROLL;
 			return true;
 		}
@@ -387,7 +387,7 @@ static bool check_faults(bool ignoreTimers){
 
 	// Check for duty
 	if(abs_duty_cycle > balance_conf.fault_duty){
-		if(ST2MS(current_time - fault_duty_timer) > balance_conf.fault_delay_duty || ignoreTimers){
+		if(TIME_I2MS(current_time - fault_duty_timer) > balance_conf.fault_delay_duty || ignoreTimers){
 			state = FAULT_DUTY;
 			return true;
 		}
@@ -558,7 +558,7 @@ static float apply_deadzone(float error){
 static void brake(void){
 	// Brake timeout logic
 	if(balance_conf.brake_timeout > 0 && (abs_erpm > 1 || brake_timeout == 0)){
-		brake_timeout = current_time + S2ST(balance_conf.brake_timeout);
+		brake_timeout = current_time + TIME_S2I(balance_conf.brake_timeout);
 	}
 	if(brake_timeout != 0 && current_time > brake_timeout){
 		return;
@@ -923,26 +923,26 @@ static void app_balance_sample_debug(){
 static void app_balance_experiment(){
 	if(debug_experiment_1 != 0){
 		commands_plot_set_graph(0);
-		commands_send_plot_points(ST2MS(current_time), app_balance_get_debug(debug_experiment_1));
+		commands_send_plot_points(TIME_I2MS(current_time), app_balance_get_debug(debug_experiment_1));
 	}
 	if(debug_experiment_2 != 0){
 		commands_plot_set_graph(1);
-		commands_send_plot_points(ST2MS(current_time), app_balance_get_debug(debug_experiment_2));
+		commands_send_plot_points(TIME_I2MS(current_time), app_balance_get_debug(debug_experiment_2));
 	}
 	if(debug_experiment_3 != 0){
 		commands_plot_set_graph(2);
-		commands_send_plot_points(ST2MS(current_time), app_balance_get_debug(debug_experiment_3));
+		commands_send_plot_points(TIME_I2MS(current_time), app_balance_get_debug(debug_experiment_3));
 	}
 	if(debug_experiment_4 != 0){
 		commands_plot_set_graph(3);
-		commands_send_plot_points(ST2MS(current_time), app_balance_get_debug(debug_experiment_4));
+		commands_send_plot_points(TIME_I2MS(current_time), app_balance_get_debug(debug_experiment_4));
 	}
 	if(debug_experiment_5 != 0){
 		commands_plot_set_graph(4);
-		commands_send_plot_points(ST2MS(current_time), app_balance_get_debug(debug_experiment_5));
+		commands_send_plot_points(TIME_I2MS(current_time), app_balance_get_debug(debug_experiment_5));
 	}
 	if(debug_experiment_6 != 0){
 		commands_plot_set_graph(5);
-		commands_send_plot_points(ST2MS(current_time), app_balance_get_debug(debug_experiment_6));
+		commands_send_plot_points(TIME_I2MS(current_time), app_balance_get_debug(debug_experiment_6));
 	}
 }

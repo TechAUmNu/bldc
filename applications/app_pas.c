@@ -262,7 +262,7 @@ static THD_FUNCTION(pas_thread, arg) {
 		float ramp_time = fabsf(output) > fabsf(output_ramp) ? config.ramp_time_pos : config.ramp_time_neg;
 
 		if (ramp_time > 0.01) {
-			const float ramp_step = (float)ST2MS(chVTTimeElapsedSinceX(last_time)) / (ramp_time * 1000.0);
+			const float ramp_step = (float)TIME_I2MS(chVTTimeElapsedSinceX(last_time)) / (ramp_time * 1000.0);
 			utils_step_towards(&output_ramp, output, ramp_step);
 			utils_truncate_number(&output_ramp, 0.0, config.current_scaling * sub_scaling);
 
