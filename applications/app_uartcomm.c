@@ -154,9 +154,9 @@ void app_uartcomm_start(UART_PORT port_number) {
 	uart_is_running[port_number] = true;
 
 	palSetPadMode(TxGpioPort[port_number], TxGpioPin[port_number], PAL_MODE_ALTERNATE(gpioAF[port_number]) |
-			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUPDR_PULLUP);
 	palSetPadMode(RxGpioPort[port_number], RxGpioPin[port_number], PAL_MODE_ALTERNATE(gpioAF[port_number]) |
-			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUPDR_PULLUP);
 	pins_enabled[port_number] = true;
 }
 
@@ -205,10 +205,10 @@ void app_uartcomm_configure(uint32_t baudrate, bool enabled, UART_PORT port_numb
 		if (enabled && !pins_enabled[port_number]) {
 			palSetPadMode(TxGpioPort[port_number], TxGpioPin[port_number], PAL_MODE_ALTERNATE(gpioAF[port_number]) |
 					PAL_STM32_OSPEED_HIGHEST |
-					PAL_STM32_PUDR_PULLUP);
+					PAL_STM32_PUPDR_PULLUP);
 			palSetPadMode(RxGpioPort[port_number], RxGpioPin[port_number], PAL_MODE_ALTERNATE(gpioAF[port_number]) |
 					PAL_STM32_OSPEED_HIGHEST |
-					PAL_STM32_PUDR_PULLUP);
+					PAL_STM32_PUPDR_PULLUP);
 			pins_enabled[port_number] = true;
 		} else if (!enabled && pins_enabled[port_number]) {
 			palSetPadMode(TxGpioPort[port_number], TxGpioPin[port_number], PAL_MODE_INPUT);
@@ -229,7 +229,7 @@ static THD_FUNCTION(packet_process_thread, arg) {
 	}
 
 	for(;;) {
-		chEvtWaitAnyTimeout(ALL_EVENTS, ST2MS(10));
+		chEvtWaitAnyTimeout(ALL_EVENTS, TIME_I2MS(10));
 
 		bool rx = true;
 		while (rx) {

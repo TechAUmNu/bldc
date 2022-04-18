@@ -42,9 +42,9 @@ static SerialConfig uart_cfg = {
 void si8900_init(void) {
 	sdStart(&HW_SI8900_DEV, &uart_cfg);
 	palSetPadMode(HW_SI8900_TX_PORT, HW_SI8900_TX_PIN, PAL_MODE_ALTERNATE(HW_SI8900_GPIO_AF) |
-			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUPDR_PULLUP);
 	palSetPadMode(HW_SI8900_RX_PORT, HW_SI8900_RX_PIN, PAL_MODE_ALTERNATE(HW_SI8900_GPIO_AF) |
-			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+			PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUPDR_PULLUP);
 	chThdCreateStatic(si_read_thread_wa, sizeof(si_read_thread_wa), NORMALPRIO, si_read_thread, NULL);
 
 	terminal_register_command_callback(
