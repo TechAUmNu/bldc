@@ -911,7 +911,7 @@ uint8_t conf_general_calculate_deadtime(float deadtime_ns, float core_clock_freq
 					// Deadtime requested is longer than max achievable. Set deadtime at
 					// longest possible value
 					DTG = 0xFF;
-					assert_param(1); //catch this
+					osalDbgCheck(1); //catch this
 				}
 			}
 		}
