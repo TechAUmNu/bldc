@@ -346,7 +346,7 @@ static void calculateTotalCurrent(void) {
 		status_msg_wrapper_t *msgw = &stat_msgs[i];
 		if (msgw->id != -1) {
 			systime_t elapsedTime = chVTGetSystemTimeX() - msgw->rx_time;
-			if(ST2MS(elapsedTime) > ESC_STATUS_TIMEOUT) {
+			if(TIME_I2MS(elapsedTime) > ESC_STATUS_TIMEOUT) {
 				if (debug_level > 0) {
 					commands_printf("ESC timeout for NodeID: %d",msgw->id);
 				}
@@ -381,7 +381,7 @@ static void sendNodeStatus(CanardInstance *ins) {
 	
 	node_status.health = node_health;
 	node_status.mode = node_mode;
-	node_status.uptime_sec = (uint32_t)ST2S(chVTGetSystemTimeX());
+	node_status.uptime_sec = (uint32_t)TIME_I2S(chVTGetSystemTimeX());
 	// status.sub_mode =
 	// status.vendor_specific_status_code is filled in the firmware update loop
 	uavcan_protocol_NodeStatus_encode(&node_status, buffer);
@@ -447,7 +447,7 @@ static void readUniqueID(uint8_t* out_uid) {
 static void handle_get_node_info(CanardInstance* ins, CanardRxTransfer* transfer) {
 	uavcan_protocol_GetNodeInfoResponse pkt;
 
-	node_status.uptime_sec = ST2S(chVTGetSystemTimeX());
+	node_status.uptime_sec = TIME_I2S(chVTGetSystemTimeX());
 
 	pkt.status = node_status;
 	pkt.software_version.major = FW_VERSION_MAJOR;
@@ -766,7 +766,7 @@ static void send_fw_read(CanardInstance *ins)
 {
 	fw_update.ins = ins;
 
-	uint32_t now = ST2MS(chVTGetSystemTimeX());
+	uint32_t now = TIME_I2MS(chVTGetSystemTimeX());
 	if (now - fw_update.last_ms < 250) {
 		// the server may still be responding
 		return;
@@ -1160,7 +1160,7 @@ static THD_FUNCTION(canard_thread, arg) {
 			rx_frame.data_len = rxmsg->DLC;
 			memcpy(rx_frame.data, rxmsg->data8, rxmsg->DLC);
 
-			canardHandleRxFrame(&canard_ins, &rx_frame, ST2US(chVTGetSystemTimeX()));
+			canardHandleRxFrame(&canard_ins, &rx_frame, TIME_I2US(chVTGetSystemTimeX()));
 		}
 
 		for (const CanardCANFrame* txf = NULL; (txf = canardPeekTxQueue(&canard_ins)) != NULL;) {
@@ -1190,9 +1190,9 @@ static THD_FUNCTION(canard_thread, arg) {
 		}
 #endif
 
-		if (ST2MS(chVTTimeElapsedSinceX(last_status_time)) >= 1000) {
+		if (TIME_I2MS(chVTTimeElapsedSinceX(last_status_time)) >= 1000) {
 			last_status_time = chVTGetSystemTimeX();
-			canardCleanupStaleTransfers(&canard_ins, ST2US(chVTGetSystemTimeX()));
+			canardCleanupStaleTransfers(&canard_ins, TIME_I2US(chVTGetSystemTimeX()));
 			sendNodeStatus(&canard_ins);
 #ifdef HW_CAN2_DEV
 			canardCleanupStaleTransfers(&canard_ins_if2, ST2US(chVTGetSystemTimeX()));
@@ -1209,7 +1209,7 @@ static THD_FUNCTION(canard_thread, arg) {
 #endif
 		}
 
-		if (ST2MS(chVTTimeElapsedSinceX(last_tot_current_calc_time)) >= 1000 / CURRENT_CALC_FREQ_HZ) {
+		if (TIME_I2MS(chVTTimeElapsedSinceX(last_tot_current_calc_time)) >= 1000 / CURRENT_CALC_FREQ_HZ) {
 			last_tot_current_calc_time = chVTGetSystemTimeX();
 			calculateTotalCurrent();
 			if (debug_level == 3) {
@@ -1218,24 +1218,24 @@ static THD_FUNCTION(canard_thread, arg) {
 			}
 		}
 
-		if (ST2MS(chVTTimeElapsedSinceX(last_param_refresh)) >= 1000 / PARAM_REFRESH_RATE_HZ) {
+		if (TIME_I2MS(chVTTimeElapsedSinceX(last_param_refresh)) >= 1000 / PARAM_REFRESH_RATE_HZ) {
 			last_param_refresh = chVTGetSystemTimeX();
 			if(refresh_parameters_enabled) {
 				refresh_parameters();
 			}
 
 			if(debug_level == 7) {
-				commands_printf("Refreshing Parameters Time Delta: %d", ST2MS(chVTGetSystemTimeX()-last_param_refresh));
+				commands_printf("Refreshing Parameters Time Delta: %d", TIME_I2MS(chVTGetSystemTimeX()-last_param_refresh));
 			}
 		}
 
-		if ((ST2MS(chVTTimeElapsedSinceX(last_read_file_req)) >= 10) && (fw_update.node_id != 0)) {
+		if ((TIME_I2MS(chVTTimeElapsedSinceX(last_read_file_req)) >= 10) && (fw_update.node_id != 0)) {
 			last_read_file_req = chVTGetSystemTimeX();
 			send_fw_read(fw_update.ins);
 		}
 
 		// delay jump to bootloader after receiving data for 0.5 sec
-		if ((ST2MS(chVTTimeElapsedSinceX(jump_delay_start)) >= 500) && (jump_to_bootloader == true)) {
+		if ((TIME_I2MS(chVTTimeElapsedSinceX(jump_delay_start)) >= 500) && (jump_to_bootloader == true)) {
 			flash_helper_jump_to_bootloader();
 		}
 

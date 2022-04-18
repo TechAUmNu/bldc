@@ -432,7 +432,7 @@ static void imu_read_callback(float *accel, float *gyro, float *mag) {
 	last_time = timer_time_now();
 	chSysUnlock();
 
-	if (!imu_ready && ST2MS(chVTGetSystemTimeX() - init_time) > 1000) {
+	if (!imu_ready && TIME_I2MS(chVTGetSystemTimeX() - init_time) > 1000) {
 		ahrs_update_all_parameters(
 				m_settings.accel_confidence_decay,
 				m_settings.mahony_kp,
