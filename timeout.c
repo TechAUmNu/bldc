@@ -213,7 +213,7 @@ static THD_FUNCTION(timeout_thread, arg) {
 			break;
 		}
 
-		if (kill_sw || (timeout_msec != 0 && chVTTimeElapsedSinceX(last_update_time) > MS2ST(timeout_msec))) {
+		if (kill_sw || (timeout_msec != 0 && chVTTimeElapsedSinceX(last_update_time) > TIME_MS2I(timeout_msec))) {
 			if (!has_timeout && !kill_sw_active) {
 				mc_interface_release_motor_override();
 			}
