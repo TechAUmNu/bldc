@@ -185,7 +185,7 @@ void gpdrive_init(volatile mc_configuration *configuration) {
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_ADC2 | RCC_APB2Periph_ADC3, ENABLE);
 
-	dmaStreamAllocate(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)),
+	dmaStreamAlloc(STM32_DMA_STREAM_ID(2, 4),
 			5,
 			(stm32_dmaisr_t)adc_int_handler,
 			(void *)0);
@@ -286,15 +286,15 @@ void gpdrive_deinit(void) {
 	ADC_DeInit();
 	DMA_DeInit(DMA2_Stream4);
 	nvicDisableVector(ADC_IRQn);
-	dmaStreamRelease(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)));
+	dmaStreamFree(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)));
 
 	// Restore pins
 	palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(GPIO_AF_TIM1) |
 			PAL_STM32_OSPEED_HIGHEST |
-			PAL_STM32_PUDR_FLOATING);
+			PAL_STM32_PUPDR_FLOATING);
 	palSetPadMode(GPIOB, 14, PAL_MODE_ALTERNATE(GPIO_AF_TIM1) |
 			PAL_STM32_OSPEED_HIGHEST |
-			PAL_STM32_PUDR_FLOATING);
+			PAL_STM32_PUPDR_FLOATING);
 }
 
 bool gpdrive_init_done(void) {
