@@ -35,7 +35,7 @@ static bool output_vt_init_done = false;
 static volatile bool output_disabled_now = false;
 
 // Private functions
-static void output_vt_cb(void *arg);
+static void output_vt_cb(virtual_timer_t *vtp, void *arg);
 
 const app_configuration* app_get_configuration(void) {
 	return &appconf;
@@ -183,7 +183,7 @@ void app_disable_output(int time_ms) {
 		chVTReset(&output_vt);
 	} else {
 		output_disabled_now = true;
-		chVTSet(&output_vt, MS2ST(time_ms), output_vt_cb, 0);
+		chVTSet(&output_vt, TIME_MS2I(time_ms), output_vt_cb, 0);
 	}
 }
 
@@ -191,7 +191,8 @@ bool app_is_output_disabled(void) {
 	return output_disabled_now;
 }
 
-static void output_vt_cb(void *arg) {
+static void output_vt_cb(virtual_timer_t *vtp, void *arg) {
+	(void)vtp;
 	(void)arg;
 	output_disabled_now = false;
 }
