@@ -38,7 +38,7 @@
 #include "mempools.h"
 #include "app.h"
 #include "spi_bb.h"
-#include "i2c.h"
+//#include "i2c.h"
 #include "confgenerator.h"
 #include "worker.h"
 
