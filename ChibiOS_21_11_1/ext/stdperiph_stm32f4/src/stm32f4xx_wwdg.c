@@ -155,7 +155,7 @@ void WWDG_SetPrescaler(uint32_t WWDG_Prescaler)
 {
   uint32_t tmpreg = 0;
   /* Check the parameters */
-  assert_param(IS_WWDG_PRESCALER(WWDG_Prescaler));
+  osalDbgCheck(IS_WWDG_PRESCALER(WWDG_Prescaler));
   /* Clear WDGTB[1:0] bits */
   tmpreg = WWDG->CFR & CFR_WDGTB_MASK;
   /* Set WDGTB[1:0] bits according to WWDG_Prescaler value */
@@ -175,7 +175,7 @@ void WWDG_SetWindowValue(uint8_t WindowValue)
   __IO uint32_t tmpreg = 0;
 
   /* Check the parameters */
-  assert_param(IS_WWDG_WINDOW_VALUE(WindowValue));
+  osalDbgCheck(IS_WWDG_WINDOW_VALUE(WindowValue));
   /* Clear W[6:0] bits */
 
   tmpreg = WWDG->CFR & CFR_W_MASK;
@@ -208,7 +208,7 @@ void WWDG_EnableIT(void)
 void WWDG_SetCounter(uint8_t Counter)
 {
   /* Check the parameters */
-  assert_param(IS_WWDG_COUNTER(Counter));
+  osalDbgCheck(IS_WWDG_COUNTER(Counter));
   /* Write to T[6:0] bits to configure the counter value, no need to do
      a read-modify-write; writing a 0 to WDGA bit does nothing */
   WWDG->CR = Counter & BIT_MASK;
@@ -239,7 +239,7 @@ void WWDG_SetCounter(uint8_t Counter)
 void WWDG_Enable(uint8_t Counter)
 {
   /* Check the parameters */
-  assert_param(IS_WWDG_COUNTER(Counter));
+  osalDbgCheck(IS_WWDG_COUNTER(Counter));
   WWDG->CR = WWDG_CR_WDGA | Counter;
 }
 /**

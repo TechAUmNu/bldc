@@ -2,6 +2,10 @@
 #ifndef _STM32F4_GPIO_AF_H_
 #define _STM32F4_GPIO_AF_H_
 
+#include <stdint.h>
+#define STM32F405xx
+#include "stm32f4xx.h"
+
 /** 
   * @brief   AF 0 selection  
   */ 

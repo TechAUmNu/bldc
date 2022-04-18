@@ -35,7 +35,11 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
+#include "ch.h"
+#define STM32F405xx
 #include "stm32f4xx.h"
+
 
 /** @addtogroup STM32F4xx_StdPeriph_Driver
   * @{
@@ -57,7 +61,7 @@ typedef enum
   FLASH_ERROR_PGP,
   FLASH_ERROR_PGA,
   FLASH_ERROR_WRP,
-  FLASH_ERROR_PROGRAM,
+  FLASH_ERROR_PROGRAM_SPL,
   FLASH_ERROR_OPERATION,
   FLASH_COMPLETE
 }FLASH_Status;

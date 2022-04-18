@@ -196,7 +196,7 @@
 void DMA_DeInit(DMA_Stream_TypeDef* DMAy_Streamx)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
 
   /* Disable the selected DMAy Streamx */
   DMAy_Streamx->CR &= ~((uint32_t)DMA_SxCR_EN);
@@ -321,20 +321,20 @@ void DMA_Init(DMA_Stream_TypeDef* DMAy_Streamx, DMA_InitTypeDef* DMA_InitStruct)
   uint32_t tmpreg = 0;
 
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_CHANNEL(DMA_InitStruct->DMA_Channel));
-  assert_param(IS_DMA_DIRECTION(DMA_InitStruct->DMA_DIR));
-  assert_param(IS_DMA_BUFFER_SIZE(DMA_InitStruct->DMA_BufferSize));
-  assert_param(IS_DMA_PERIPHERAL_INC_STATE(DMA_InitStruct->DMA_PeripheralInc));
-  assert_param(IS_DMA_MEMORY_INC_STATE(DMA_InitStruct->DMA_MemoryInc));
-  assert_param(IS_DMA_PERIPHERAL_DATA_SIZE(DMA_InitStruct->DMA_PeripheralDataSize));
-  assert_param(IS_DMA_MEMORY_DATA_SIZE(DMA_InitStruct->DMA_MemoryDataSize));
-  assert_param(IS_DMA_MODE(DMA_InitStruct->DMA_Mode));
-  assert_param(IS_DMA_PRIORITY(DMA_InitStruct->DMA_Priority));
-  assert_param(IS_DMA_FIFO_MODE_STATE(DMA_InitStruct->DMA_FIFOMode));
-  assert_param(IS_DMA_FIFO_THRESHOLD(DMA_InitStruct->DMA_FIFOThreshold));
-  assert_param(IS_DMA_MEMORY_BURST(DMA_InitStruct->DMA_MemoryBurst));
-  assert_param(IS_DMA_PERIPHERAL_BURST(DMA_InitStruct->DMA_PeripheralBurst));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_CHANNEL(DMA_InitStruct->DMA_Channel));
+  osalDbgCheck(IS_DMA_DIRECTION(DMA_InitStruct->DMA_DIR));
+  osalDbgCheck(IS_DMA_BUFFER_SIZE(DMA_InitStruct->DMA_BufferSize));
+  osalDbgCheck(IS_DMA_PERIPHERAL_INC_STATE(DMA_InitStruct->DMA_PeripheralInc));
+  osalDbgCheck(IS_DMA_MEMORY_INC_STATE(DMA_InitStruct->DMA_MemoryInc));
+  osalDbgCheck(IS_DMA_PERIPHERAL_DATA_SIZE(DMA_InitStruct->DMA_PeripheralDataSize));
+  osalDbgCheck(IS_DMA_MEMORY_DATA_SIZE(DMA_InitStruct->DMA_MemoryDataSize));
+  osalDbgCheck(IS_DMA_MODE(DMA_InitStruct->DMA_Mode));
+  osalDbgCheck(IS_DMA_PRIORITY(DMA_InitStruct->DMA_Priority));
+  osalDbgCheck(IS_DMA_FIFO_MODE_STATE(DMA_InitStruct->DMA_FIFOMode));
+  osalDbgCheck(IS_DMA_FIFO_THRESHOLD(DMA_InitStruct->DMA_FIFOThreshold));
+  osalDbgCheck(IS_DMA_MEMORY_BURST(DMA_InitStruct->DMA_MemoryBurst));
+  osalDbgCheck(IS_DMA_PERIPHERAL_BURST(DMA_InitStruct->DMA_PeripheralBurst));
 
   /*------------------------- DMAy Streamx CR Configuration ------------------*/
   /* Get the DMAy_Streamx CR value */
@@ -478,8 +478,8 @@ void DMA_StructInit(DMA_InitTypeDef* DMA_InitStruct)
 void DMA_Cmd(DMA_Stream_TypeDef* DMAy_Streamx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
 
   if (NewState != DISABLE)
   {
@@ -514,8 +514,8 @@ void DMA_Cmd(DMA_Stream_TypeDef* DMAy_Streamx, FunctionalState NewState)
 void DMA_PeriphIncOffsetSizeConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_Pincos)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_PINCOS_SIZE(DMA_Pincos));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_PINCOS_SIZE(DMA_Pincos));
 
   /* Check the needed Peripheral increment offset */
   if(DMA_Pincos != DMA_PINCOS_Psize)
@@ -550,8 +550,8 @@ void DMA_PeriphIncOffsetSizeConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DM
 void DMA_FlowControllerConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_FlowCtrl)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_FLOW_CTRL(DMA_FlowCtrl));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_FLOW_CTRL(DMA_FlowCtrl));
 
   /* Check the needed flow controller  */
   if(DMA_FlowCtrl != DMA_FlowCtrl_Memory)
@@ -632,7 +632,7 @@ void DMA_FlowControllerConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_Flo
 void DMA_SetCurrDataCounter(DMA_Stream_TypeDef* DMAy_Streamx, uint16_t Counter)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
 
   /* Write the number of data units to be transferred */
   DMAy_Streamx->NDTR = (uint16_t)Counter;
@@ -647,7 +647,7 @@ void DMA_SetCurrDataCounter(DMA_Stream_TypeDef* DMAy_Streamx, uint16_t Counter)
 uint16_t DMA_GetCurrDataCounter(DMA_Stream_TypeDef* DMAy_Streamx)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
 
   /* Return the number of remaining data units for DMAy Streamx */
   return ((uint16_t)(DMAy_Streamx->NDTR));
@@ -731,8 +731,8 @@ void DMA_DoubleBufferModeConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t Memor
                                 uint32_t DMA_CurrentMemory)
 {  
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_CURRENT_MEM(DMA_CurrentMemory));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_CURRENT_MEM(DMA_CurrentMemory));
 
   if (DMA_CurrentMemory != DMA_Memory_0)
   {
@@ -761,8 +761,8 @@ void DMA_DoubleBufferModeConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t Memor
 void DMA_DoubleBufferModeCmd(DMA_Stream_TypeDef* DMAy_Streamx, FunctionalState NewState)
 {  
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
 
   /* Configure the Double Buffer mode */
   if (NewState != DISABLE)
@@ -803,8 +803,8 @@ void DMA_MemoryTargetConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t MemoryBas
                            uint32_t DMA_MemoryTarget)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_CURRENT_MEM(DMA_MemoryTarget));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_CURRENT_MEM(DMA_MemoryTarget));
     
   /* Check the Memory target to be configured */
   if (DMA_MemoryTarget != DMA_Memory_0)
@@ -830,7 +830,7 @@ uint32_t DMA_GetCurrentMemoryTarget(DMA_Stream_TypeDef* DMAy_Streamx)
   uint32_t tmp = 0;
   
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
 
   /* Get the current memory target */
   if ((DMAy_Streamx->CR & DMA_SxCR_CT) != 0)
@@ -945,7 +945,7 @@ FunctionalState DMA_GetCmdStatus(DMA_Stream_TypeDef* DMAy_Streamx)
   FunctionalState state = DISABLE;
 
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
 
   if ((DMAy_Streamx->CR & (uint32_t)DMA_SxCR_EN) != 0)
   {
@@ -979,7 +979,7 @@ uint32_t DMA_GetFIFOStatus(DMA_Stream_TypeDef* DMAy_Streamx)
   uint32_t tmpreg = 0;
  
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
   
   /* Get the FIFO level bits */
   tmpreg = (uint32_t)((DMAy_Streamx->FCR & DMA_SxFCR_FS));
@@ -1008,8 +1008,8 @@ FlagStatus DMA_GetFlagStatus(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_FLAG
   uint32_t tmpreg = 0;
 
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_GET_FLAG(DMA_FLAG));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_GET_FLAG(DMA_FLAG));
 
   /* Determine the DMA to which belongs the stream */
   if (DMAy_Streamx < DMA2_Stream0)
@@ -1073,8 +1073,8 @@ void DMA_ClearFlag(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_FLAG)
   DMA_TypeDef* DMAy;
 
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_CLEAR_FLAG(DMA_FLAG));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_CLEAR_FLAG(DMA_FLAG));
 
   /* Determine the DMA to which belongs the stream */
   if (DMAy_Streamx < DMA2_Stream0)
@@ -1118,9 +1118,9 @@ void DMA_ClearFlag(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_FLAG)
 void DMA_ITConfig(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_IT, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_CONFIG_IT(DMA_IT));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_CONFIG_IT(DMA_IT));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
 
   /* Check if the DMA_IT parameter contains a FIFO interrupt */
   if ((DMA_IT & DMA_IT_FE) != 0)
@@ -1174,8 +1174,8 @@ ITStatus DMA_GetITStatus(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_IT)
   uint32_t tmpreg = 0, enablestatus = 0;
 
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_GET_IT(DMA_IT));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_GET_IT(DMA_IT));
  
   /* Determine the DMA to which belongs the stream */
   if (DMAy_Streamx < DMA2_Stream0)
@@ -1254,8 +1254,8 @@ void DMA_ClearITPendingBit(DMA_Stream_TypeDef* DMAy_Streamx, uint32_t DMA_IT)
   DMA_TypeDef* DMAy;
 
   /* Check the parameters */
-  assert_param(IS_DMA_ALL_PERIPH(DMAy_Streamx));
-  assert_param(IS_DMA_CLEAR_IT(DMA_IT));
+  osalDbgCheck(IS_DMA_ALL_PERIPH(DMAy_Streamx));
+  osalDbgCheck(IS_DMA_CLEAR_IT(DMA_IT));
 
   /* Determine the DMA to which belongs the stream */
   if (DMAy_Streamx < DMA2_Stream0)

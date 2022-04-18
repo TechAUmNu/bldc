@@ -118,7 +118,7 @@
 void NVIC_PriorityGroupConfig(uint32_t NVIC_PriorityGroup)
 {
   /* Check the parameters */
-  assert_param(IS_NVIC_PRIORITY_GROUP(NVIC_PriorityGroup));
+  osalDbgCheck(IS_NVIC_PRIORITY_GROUP(NVIC_PriorityGroup));
   
   /* Set the PRIGROUP[10:8] bits according to NVIC_PriorityGroup value */
   SCB->AIRCR = AIRCR_VECTKEY_MASK | NVIC_PriorityGroup;
@@ -138,9 +138,9 @@ void NVIC_Init(NVIC_InitTypeDef* NVIC_InitStruct)
   uint8_t tmppriority = 0x00, tmppre = 0x00, tmpsub = 0x0F;
   
   /* Check the parameters */
-  assert_param(IS_FUNCTIONAL_STATE(NVIC_InitStruct->NVIC_IRQChannelCmd));
-  assert_param(IS_NVIC_PREEMPTION_PRIORITY(NVIC_InitStruct->NVIC_IRQChannelPreemptionPriority));  
-  assert_param(IS_NVIC_SUB_PRIORITY(NVIC_InitStruct->NVIC_IRQChannelSubPriority));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NVIC_InitStruct->NVIC_IRQChannelCmd));
+  osalDbgCheck(IS_NVIC_PREEMPTION_PRIORITY(NVIC_InitStruct->NVIC_IRQChannelPreemptionPriority));  
+  osalDbgCheck(IS_NVIC_SUB_PRIORITY(NVIC_InitStruct->NVIC_IRQChannelSubPriority));
     
   if (NVIC_InitStruct->NVIC_IRQChannelCmd != DISABLE)
   {
@@ -180,8 +180,8 @@ void NVIC_Init(NVIC_InitTypeDef* NVIC_InitStruct)
 void NVIC_SetVectorTable(uint32_t NVIC_VectTab, uint32_t Offset)
 { 
   /* Check the parameters */
-  assert_param(IS_NVIC_VECTTAB(NVIC_VectTab));
-  assert_param(IS_NVIC_OFFSET(Offset));  
+  osalDbgCheck(IS_NVIC_VECTTAB(NVIC_VectTab));
+  osalDbgCheck(IS_NVIC_OFFSET(Offset));  
    
   SCB->VTOR = NVIC_VectTab | (Offset & (uint32_t)0x1FFFFF80);
 }
@@ -199,8 +199,8 @@ void NVIC_SetVectorTable(uint32_t NVIC_VectTab, uint32_t Offset)
 void NVIC_SystemLPConfig(uint8_t LowPowerMode, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_NVIC_LP(LowPowerMode));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));  
+  osalDbgCheck(IS_NVIC_LP(LowPowerMode));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));  
   
   if (NewState != DISABLE)
   {
@@ -223,7 +223,7 @@ void NVIC_SystemLPConfig(uint8_t LowPowerMode, FunctionalState NewState)
 void SysTick_CLKSourceConfig(uint32_t SysTick_CLKSource)
 {
   /* Check the parameters */
-  assert_param(IS_SYSTICK_CLK_SOURCE(SysTick_CLKSource));
+  osalDbgCheck(IS_SYSTICK_CLK_SOURCE(SysTick_CLKSource));
   if (SysTick_CLKSource == SysTick_CLKSource_HCLK)
   {
     SysTick->CTRL |= SysTick_CLKSource_HCLK;

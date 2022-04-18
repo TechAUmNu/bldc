@@ -128,10 +128,10 @@ void EXTI_Init(EXTI_InitTypeDef* EXTI_InitStruct)
   uint32_t tmp = 0;
 
   /* Check the parameters */
-  assert_param(IS_EXTI_MODE(EXTI_InitStruct->EXTI_Mode));
-  assert_param(IS_EXTI_TRIGGER(EXTI_InitStruct->EXTI_Trigger));
-  assert_param(IS_EXTI_LINE(EXTI_InitStruct->EXTI_Line));  
-  assert_param(IS_FUNCTIONAL_STATE(EXTI_InitStruct->EXTI_LineCmd));
+  osalDbgCheck(IS_EXTI_MODE(EXTI_InitStruct->EXTI_Mode));
+  osalDbgCheck(IS_EXTI_TRIGGER(EXTI_InitStruct->EXTI_Trigger));
+  osalDbgCheck(IS_EXTI_LINE(EXTI_InitStruct->EXTI_Line));  
+  osalDbgCheck(IS_FUNCTIONAL_STATE(EXTI_InitStruct->EXTI_LineCmd));
 
   tmp = (uint32_t)EXTI_BASE;
      
@@ -197,7 +197,7 @@ void EXTI_StructInit(EXTI_InitTypeDef* EXTI_InitStruct)
 void EXTI_GenerateSWInterrupt(uint32_t EXTI_Line)
 {
   /* Check the parameters */
-  assert_param(IS_EXTI_LINE(EXTI_Line));
+  osalDbgCheck(IS_EXTI_LINE(EXTI_Line));
   
   EXTI->SWIER |= EXTI_Line;
 }
@@ -228,7 +228,7 @@ FlagStatus EXTI_GetFlagStatus(uint32_t EXTI_Line)
 {
   FlagStatus bitstatus = RESET;
   /* Check the parameters */
-  assert_param(IS_GET_EXTI_LINE(EXTI_Line));
+  osalDbgCheck(IS_GET_EXTI_LINE(EXTI_Line));
   
   if ((EXTI->PR & EXTI_Line) != (uint32_t)RESET)
   {
@@ -250,7 +250,7 @@ FlagStatus EXTI_GetFlagStatus(uint32_t EXTI_Line)
 void EXTI_ClearFlag(uint32_t EXTI_Line)
 {
   /* Check the parameters */
-  assert_param(IS_EXTI_LINE(EXTI_Line));
+  osalDbgCheck(IS_EXTI_LINE(EXTI_Line));
   
   EXTI->PR = EXTI_Line;
 }
@@ -265,7 +265,7 @@ ITStatus EXTI_GetITStatus(uint32_t EXTI_Line)
 {
   FlagStatus bitstatus = RESET;
   /* Check the parameters */
-  assert_param(IS_GET_EXTI_LINE(EXTI_Line));
+  osalDbgCheck(IS_GET_EXTI_LINE(EXTI_Line));
   
   if ((EXTI->PR & EXTI_Line) != (uint32_t)RESET)
   {
@@ -288,7 +288,7 @@ ITStatus EXTI_GetITStatus(uint32_t EXTI_Line)
 void EXTI_ClearITPendingBit(uint32_t EXTI_Line)
 {
   /* Check the parameters */
-  assert_param(IS_EXTI_LINE(EXTI_Line));
+  osalDbgCheck(IS_EXTI_LINE(EXTI_Line));
   
   EXTI->PR = EXTI_Line;
 }

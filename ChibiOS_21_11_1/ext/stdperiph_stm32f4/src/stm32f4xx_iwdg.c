@@ -132,7 +132,7 @@
 void IWDG_WriteAccessCmd(uint16_t IWDG_WriteAccess)
 {
   /* Check the parameters */
-  assert_param(IS_IWDG_WRITE_ACCESS(IWDG_WriteAccess));
+  osalDbgCheck(IS_IWDG_WRITE_ACCESS(IWDG_WriteAccess));
   IWDG->KR = IWDG_WriteAccess;
 }
 
@@ -152,7 +152,7 @@ void IWDG_WriteAccessCmd(uint16_t IWDG_WriteAccess)
 void IWDG_SetPrescaler(uint8_t IWDG_Prescaler)
 {
   /* Check the parameters */
-  assert_param(IS_IWDG_PRESCALER(IWDG_Prescaler));
+  osalDbgCheck(IS_IWDG_PRESCALER(IWDG_Prescaler));
   IWDG->PR = IWDG_Prescaler;
 }
 
@@ -165,7 +165,7 @@ void IWDG_SetPrescaler(uint8_t IWDG_Prescaler)
 void IWDG_SetReload(uint16_t Reload)
 {
   /* Check the parameters */
-  assert_param(IS_IWDG_RELOAD(Reload));
+  osalDbgCheck(IS_IWDG_RELOAD(Reload));
   IWDG->RLR = Reload;
 }
 
@@ -234,7 +234,7 @@ FlagStatus IWDG_GetFlagStatus(uint16_t IWDG_FLAG)
 {
   FlagStatus bitstatus = RESET;
   /* Check the parameters */
-  assert_param(IS_IWDG_FLAG(IWDG_FLAG));
+  osalDbgCheck(IS_IWDG_FLAG(IWDG_FLAG));
   if ((IWDG->SR & IWDG_FLAG) != (uint32_t)RESET)
   {
     bitstatus = SET;

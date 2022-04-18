@@ -238,14 +238,14 @@ void ADC_Init(ADC_TypeDef* ADCx, ADC_InitTypeDef* ADC_InitStruct)
   uint32_t tmpreg1 = 0;
   uint8_t tmpreg2 = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_RESOLUTION(ADC_InitStruct->ADC_Resolution)); 
-  assert_param(IS_FUNCTIONAL_STATE(ADC_InitStruct->ADC_ScanConvMode));
-  assert_param(IS_FUNCTIONAL_STATE(ADC_InitStruct->ADC_ContinuousConvMode)); 
-  assert_param(IS_ADC_EXT_TRIG_EDGE(ADC_InitStruct->ADC_ExternalTrigConvEdge)); 
-  assert_param(IS_ADC_EXT_TRIG(ADC_InitStruct->ADC_ExternalTrigConv));    
-  assert_param(IS_ADC_DATA_ALIGN(ADC_InitStruct->ADC_DataAlign)); 
-  assert_param(IS_ADC_REGULAR_LENGTH(ADC_InitStruct->ADC_NbrOfConversion));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_RESOLUTION(ADC_InitStruct->ADC_Resolution)); 
+  osalDbgCheck(IS_FUNCTIONAL_STATE(ADC_InitStruct->ADC_ScanConvMode));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(ADC_InitStruct->ADC_ContinuousConvMode)); 
+  osalDbgCheck(IS_ADC_EXT_TRIG_EDGE(ADC_InitStruct->ADC_ExternalTrigConvEdge)); 
+  osalDbgCheck(IS_ADC_EXT_TRIG(ADC_InitStruct->ADC_ExternalTrigConv));    
+  osalDbgCheck(IS_ADC_DATA_ALIGN(ADC_InitStruct->ADC_DataAlign)); 
+  osalDbgCheck(IS_ADC_REGULAR_LENGTH(ADC_InitStruct->ADC_NbrOfConversion));
   
   /*---------------------------- ADCx CR1 Configuration -----------------*/
   /* Get the ADCx CR1 value */
@@ -343,10 +343,10 @@ void ADC_CommonInit(ADC_CommonInitTypeDef* ADC_CommonInitStruct)
 {
   uint32_t tmpreg1 = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_MODE(ADC_CommonInitStruct->ADC_Mode));
-  assert_param(IS_ADC_PRESCALER(ADC_CommonInitStruct->ADC_Prescaler));
-  assert_param(IS_ADC_DMA_ACCESS_MODE(ADC_CommonInitStruct->ADC_DMAAccessMode));
-  assert_param(IS_ADC_SAMPLING_DELAY(ADC_CommonInitStruct->ADC_TwoSamplingDelay));
+  osalDbgCheck(IS_ADC_MODE(ADC_CommonInitStruct->ADC_Mode));
+  osalDbgCheck(IS_ADC_PRESCALER(ADC_CommonInitStruct->ADC_Prescaler));
+  osalDbgCheck(IS_ADC_DMA_ACCESS_MODE(ADC_CommonInitStruct->ADC_DMAAccessMode));
+  osalDbgCheck(IS_ADC_SAMPLING_DELAY(ADC_CommonInitStruct->ADC_TwoSamplingDelay));
   /*---------------------------- ADC CCR Configuration -----------------*/
   /* Get the ADC CCR value */
   tmpreg1 = ADC->CCR;
@@ -400,8 +400,8 @@ void ADC_CommonStructInit(ADC_CommonInitTypeDef* ADC_CommonInitStruct)
 void ADC_Cmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Set the ADON bit to wake up the ADC from power down mode */
@@ -457,8 +457,8 @@ void ADC_AnalogWatchdogCmd(ADC_TypeDef* ADCx, uint32_t ADC_AnalogWatchdog)
 {
   uint32_t tmpreg = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_ANALOG_WATCHDOG(ADC_AnalogWatchdog));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_ANALOG_WATCHDOG(ADC_AnalogWatchdog));
   
   /* Get the old register value */
   tmpreg = ADCx->CR1;
@@ -486,9 +486,9 @@ void ADC_AnalogWatchdogThresholdsConfig(ADC_TypeDef* ADCx, uint16_t HighThreshol
                                         uint16_t LowThreshold)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_THRESHOLD(HighThreshold));
-  assert_param(IS_ADC_THRESHOLD(LowThreshold));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_THRESHOLD(HighThreshold));
+  osalDbgCheck(IS_ADC_THRESHOLD(LowThreshold));
   
   /* Set the ADCx high threshold */
   ADCx->HTR = HighThreshold;
@@ -527,8 +527,8 @@ void ADC_AnalogWatchdogSingleChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channe
 {
   uint32_t tmpreg = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_CHANNEL(ADC_Channel));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_CHANNEL(ADC_Channel));
   
   /* Get the old register value */
   tmpreg = ADCx->CR1;
@@ -590,7 +590,7 @@ void ADC_AnalogWatchdogSingleChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channe
 void ADC_TempSensorVrefintCmd(FunctionalState NewState)                
 {
   /* Check the parameters */
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Enable the temperature sensor and Vrefint channel*/
@@ -616,7 +616,7 @@ void ADC_TempSensorVrefintCmd(FunctionalState NewState)
 void ADC_VBATCmd(FunctionalState NewState)                             
 {
   /* Check the parameters */
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Enable the VBAT channel*/
@@ -717,10 +717,10 @@ void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Ra
 {
   uint32_t tmpreg1 = 0, tmpreg2 = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_CHANNEL(ADC_Channel));
-  assert_param(IS_ADC_REGULAR_RANK(Rank));
-  assert_param(IS_ADC_SAMPLE_TIME(ADC_SampleTime));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_CHANNEL(ADC_Channel));
+  osalDbgCheck(IS_ADC_REGULAR_RANK(Rank));
+  osalDbgCheck(IS_ADC_SAMPLE_TIME(ADC_SampleTime));
   
   /* if ADC_Channel_10 ... ADC_Channel_18 is selected */
   if (ADC_Channel > ADC_Channel_9)
@@ -836,7 +836,7 @@ void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Ra
 void ADC_SoftwareStartConv(ADC_TypeDef* ADCx)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
   
   /* Enable the selected ADC conversion for regular group */
   ADCx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
@@ -851,7 +851,7 @@ FlagStatus ADC_GetSoftwareStartConvStatus(ADC_TypeDef* ADCx)
 {
   FlagStatus bitstatus = RESET;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
   
   /* Check the status of SWSTART bit */
   if ((ADCx->CR2 & ADC_CR2_SWSTART) != (uint32_t)RESET)
@@ -880,8 +880,8 @@ FlagStatus ADC_GetSoftwareStartConvStatus(ADC_TypeDef* ADCx)
 void ADC_EOCOnEachRegularChannelCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   
   if (NewState != DISABLE)
   {
@@ -905,8 +905,8 @@ void ADC_EOCOnEachRegularChannelCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 void ADC_ContinuousModeCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   
   if (NewState != DISABLE)
   {
@@ -934,8 +934,8 @@ void ADC_DiscModeChannelCountConfig(ADC_TypeDef* ADCx, uint8_t Number)
   uint32_t tmpreg2 = 0;
   
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_REGULAR_DISC_NUMBER(Number));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_REGULAR_DISC_NUMBER(Number));
   
   /* Get the old register value */
   tmpreg1 = ADCx->CR1;
@@ -963,8 +963,8 @@ void ADC_DiscModeChannelCountConfig(ADC_TypeDef* ADCx, uint8_t Number)
 void ADC_DiscModeCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   
   if (NewState != DISABLE)
   {
@@ -986,7 +986,7 @@ void ADC_DiscModeCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 uint16_t ADC_GetConversionValue(ADC_TypeDef* ADCx)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
   
   /* Return the selected ADC conversion value */
   return (uint16_t) ADCx->DR;
@@ -1053,8 +1053,8 @@ uint32_t ADC_GetMultiModeConversionValue(void)
 void ADC_DMACmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Enable the selected ADC DMA request */
@@ -1077,8 +1077,8 @@ void ADC_DMACmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 void ADC_DMARequestAfterLastTransferCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Enable the selected ADC DMA request after last transfer */
@@ -1104,7 +1104,7 @@ void ADC_DMARequestAfterLastTransferCmd(ADC_TypeDef* ADCx, FunctionalState NewSt
 void ADC_MultiModeDMARequestAfterLastTransferCmd(FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Enable the selected ADC DMA request after last transfer */
@@ -1192,10 +1192,10 @@ void ADC_InjectedChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t R
 {
   uint32_t tmpreg1 = 0, tmpreg2 = 0, tmpreg3 = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_CHANNEL(ADC_Channel));
-  assert_param(IS_ADC_INJECTED_RANK(Rank));
-  assert_param(IS_ADC_SAMPLE_TIME(ADC_SampleTime));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_CHANNEL(ADC_Channel));
+  osalDbgCheck(IS_ADC_INJECTED_RANK(Rank));
+  osalDbgCheck(IS_ADC_SAMPLE_TIME(ADC_SampleTime));
   /* if ADC_Channel_10 ... ADC_Channel_18 is selected */
   if (ADC_Channel > ADC_Channel_9)
   {
@@ -1256,8 +1256,8 @@ void ADC_InjectedSequencerLengthConfig(ADC_TypeDef* ADCx, uint8_t Length)
   uint32_t tmpreg1 = 0;
   uint32_t tmpreg2 = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_INJECTED_LENGTH(Length));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_INJECTED_LENGTH(Length));
   
   /* Get the old register value */
   tmpreg1 = ADCx->JSQR;
@@ -1290,9 +1290,9 @@ void ADC_SetInjectedOffset(ADC_TypeDef* ADCx, uint8_t ADC_InjectedChannel, uint1
 {
     __IO uint32_t tmp = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_INJECTED_CHANNEL(ADC_InjectedChannel));
-  assert_param(IS_ADC_OFFSET(Offset));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_INJECTED_CHANNEL(ADC_InjectedChannel));
+  osalDbgCheck(IS_ADC_OFFSET(Offset));
   
   tmp = (uint32_t)ADCx;
   tmp += ADC_InjectedChannel;
@@ -1328,8 +1328,8 @@ void ADC_ExternalTrigInjectedConvConfig(ADC_TypeDef* ADCx, uint32_t ADC_External
 {
   uint32_t tmpreg = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_EXT_INJEC_TRIG(ADC_ExternalTrigInjecConv));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_EXT_INJEC_TRIG(ADC_ExternalTrigInjecConv));
   
   /* Get the old register value */
   tmpreg = ADCx->CR2;
@@ -1362,8 +1362,8 @@ void ADC_ExternalTrigInjectedConvEdgeConfig(ADC_TypeDef* ADCx, uint32_t ADC_Exte
 {
   uint32_t tmpreg = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_EXT_INJEC_TRIG_EDGE(ADC_ExternalTrigInjecConvEdge));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_EXT_INJEC_TRIG_EDGE(ADC_ExternalTrigInjecConvEdge));
   /* Get the old register value */
   tmpreg = ADCx->CR2;
   /* Clear the old external trigger edge for injected group */
@@ -1382,7 +1382,7 @@ void ADC_ExternalTrigInjectedConvEdgeConfig(ADC_TypeDef* ADCx, uint32_t ADC_Exte
 void ADC_SoftwareStartInjectedConv(ADC_TypeDef* ADCx)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
   /* Enable the selected ADC conversion for injected group */
   ADCx->CR2 |= (uint32_t)ADC_CR2_JSWSTART;
 }
@@ -1396,7 +1396,7 @@ FlagStatus ADC_GetSoftwareStartInjectedConvCmdStatus(ADC_TypeDef* ADCx)
 {
   FlagStatus bitstatus = RESET;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
   
   /* Check the status of JSWSTART bit */
   if ((ADCx->CR2 & ADC_CR2_JSWSTART) != (uint32_t)RESET)
@@ -1424,8 +1424,8 @@ FlagStatus ADC_GetSoftwareStartInjectedConvCmdStatus(ADC_TypeDef* ADCx)
 void ADC_AutoInjectedConvCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Enable the selected ADC automatic injected group conversion */
@@ -1450,8 +1450,8 @@ void ADC_AutoInjectedConvCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 void ADC_InjectedDiscModeCmd(ADC_TypeDef* ADCx, FunctionalState NewState)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
   if (NewState != DISABLE)
   {
     /* Enable the selected ADC injected discontinuous mode */
@@ -1480,8 +1480,8 @@ uint16_t ADC_GetInjectedConversionValue(ADC_TypeDef* ADCx, uint8_t ADC_InjectedC
   __IO uint32_t tmp = 0;
   
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_INJECTED_CHANNEL(ADC_InjectedChannel));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_INJECTED_CHANNEL(ADC_InjectedChannel));
 
   tmp = (uint32_t)ADCx;
   tmp += ADC_InjectedChannel + JDR_OFFSET;
@@ -1586,9 +1586,9 @@ void ADC_ITConfig(ADC_TypeDef* ADCx, uint16_t ADC_IT, FunctionalState NewState)
 {
   uint32_t itmask = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
-  assert_param(IS_ADC_IT(ADC_IT)); 
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_FUNCTIONAL_STATE(NewState));
+  osalDbgCheck(IS_ADC_IT(ADC_IT)); 
 
   /* Get the ADC IT index */
   itmask = (uint8_t)ADC_IT;
@@ -1623,8 +1623,8 @@ FlagStatus ADC_GetFlagStatus(ADC_TypeDef* ADCx, uint8_t ADC_FLAG)
 {
   FlagStatus bitstatus = RESET;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_GET_FLAG(ADC_FLAG));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_GET_FLAG(ADC_FLAG));
 
   /* Check the status of the specified ADC flag */
   if ((ADCx->SR & ADC_FLAG) != (uint8_t)RESET)
@@ -1657,8 +1657,8 @@ FlagStatus ADC_GetFlagStatus(ADC_TypeDef* ADCx, uint8_t ADC_FLAG)
 void ADC_ClearFlag(ADC_TypeDef* ADCx, uint8_t ADC_FLAG)
 {
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_CLEAR_FLAG(ADC_FLAG));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_CLEAR_FLAG(ADC_FLAG));
 
   /* Clear the selected ADC flags */
   ADCx->SR = ~(uint32_t)ADC_FLAG;
@@ -1681,8 +1681,8 @@ ITStatus ADC_GetITStatus(ADC_TypeDef* ADCx, uint16_t ADC_IT)
   uint32_t itmask = 0, enablestatus = 0;
 
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_IT(ADC_IT));
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_IT(ADC_IT));
 
   /* Get the ADC IT index */
   itmask = ADC_IT >> 8;
@@ -1720,8 +1720,8 @@ void ADC_ClearITPendingBit(ADC_TypeDef* ADCx, uint16_t ADC_IT)
 {
   uint8_t itmask = 0;
   /* Check the parameters */
-  assert_param(IS_ADC_ALL_PERIPH(ADCx));
-  assert_param(IS_ADC_IT(ADC_IT)); 
+  osalDbgCheck(IS_ADC_ALL_PERIPH(ADCx));
+  osalDbgCheck(IS_ADC_IT(ADC_IT)); 
   /* Get the ADC IT index */
   itmask = (uint8_t)(ADC_IT >> 8);
   /* Clear the selected ADC interrupt pending bits */
