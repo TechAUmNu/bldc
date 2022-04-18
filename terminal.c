@@ -91,10 +91,11 @@ void terminal_process_string(char *str) {
 	} else if (strcmp(argv[0], "kv") == 0) {
 		commands_printf("Calculated KV: %.2f rpm/volt\n", (double)mcpwm_get_kv_filtered());
 	} else if (strcmp(argv[0], "mem") == 0) {
-		size_t n, size;
-		n = chHeapStatus(NULL, &size);
+		size_t n, size, blk;
+		n = chHeapStatus(NULL, &size, &blk);
 		commands_printf("core free memory : %u bytes", chCoreGetStatusX());
 		commands_printf("heap fragments   : %u", n);
+		commands_printf("heap largest free block   : %u", blk);
 		commands_printf("heap free total  : %u bytes\n", size);
 	} else if (strcmp(argv[0], "threads") == 0) {
 		thread_t *tp;
@@ -106,11 +107,11 @@ void terminal_process_string(char *str) {
 		do {
 			int stack_left = utils_check_min_stack_left(tp);
 			commands_printf("%.8lx %.8lx %4lu %4lu %9s %14s %5lu %8d  %lu (%.1f %%)",
-					(uint32_t)tp, (uint32_t)tp->p_ctx.r13,
-					(uint32_t)tp->p_prio, (uint32_t)(tp->p_refs - 1),
-					states[tp->p_state], tp->p_name, tp->motor_selected, stack_left, (uint32_t)tp->p_time,
-					(double)(100.0 * (float)tp->p_time / (float)(chVTGetSystemTimeX() - last_check_time)));
-			tp->p_time = 0;
+					(uint32_t)tp, (uint32_t)tp->wabase,
+					(uint32_t)tp->realprio, (uint32_t)(tp->refs - 1),
+					states[tp->state], tp->name, tp->motor_selected, stack_left, (uint32_t)tp->time,
+					(double)(100.0 * (float)tp->time / (float)(chVTGetSystemTimeX() - last_check_time)));
+			tp->time = 0;
 			tp = chRegNextThread(tp);
 		} while (tp != NULL);
 		last_check_time = chVTGetSystemTimeX();

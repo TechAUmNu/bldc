@@ -122,7 +122,7 @@ const char* utils_hw_type_to_string(HW_TYPE hw) {
  * Check the minimum stack tp had left by counting the remaining fill characters.
  */
 int utils_check_min_stack_left(thread_t *tp) {
-	uint32_t *p = (uint32_t *)tp->p_stklimit;
+	uint32_t *p = (uint32_t *)tp->wabase;
 
 	int free = 0;
 	while (free < 8192) {
@@ -140,5 +140,5 @@ int utils_check_min_stack_left(thread_t *tp) {
  */
 int utils_stack_left_now(void) {
 	struct port_intctx *r13 = (struct port_intctx *)__get_PSP();
-	return ((stkalign_t *)(r13 - 1) - chThdGetSelfX()->p_stklimit) * sizeof(stkalign_t);
+	return ((stkalign_t *)(r13 - 1) - chThdGetSelfX()->wabase) * sizeof(stkalign_t);
 }
