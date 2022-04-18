@@ -97,7 +97,8 @@ static ICUConfig icucfg = {
 		icuperiodcb,
 		NULL,
 		HW_ICU_CHANNEL,
-		0
+		0,
+		0xFFFFFFFFU				// set automatic reload register to max
 };
 
 /**
