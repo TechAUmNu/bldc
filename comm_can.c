@@ -284,7 +284,7 @@ void comm_can_transmit_eid_replace(uint32_t id, const uint8_t *data, uint8_t len
 	}
 #else
 	(void)interface;
-	canTransmit(&HW_CAN_DEV, CAN_ANY_MAILBOX, &txmsg, MS2ST(5));
+	canTransmit(&HW_CAN_DEV, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(5));
 #endif
 	chMtxUnlock(&can_mtx);
 #else
@@ -332,7 +332,7 @@ void comm_can_transmit_sid(uint32_t id, uint8_t *data, uint8_t len) {
 		chThdSleepMicroseconds(500);
 	}
 #else
-	canTransmit(&HW_CAN_DEV, CAN_ANY_MAILBOX, &txmsg, MS2ST(5));
+	canTransmit(&HW_CAN_DEV, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(5));
 #endif
 	chMtxUnlock(&can_mtx);
 #else
@@ -615,7 +615,7 @@ bool comm_can_ping(uint8_t controller_id, HW_TYPE *hw_type) {
 	comm_can_transmit_eid_replace(controller_id |
 			((uint32_t)CAN_PACKET_PING << 8), buffer, 1, true, 0);
 
-	int ret = chEvtWaitAnyTimeout(1 << 29, MS2ST(10));
+	int ret = chEvtWaitAnyTimeout(1 << 29, TIME_MS2I(10));
 	ping_tp = 0;
 
 	if (ret != 0) {
@@ -1228,7 +1228,7 @@ static THD_FUNCTION(cancom_read_thread, arg) {
 		// Feed watchdog
 		timeout_feed_WDT(THREAD_CANBUS);
         
-		if (chEvtWaitAnyTimeout(ALL_EVENTS, MS2ST(10)) == 0) {
+		if (chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(10)) == 0) {
 			continue;
 		}
 
