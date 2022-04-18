@@ -50,7 +50,7 @@ static THD_FUNCTION(serial_read_thread, arg) {
 	int had_data = 0;
 
 	for(;;) {
-		int len = chSequentialStreamRead(&SDU1, (uint8_t*) buffer, 1);
+		int len = chnRead(&SDU1, (uint8_t*) buffer, 1);
 
 		for (int i = 0;i < len;i++) {
 			serial_rx_buffer[serial_rx_write_pos++] = buffer[i];
@@ -104,7 +104,7 @@ static void send_packet_raw(unsigned char *buffer, unsigned int len) {
 		if (was_timeout) {
 			written = SDU1.vmt->writet(&SDU1, buffer, len, TIME_IMMEDIATE);
 		} else {
-			written = SDU1.vmt->writet(&SDU1, buffer, len, MS2ST(100));
+			written = SDU1.vmt->writet(&SDU1, buffer, len, TIME_MS2I(100));
 		}
 
 		was_timeout = written != len;
