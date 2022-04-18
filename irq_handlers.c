@@ -42,14 +42,15 @@ CH_IRQ_HANDLER(HW_ENC_EXTI_ISR_VEC) {
 	}
 }
 
-CH_IRQ_HANDLER(HW_ENC_TIM_ISR_VEC) {
-	if (TIM_GetITStatus(HW_ENC_TIM, TIM_IT_Update) != RESET) {
-		encoder_tim_isr();
-
-		// Clear the IT pending bit
-		TIM_ClearITPendingBit(HW_ENC_TIM, TIM_IT_Update);
-	}
-}
+/// Fix Warning needsto use ch hal
+//CH_IRQ_HANDLER(HW_ENC_TIM_ISR_VEC) {
+//	if (TIM_GetITStatus(HW_ENC_TIM, TIM_IT_Update) != RESET) {
+//		encoder_tim_isr();
+//
+//		// Clear the IT pending bit
+//		TIM_ClearITPendingBit(HW_ENC_TIM, TIM_IT_Update);
+//	}
+//}
 
 CH_IRQ_HANDLER(TIM2_IRQHandler) {
 	if (TIM_GetITStatus(TIM2, TIM_IT_CC2) != RESET) {

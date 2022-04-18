@@ -249,13 +249,13 @@
  */
 #define STM32_ICU_USE_TIM1                  FALSE
 #define STM32_ICU_USE_TIM2                  FALSE
-#ifdef HW_USE_SERVO_TIM4
-#define STM32_ICU_USE_TIM3                  FALSE
-#define STM32_ICU_USE_TIM4                  TRUE
-#else
+//#ifdef HW_USE_SERVO_TIM4
+//#define STM32_ICU_USE_TIM3                  FALSE
+//#define STM32_ICU_USE_TIM4                  TRUE
+//#else
 #define STM32_ICU_USE_TIM3                  TRUE
-#define STM32_ICU_USE_TIM4                  FALSE
-#endif
+#define STM32_ICU_USE_TIM4                  TRUE
+//#endif
 #define STM32_ICU_USE_TIM5                  FALSE
 #define STM32_ICU_USE_TIM8                  FALSE
 #define STM32_ICU_USE_TIM9                  TRUE
