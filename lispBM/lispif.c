@@ -143,9 +143,9 @@ void lispif_process_cmd(unsigned char *data, unsigned int len,
 
 		static systime_t time_last = 0;
 		if (eval_tp) {
-			cpu_use = 100.0 * (float)eval_tp->p_time / (float)(chVTGetSystemTimeX() - time_last);
+			cpu_use = 100.0 * (float)eval_tp->time / (float)(chVTGetSystemTimeX() - time_last);
 			time_last = chVTGetSystemTimeX();
-			eval_tp->p_time = 0;
+			eval_tp->time = 0;
 		} else {
 			break;
 		}
