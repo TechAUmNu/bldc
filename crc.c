@@ -19,7 +19,7 @@
 
 #include "crc.h"
 #ifndef NO_STM32
-#include "stm32f4xx.h"
+#include "hal.h"
 #endif
 
 // CRC Table
