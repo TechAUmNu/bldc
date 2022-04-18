@@ -282,6 +282,8 @@ static void usb_event(USBDriver *usbp, usbevent_t event) {
 		return;
 	case USB_EVENT_STALLED:
 		return;
+	default:			// fixed warning: enumeration value 'USB_EVENT_UNCONFIGURED' not handled in switch
+		return;
 	}
 	return;
 }
