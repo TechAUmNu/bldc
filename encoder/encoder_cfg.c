@@ -74,8 +74,10 @@ MT6816_config_t encoder_cfg_mt6816 = {
 #ifdef HW_SPI_DEV
 		&HW_SPI_DEV, // spi_dev
 		{//HARDWARE SPI CONFIG
-				NULL, HW_HALL_ENC_GPIO3, HW_HALL_ENC_PIN3, SPI_BaudRatePrescaler_4 |
-				SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_DATASIZE_16BIT
+				false, false, NULL, NULL,
+				HW_SPI_PORT_NSS, HW_SPI_PIN_NSS,
+				SPI_BaudRatePrescaler_4 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_DATASIZE_16BIT,
+				0
 		},
 
 		/*NSS*/HW_SPI_PORT_NSS, HW_SPI_PIN_NSS,
