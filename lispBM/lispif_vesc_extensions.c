@@ -1722,7 +1722,7 @@ static lbm_value ext_uart_start(lbm_value *args, lbm_uint argn) {
 
 static void wait_uart_tx_task(void *arg) {
 	(void)arg;
-	while(!chOQIsEmptyI(&HW_UART_DEV.oqueue)){
+	while(!oqIsEmptyI(&HW_UART_DEV.oqueue)){
 		chThdSleepMilliseconds(1);
 	}
 	chThdSleepMilliseconds(1);
