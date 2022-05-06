@@ -287,7 +287,7 @@ int tok_char(lbm_tokenizer_char_stream_t *str, char *res) {
     count = 9;
   } else if (peek(str,0) == '\\' &&
              peek(str,1) == '#' &&
-             isgraph(peek(str,2))) {
+             isgraph((uint8_t)peek(str,2))) {
     *res = peek(str,2);
     drop(str,3);
     count = 3;
@@ -352,7 +352,7 @@ void clean_whitespace(lbm_tokenizer_char_stream_t *str) {
       while ( more(str) && peek(str, 0) != '\n') {
         drop(str,1);
       }
-    } else if ( isspace(peek(str,0))) {
+    } else if ( isspace((uint8_t)peek(str,0))) {
       drop(str,1);
     } else {
       clean_whitespace = false;
