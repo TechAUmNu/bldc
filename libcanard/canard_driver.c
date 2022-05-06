@@ -1181,7 +1181,7 @@ static THD_FUNCTION(canard_thread, arg) {
 			rx_frame.data_len = rxmsg->DLC;
 			memcpy(rx_frame.data, rxmsg->data8, rxmsg->DLC);
 
-			canardHandleRxFrame(&canard_ins_if2, &rx_frame, ST2US(chVTGetSystemTimeX()));
+			canardHandleRxFrame(&canard_ins_if2, &rx_frame, TIME_I2US(chVTGetSystemTimeX()));
 		}
 
 		for (const CanardCANFrame* txf = NULL; (txf = canardPeekTxQueue(&canard_ins_if2)) != NULL;) {
@@ -1195,7 +1195,7 @@ static THD_FUNCTION(canard_thread, arg) {
 			canardCleanupStaleTransfers(&canard_ins, TIME_I2US(chVTGetSystemTimeX()));
 			sendNodeStatus(&canard_ins);
 #ifdef HW_CAN2_DEV
-			canardCleanupStaleTransfers(&canard_ins_if2, ST2US(chVTGetSystemTimeX()));
+			canardCleanupStaleTransfers(&canard_ins_if2, TIME_I2US(chVTGetSystemTimeX()));
 			sendNodeStatus(&canard_ins_if2);
 #endif
 		}

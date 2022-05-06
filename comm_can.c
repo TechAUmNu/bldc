@@ -278,9 +278,9 @@ void comm_can_transmit_eid_replace(uint32_t id, const uint8_t *data, uint8_t len
 			chThdSleepMicroseconds(500);
 		}
 	} else if (interface == 1) {
-		canTransmit(&HW_CAN_DEV, CAN_ANY_MAILBOX, &txmsg, MS2ST(5));
+		canTransmit(&HW_CAN_DEV, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(5));
 	} else if (interface == 2) {
-		canTransmit(&HW_CAN2_DEV, CAN_ANY_MAILBOX, &txmsg, MS2ST(5));
+		canTransmit(&HW_CAN2_DEV, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(5));
 	}
 #else
 	(void)interface;
