@@ -124,7 +124,7 @@ static THD_FUNCTION(bmi_thread, arg) {
 	s->is_running = true;
 
 	systime_t iteration_timer = chVTGetSystemTime();
-	const systime_t desired_interval = US2ST(1000000 / s->rate_hz);
+	const systime_t desired_interval = OSAL_US2I(1000000 / s->rate_hz);
 
 	for(;;) {
 		struct bmi160_sensor_data accel;

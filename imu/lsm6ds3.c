@@ -162,7 +162,7 @@ static THD_FUNCTION(lsm6ds3_thread, arg) {
 	chRegSetThreadName("LSM6SD3 Sampling");
 
 	systime_t iteration_timer = chVTGetSystemTime();
-	const systime_t desired_interval = US2ST(1000000 / rate_hz);
+	const systime_t desired_interval = OSAL_US2I(1000000 / rate_hz);
 
 	while (!chThdShouldTerminateX()) {
 
