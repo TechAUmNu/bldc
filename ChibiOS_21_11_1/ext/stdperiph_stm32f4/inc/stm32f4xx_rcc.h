@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include "osal.h"
 #define STM32F405xx
+#define STM32F40_41xxx
 #include "stm32f4xx.h"
 
 
