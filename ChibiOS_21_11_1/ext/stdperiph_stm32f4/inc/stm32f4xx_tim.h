@@ -36,7 +36,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
-#include "ch.h"
+#include "osal.h"
 #define STM32F405xx
 #include "stm32f4xx.h"
 
