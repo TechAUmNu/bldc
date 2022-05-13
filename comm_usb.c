@@ -66,6 +66,12 @@ static THD_FUNCTION(serial_read_thread, arg) {
 			chEvtSignal(process_tp, (eventmask_t) 1);
 			had_data = 0;
 		}
+
+		// usb driver puts queues in non blocking when disconnected!!!
+		 if (!comm_usb_serial_is_active())
+		 {
+			 chThdSleepMilliseconds(300);
+		 }
 	}
 }
 
