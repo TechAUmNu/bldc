@@ -9,6 +9,7 @@ USE_LISPBM=1
 ifeq ($(USE_OPT),)
   USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16 -std=gnu99 -D_GNU_SOURCE
   USE_OPT += -DBOARD_OTG_NOVBUSSENS $(build_args)
+#  USE_OPT += -DUSE_GC_PTR_REV
   USE_OPT += -fsingle-precision-constant -Wdouble-promotion -specs=nosys.specs
 endif
 
@@ -119,11 +120,8 @@ include $(CHIBIOS)/tools/mk/autobuild.mk
 # Other files
 include hwconf/hwconf.mk
 include applications/applications.mk
-include nrf/nrf.mk
 include libcanard/canard.mk
 include imu/imu.mk
-include lora/lora.mk
-include lzo/lzo.mk
 include blackmagic/blackmagic.mk
 include encoder/encoder.mk
 
@@ -140,52 +138,23 @@ LDSCRIPT= ld_eeprom_emu.ld
 CSRC = $(ALLCSRC) \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        $(CHIBIOS)/os/various/syscalls.c \
-       board.c \
        main.c \
-       comm_usb_serial.c \
        irq_handlers.c \
-       buffer.c \
-       comm_usb.c \
-       crc.c \
-       digital_filter.c \
-       ledpwm.c \
-       mcpwm.c \
-       servo_dec.c \
-       utils_math.c \
-       utils_sys.c \
-       servo_simple.c \
-       packet.c \
        terminal.c \
        conf_general.c \
-       eeprom.c \
-       commands.c \
        timeout.c \
-       comm_can.c \
        flash_helper.c \
-       mc_interface.c \
-       mcpwm_foc.c \
-       gpdrive.c \
        confgenerator.c \
-       timer.c \
-       i2c_bb.c \
-       spi_bb.c \
-       virtual_motor.c \
-       shutdown.c \
-       mempools.c \
-       worker.c \
        bms.c \
        events.c \
        $(HWSRC) \
        $(APPSRC) \
-       $(NRFSRC) \
        $(CANARDSRC) \
        $(IMUSRC) \
-       $(LORASRC) \
-       $(LZOSRC) \
        $(BLACKMAGICSRC) \
        qmlui/qmlui.c \
        $(ENCSRC) \
-       foc_math.c
+       conf_custom.c
 
 ifeq ($(USE_LISPBM),1)
   CSRC += $(LISPBMSRC)
@@ -205,20 +174,20 @@ ASMXSRC = $(ALLXASMSRC)
 INCDIR = $(ALLINC)$(CONFDIR) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/hal/lib/streams \
-         mcconf \
-         appconf \
          $(HWINC) \
          $(APPINC) \
-         $(NRFINC) \
          $(CANARDINC) \
          $(IMUINC) \
-         $(LORAINC) \
-         $(LZOINC) \
          $(BLACKMAGICINC) \
          qmlui \
          qmlui/hw \
          qmlui/app \
          $(ENCINC)
+
+include comm/comm.mk
+include motor/motor.mk
+include util/util.mk
+include driver/driver.mk
 
 ifeq ($(USE_LISPBM),1)
   INCDIR += $(LISPBMINC)

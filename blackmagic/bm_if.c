@@ -127,6 +127,7 @@ static int idcode_to_device(uint32_t idcode) {
 	case 0x0086: /* nRF51422 (rev 3) QFAC A1 */
 	case 0x0087: /* nRF51822 (rev 3) CFAC A0 */
 	case 0x0088: /* nRF51422 (rev 3) CFAC A0 */
+	case 0x0169: /* nRF51822 (rev 3) Taiyo EYSGJNZWY*/
 		ret = 4; break;
 	case 0x00AC: /* nRF52832 Preview QFAA BA0 */
 	case 0x00C7: /* nRF52832 (rev 1) QFAA B00 */
@@ -145,6 +146,10 @@ static int idcode_to_device(uint32_t idcode) {
 	case 0x422: ret = 9; break; // STM32F30x
 
 	case 0x415: ret = 10; break; // STM32L47x
+
+	case 0x468: ret = 11; break; // STM32G43
+	case 0x469: ret = 12; break; // STM32G47
+	case 0x479: ret = 13; break; // STM32G49
 
 	default: ret = -2; break;
 	}

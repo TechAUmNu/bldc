@@ -78,8 +78,6 @@
  * 1, 2			I2C1		Nunchuk, temp on rev 4.5
  * 1, 7			I2C1		Nunchuk, temp on rev 4.5
  * 2, 4			ADC			mcpwm
- * 1, 0			TIM4		WS2811/WS2812 LEDs CH1 (Ch 1)
- * 1, 3			TIM4		WS2811/WS2812 LEDs CH2 (Ch 2)
  *
  */
 
@@ -189,10 +187,16 @@ static THD_FUNCTION(periodic_thread, arg) {
 				commands_send_rotor_pos(utils_angle_difference(mcpwm_foc_get_phase_observer(), mcpwm_foc_get_phase_encoder()));
 				break;
 
+			case DISP_POS_MODE_HALL_OBSERVER_ERROR:
+				commands_send_rotor_pos(utils_angle_difference(mcpwm_foc_get_phase_observer(), mcpwm_foc_get_phase_hall()));
+				break;
+
 			default:
 				break;
 			}
 		}
+	 
+		HW_TRIM_HSI(); // Compensate HSI for temperature
 
 		chThdSleepMilliseconds(10);
 	}
@@ -231,6 +235,7 @@ int main(void) {
 
 	chThdSleepMilliseconds(100);
 
+	mempools_init();
 	events_init();
 	hw_init_gpio();
 	LED_RED_OFF();
@@ -239,7 +244,7 @@ int main(void) {
 	timer_init();
 	conf_general_init();
 
-	if( flash_helper_verify_flash_memory() == FAULT_CODE_FLASH_CORRUPTION )	{
+	if (flash_helper_verify_flash_memory() == FAULT_CODE_FLASH_CORRUPTION)	{
 		// Loop here, it is not safe to run any code
 		while (1) {
 			chThdSleepMilliseconds(100);
@@ -258,16 +263,17 @@ int main(void) {
 	comm_usb_init();
 #endif
 
-#if CAN_ENABLE
-	comm_can_init();
-#endif
-
 	app_uartcomm_initialize();
 	app_configuration *appconf = mempools_alloc_appconf();
 	conf_general_read_app_configuration(appconf);
-	app_set_configuration(appconf);
 	app_uartcomm_start(UART_PORT_BUILTIN);
 	app_uartcomm_start(UART_PORT_EXTRA_HEADER);
+	app_set_configuration(appconf);
+
+	// This reads the appconf, that must be initialized first.
+#if CAN_ENABLE
+	comm_can_init();
+#endif
 
 #ifdef HW_HAS_PERMANENT_NRF
 	conf_general_permanent_nrf_found = nrf_driver_init();
@@ -294,15 +300,11 @@ int main(void) {
 	timeout_init();
 	timeout_configure(appconf->timeout_msec, appconf->timeout_brake_current, appconf->kill_sw_mode);
 
-	mempools_free_appconf(appconf);
-
 #if HAS_BLACKMAGIC
 	bm_init();
 #endif
 
-#ifdef HW_SHUTDOWN_HOLD_ON
 	shutdown_init();
-#endif
 
 	imu_reset_orientation();
 
@@ -315,11 +317,15 @@ int main(void) {
 
 #ifdef CAN_ENABLE
 	// Transmit a CAN boot-frame to notify other nodes on the bus about it.
-	comm_can_transmit_eid(
-		app_get_configuration()->controller_id | (CAN_PACKET_NOTIFY_BOOT << 8),
-		(uint8_t *)HW_NAME, (strlen(HW_NAME) <= CAN_FRAME_MAX_PL_SIZE) ?
-		strlen(HW_NAME) : CAN_FRAME_MAX_PL_SIZE);
+	if (appconf->can_mode == CAN_MODE_VESC) {
+		comm_can_transmit_eid(
+				app_get_configuration()->controller_id | (CAN_PACKET_NOTIFY_BOOT << 8),
+				(uint8_t *)HW_NAME, (strlen(HW_NAME) <= CAN_FRAME_MAX_PL_SIZE) ?
+						strlen(HW_NAME) : CAN_FRAME_MAX_PL_SIZE);
+	}
 #endif
+
+	mempools_free_appconf(appconf);
 
 	for(;;) {
 		chThdSleepMilliseconds(10);

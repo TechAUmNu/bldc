@@ -49,6 +49,8 @@ static volatile ppm_config config;
 static volatile int pulses_without_power = 0;
 static float input_val = 0.0;
 static volatile float direction_hyst = 0;
+static volatile bool ppm_detached = false;
+static volatile float ppm_override = 0.0;
 
 // Private functions
 
@@ -85,6 +87,14 @@ float app_ppm_get_decoded_level(void) {
 	return input_val;
 }
 
+void app_ppm_detach(bool detach) {
+	ppm_detached = detach;
+}
+
+void app_ppm_override(float val) {
+	ppm_override = val;
+}
+
 static void servodec_func(void) {
 	ppm_rx = true;
 	chSysLockFromISR();
@@ -118,7 +128,13 @@ static THD_FUNCTION(ppm_thread, arg) {
 		const volatile mc_configuration *mcconf = mc_interface_get_configuration();
 		const float rpm_now = mc_interface_get_rpm();
 		float servo_val = servodec_get_servo(0);
+
+		if (ppm_detached) {
+			servo_val = ppm_override;
+		}
+
 		float servo_ms = utils_map(servo_val, -1.0, 1.0, config.pulse_start, config.pulse_end);
+
 		static bool servoError = false;
 
 		switch (config.ctrl_type) {
@@ -235,9 +251,9 @@ static THD_FUNCTION(ppm_thread, arg) {
 				}
 
 				if (rpm_now >= 0.0) { //Accelerate
-					current = servo_val * mcconf->lo_current_motor_max_now;
+					current = servo_val * mcconf->lo_current_max;
 				} else { //Brake
-					current = servo_val * fabsf(mcconf->lo_current_motor_min_now);
+					current = servo_val * fabsf(mcconf->lo_current_min);
 				}
 
 			} else {
@@ -266,10 +282,10 @@ static THD_FUNCTION(ppm_thread, arg) {
 
 				if (current_mode_brake) {
 					// braking
-					current = fabsf(servo_val * mcconf->lo_current_motor_min_now);
+					current = fabsf(servo_val * mcconf->lo_current_min);
 				} else {
 					// reverse acceleration
-					current = servo_val * fabsf(mcconf->lo_current_motor_min_now);
+					current = servo_val * fabsf(mcconf->lo_current_min);
 				}
 			}
 
@@ -282,9 +298,9 @@ static THD_FUNCTION(ppm_thread, arg) {
 		case PPM_CTRL_TYPE_CURRENT_NOREV:
 			current_mode = true;
 			if ((servo_val >= 0.0 && rpm_now >= 0.0) || (servo_val < 0.0 && rpm_now <= 0.0)) { //Accelerate
-				current = servo_val * mcconf->lo_current_motor_max_now;
+				current = servo_val * mcconf->lo_current_max;
 			} else { //Brake
-				current = servo_val * fabsf(mcconf->lo_current_motor_min_now);
+				current = servo_val * fabsf(mcconf->lo_current_min);
 			}
 
 			if (fabsf(servo_val) < 0.001) {
@@ -298,9 +314,9 @@ static THD_FUNCTION(ppm_thread, arg) {
 			current_mode_brake = servo_val < 0.0;
 
 			if (servo_val >= 0.0 && rpm_now > 0.0) { //Positive input AND going forward = accelerating
-				current = servo_val * mcconf->lo_current_motor_max_now;
+				current = servo_val * mcconf->lo_current_max;
 			} else { //Negative input OR going backwards = brake (no reverse allowed in those control types)
-				current = fabsf(servo_val * mcconf->lo_current_motor_min_now);
+				current = fabsf(servo_val * mcconf->lo_current_min);
 			}
 
 			if (fabsf(servo_val) < 0.001) {

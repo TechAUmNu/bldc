@@ -105,6 +105,10 @@ bool app_nunchuk_get_is_rev(void) {
 	return chuck_d.is_rev;
 }
 
+float app_nunchuk_get_update_age(void) {
+	return UTILS_AGE_S(last_update_time);
+}
+
 void app_nunchuk_update_output(chuck_data *data) {
 	if (!output_running) {
 		last_update_time = 0;
@@ -114,7 +118,7 @@ void app_nunchuk_update_output(chuck_data *data) {
 	}
 
 	chuck_d = *data;
-	last_update_time = chVTGetSystemTime();
+	last_update_time = chVTGetSystemTimeX();
 	timeout_reset();
 }
 
@@ -352,15 +356,15 @@ static THD_FUNCTION(output_thread, arg) {
 
 		if (config.ctrl_type == CHUK_CTRL_TYPE_CURRENT_BIDIRECTIONAL) {
 			if ((out_val > 0.0 && duty_now > 0.0) || (out_val < 0.0 && duty_now < 0.0)) {
-				current = out_val * mcconf->lo_current_motor_max_now;
+				current = out_val * mcconf->lo_current_max;
 			} else {
-				current = out_val * fabsf(mcconf->lo_current_motor_min_now);
+				current = out_val * fabsf(mcconf->lo_current_min);
 			}
 		} else {
 			if (out_val >= 0.0 && ((is_reverse ? -1.0 : 1.0) * duty_now) > 0.0) {
-				current = out_val * mcconf->lo_current_motor_max_now;
+				current = out_val * mcconf->lo_current_max;
 			} else {
-				current = out_val * fabsf(mcconf->lo_current_motor_min_now);
+				current = out_val * fabsf(mcconf->lo_current_min);
 			}
 		}
 

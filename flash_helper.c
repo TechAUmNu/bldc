@@ -28,6 +28,10 @@
 #include "buffer.h"
 #include <string.h>
 
+#ifdef USE_LISPBM
+#include "lispif.h"
+#endif
+
 /*
  * Defines
  */
@@ -122,6 +126,10 @@ static const uint16_t flash_sector[FLASH_SECTORS] = {
 };
 
 uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
+#ifdef USE_LISPBM
+	lispif_restart(false, false, false);
+#endif
+
 	FLASH_Unlock();
 	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
 			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
@@ -170,6 +178,12 @@ uint16_t flash_helper_write_new_app_data(uint32_t offset, uint8_t *data, uint32_
 }
 
 uint16_t flash_helper_erase_code(int ind) {
+#ifdef USE_LISPBM
+	if (ind == CODE_IND_LISP) {
+		lispif_stop_lib();
+	}
+#endif
+
 	code_checks[ind].check_done = false;
 	code_checks[ind].ok = false;
 	return erase_sector(flash_sector[code_sectors[ind]]);
@@ -189,6 +203,10 @@ uint8_t* flash_helper_code_data(int ind) {
 	} else {
 		return 0;
 	}
+}
+
+uint8_t* flash_helper_code_data_raw(int ind) {
+	return (uint8_t*)flash_addr[code_sectors[ind]];
 }
 
 uint32_t flash_helper_code_size(int ind) {
@@ -447,4 +465,48 @@ static void qmlui_check(int ind) {
 	}
 
 	code_checks[ind].check_done = true;
+}
+
+#define VESC_IF_NVM_REGION_SIZE	(ADDR_FLASH_SECTOR_9 - ADDR_FLASH_SECTOR_8)
+
+/**
+  * @brief  Reads len bytes to v from nvm at address
+  * @param	v: array of bytes to which the result will be written
+  * @param	len: number of bytes to read
+  * @param	address: address of the first byte
+  * @retval Boolean indicating success or failure
+  */
+bool flash_helper_read_nvm(uint8_t *v, unsigned int len, unsigned int address) {
+	if ((address + len) > VESC_IF_NVM_REGION_SIZE) {
+		return false;
+	}
+
+	memcpy(v, (uint8_t*)(ADDR_FLASH_SECTOR_8 + address), len);
+
+	return true;
+}
+
+/**
+  * @brief  Writes len bytes from v to nvm at address
+  * @param	v: array of bytes to write
+  * @param	len: number of bytes to write
+  * @param	address: address of the first byte
+  * @retval Boolean indicating success or failure
+  */
+bool flash_helper_write_nvm(uint8_t *v, unsigned int len, unsigned int address) {
+	if ((address + len) > VESC_IF_NVM_REGION_SIZE) {
+		return false;
+	}
+
+	uint16_t res = write_data(ADDR_FLASH_SECTOR_8 + address, v, len);
+
+	return (res == FLASH_COMPLETE);
+}
+
+/**
+  * @brief  Erase region of NVM used by packages.
+  * @retval Boolean indicating success or failure
+  */
+bool flash_helper_wipe_nvm(void) {
+	return (erase_sector(flash_sector[8]) == FLASH_COMPLETE);
 }

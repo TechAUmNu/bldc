@@ -264,6 +264,12 @@
 #ifndef CURRENT_FILTER_OFF
 #define CURRENT_FILTER_OFF()
 #endif
+#ifndef CURRENT_FILTER_ON_M2
+#define CURRENT_FILTER_ON_M2()
+#endif
+#ifndef CURRENT_FILTER_OFF_M2
+#define CURRENT_FILTER_OFF_M2()
+#endif
 
 #ifndef SENSOR_PORT_5V
 #define SENSOR_PORT_5V()
@@ -288,6 +294,23 @@
 #define NTC_TEMP_MOS3()		0.0
 #endif
 
+#ifndef NTC_TEMP_MOS1_M2
+#define NTC_TEMP_MOS1_M2()	0.0
+#endif
+#ifndef NTC_TEMP_MOS2_M2
+#define NTC_TEMP_MOS2_M2()	0.0
+#endif
+#ifndef NTC_TEMP_MOS3_M2
+#define NTC_TEMP_MOS3_M2()	0.0
+#endif
+
+#ifndef TEMP_MOTOR_1
+#define TEMP_MOTOR_1(beta)	0.0
+#endif
+#ifndef TEMP_MOTOR_2
+#define TEMP_MOTOR_2(beta)	0.0
+#endif
+
 // Sin/Cos Encoder Signals. Override if available
 #ifndef ENCODER_SIN_VOLTS
 #if defined(ADC_IND_EXT) && defined(ADC_VOLTS)
@@ -308,25 +331,26 @@
 // Current ADC macros. Override them for custom current measurement functions.
 #ifndef GET_CURRENT1
 #ifdef INVERTED_SHUNT_POLARITY
-#define GET_CURRENT1()		(4095 - ADC_Value[ADC_IND_CURR1])
+#define GET_CURRENT1()		(4095.0 - (float)ADC_Value[ADC_IND_CURR1])
 #else
-#define GET_CURRENT1()		ADC_Value[ADC_IND_CURR1]
+#define GET_CURRENT1()		((float)ADC_Value[ADC_IND_CURR1])
 #endif
 #endif
 #ifndef GET_CURRENT2
 #ifdef INVERTED_SHUNT_POLARITY
-#define GET_CURRENT2()		(4095 - ADC_Value[ADC_IND_CURR2])
+#define GET_CURRENT2()		(4095.0 - (float)ADC_Value[ADC_IND_CURR2])
 #else
-#define GET_CURRENT2()		ADC_Value[ADC_IND_CURR2]
+#define GET_CURRENT2()		((float)ADC_Value[ADC_IND_CURR2])
 #endif
 #endif
 #ifndef GET_CURRENT3
 #ifdef INVERTED_SHUNT_POLARITY
-#define GET_CURRENT3()		(4095 - ADC_Value[ADC_IND_CURR3])
+#define GET_CURRENT3()		(4095.0 - (float)ADC_Value[ADC_IND_CURR3])
 #else
 #ifdef ADC_IND_CURR3
-#define GET_CURRENT3()		ADC_Value[ADC_IND_CURR3]
+#define GET_CURRENT3()		((float)ADC_Value[ADC_IND_CURR3])
 #else
+#define ADC_IND_CURR3		0
 #define GET_CURRENT3()		0
 #endif
 #endif
@@ -334,26 +358,26 @@
 
 #ifndef GET_CURRENT1_M2
 #ifdef INVERTED_SHUNT_POLARITY
-#define GET_CURRENT1_M2()	(4095 - ADC_Value[ADC_IND_CURR4])
+#define GET_CURRENT1_M2()	(4095.0 - (float)ADC_Value[ADC_IND_CURR4])
 #else
-#define GET_CURRENT1_M2()	ADC_Value[ADC_IND_CURR4]
+#define GET_CURRENT1_M2()	((float)ADC_Value[ADC_IND_CURR4])
 #endif
 #endif
 #ifndef GET_CURRENT2_M2
 #ifdef INVERTED_SHUNT_POLARITY
-#define GET_CURRENT2_M2()	(4095 - ADC_Value[ADC_IND_CURR5])
+#define GET_CURRENT2_M2()	(4095.0 - (float)ADC_Value[ADC_IND_CURR5])
 #else
-#define GET_CURRENT2_M2()	ADC_Value[ADC_IND_CURR5]
+#define GET_CURRENT2_M2()	((float)ADC_Value[ADC_IND_CURR5])
 #endif
 #endif
 #ifndef GET_CURRENT3_M2
 #ifdef INVERTED_SHUNT_POLARITY
-#define GET_CURRENT3_M2()	(4095 - ADC_Value[ADC_IND_CURR6])
+#define GET_CURRENT3_M2()	(4095.0 - (float)ADC_Value[ADC_IND_CURR6])
 #else
 #ifdef ADC_IND_CURR6
-#define GET_CURRENT3_M2()	ADC_Value[ADC_IND_CURR6]
+#define GET_CURRENT3_M2()	((float)ADC_Value[ADC_IND_CURR6])
 #else
-#define GET_CURRENT3_M2()			0
+#define GET_CURRENT3_M2()	0
 #endif
 #endif
 #endif
@@ -369,11 +393,26 @@
 #endif
 
 // ADC Channels
+#ifndef ADC_IND_EXT2
+#define ADC_IND_EXT2 			ADC_IND_EXT
+#endif
 #ifndef ADC_IND_EXT3
 #define ADC_IND_EXT3 			ADC_IND_EXT
 #endif
-#ifndef ADC_IND_EXT2
-#define ADC_IND_EXT2 			ADC_IND_EXT
+#ifndef ADC_IND_EXT4
+#define ADC_IND_EXT4 			ADC_IND_EXT
+#endif
+#ifndef ADC_IND_EXT5
+#define ADC_IND_EXT5 			ADC_IND_EXT
+#endif
+#ifndef ADC_IND_EXT6
+#define ADC_IND_EXT6 			ADC_IND_EXT
+#endif
+#ifndef ADC_IND_EXT7
+#define ADC_IND_EXT7 			ADC_IND_EXT
+#endif
+#ifndef ADC_IND_EXT8
+#define ADC_IND_EXT8 			ADC_IND_EXT
 #endif
 
 // Adc voltage scaling on phases and input
@@ -552,6 +591,10 @@
 #endif
 #endif
 
+#ifndef HW_TRIM_HSI
+#define HW_TRIM_HSI()
+#endif
+
 #ifndef HW_RESET_DRV_FAULTS
 #define HW_RESET_DRV_FAULTS()
 #endif
@@ -562,6 +605,46 @@
 #define MCCONF_FOC_F_ZV			MCCONF_FOC_F_SW
 #warning Please replace `MCCONF_FOC_F_SW` by `MCCONF_FOC_F_ZV`. `MCCONF_FOC_F_SW` is deprecated.
 #endif
+#endif
+
+#ifndef HW_SPI_PORT_NSS
+#define HW_SPI_PORT_NSS HW_HALL_ENC_GPIO3
+#endif
+
+#ifndef HW_SPI_PIN_NSS
+#define HW_SPI_PIN_NSS HW_HALL_ENC_PIN3
+#endif
+
+#ifndef HW_SPI_PORT_SCK
+#define HW_SPI_PORT_SCK HW_HALL_ENC_GPIO1
+#endif
+
+#ifndef HW_SPI_PIN_SCK
+#define HW_SPI_PIN_SCK HW_HALL_ENC_PIN1
+#endif
+
+#ifndef HW_SPI_PORT_MISO
+#define HW_SPI_PORT_MISO HW_HALL_ENC_GPIO2
+#endif
+
+#ifndef HW_SPI_PIN_MISO
+#define HW_SPI_PIN_MISO HW_HALL_ENC_PIN2
+#endif
+
+#ifndef HW_GET_INJ_CURR1
+#define HW_GET_INJ_CURR1()		ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_1)
+#endif
+#ifndef HW_GET_INJ_CURR2
+#define HW_GET_INJ_CURR2()		ADC_GetInjectedConversionValue(ADC2, ADC_InjectedChannel_1)
+#endif
+#ifndef HW_GET_INJ_CURR3
+#define HW_GET_INJ_CURR3()		ADC_GetInjectedConversionValue(ADC3, ADC_InjectedChannel_1)
+#endif
+#ifndef HW_GET_INJ_CURR1_S2
+#define HW_GET_INJ_CURR1_S2()	ADC_GetInjectedConversionValue(ADC2, ADC_InjectedChannel_2)
+#endif
+#ifndef HW_GET_INJ_CURR2_S2
+#define HW_GET_INJ_CURR2_S2()	ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_2)
 #endif
 
 // Functions
