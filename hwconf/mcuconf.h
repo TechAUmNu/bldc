@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef MCUCONF_H
-#define MCUCONF_H
+#ifndef _MCUCONF_H_
+#define _MCUCONF_H_
 
 #include "conf_general.h"
 #include "hw.h"
@@ -37,6 +37,7 @@
 /*
  * HAL driver system settings.
  */
+#define STM32F4xx_MCUCONF
 #define STM32F4xx_MCUCONF
 #define STM32F405_MCUCONF
 #define STM32F415_MCUCONF
@@ -117,28 +118,14 @@
 	#define STM32_BKPRAM_ENABLE					FALSE
 #endif
 
+
 /*
  * IRQ system settings.
  */
-#define STM32_IRQ_EXTI0_PRIORITY            6
-#define STM32_IRQ_EXTI1_PRIORITY            6
-#define STM32_IRQ_EXTI2_PRIORITY            6
-#define STM32_IRQ_EXTI3_PRIORITY            6
-#define STM32_IRQ_EXTI4_PRIORITY            6
-#define STM32_IRQ_EXTI5_9_PRIORITY          6
-#define STM32_IRQ_EXTI10_15_PRIORITY        6
-#define STM32_IRQ_EXTI16_PRIORITY           6
-#define STM32_IRQ_EXTI17_PRIORITY           15
-#define STM32_IRQ_EXTI18_PRIORITY           6
-#define STM32_IRQ_EXTI19_PRIORITY           6
-#define STM32_IRQ_EXTI20_PRIORITY           6
-#define STM32_IRQ_EXTI21_PRIORITY           15
-#define STM32_IRQ_EXTI22_PRIORITY           15
-
-#define STM32_IRQ_TIM1_BRK_TIM9_PRIORITY    7
 #define STM32_IRQ_TIM1_UP_TIM10_PRIORITY    7
 #define STM32_IRQ_TIM1_TRGCO_TIM11_PRIORITY 7
 #define STM32_IRQ_TIM1_CC_PRIORITY          7
+#define STM32_IRQ_TIM1_BRK_TIM9_PRIORITY    7
 #define STM32_IRQ_TIM2_PRIORITY             7
 #define STM32_IRQ_TIM3_PRIORITY             7
 #define STM32_IRQ_TIM4_PRIORITY             7
@@ -156,6 +143,21 @@
 #define STM32_IRQ_UART4_PRIORITY            12
 #define STM32_IRQ_UART5_PRIORITY            12
 #define STM32_IRQ_USART6_PRIORITY           12
+
+#define STM32_IRQ_EXTI0_PRIORITY            6
+#define STM32_IRQ_EXTI1_PRIORITY            6
+#define STM32_IRQ_EXTI2_PRIORITY            6
+#define STM32_IRQ_EXTI3_PRIORITY            6
+#define STM32_IRQ_EXTI4_PRIORITY            6
+#define STM32_IRQ_EXTI5_9_PRIORITY          6
+#define STM32_IRQ_EXTI10_15_PRIORITY        6
+#define STM32_IRQ_EXTI16_PRIORITY           6
+#define STM32_IRQ_EXTI17_PRIORITY           15
+#define STM32_IRQ_EXTI18_PRIORITY           6
+#define STM32_IRQ_EXTI19_PRIORITY           6
+#define STM32_IRQ_EXTI20_PRIORITY           6
+#define STM32_IRQ_EXTI21_PRIORITY           15
+#define STM32_IRQ_EXTI22_PRIORITY           15
 
 /*
  * ADC driver system settings.
@@ -197,8 +199,6 @@
 #define STM32_DAC_DAC1_CH2_DMA_STREAM       STM32_DMA_STREAM_ID(1, 6)
 
 /*
-<<<<<<<< HEAD:cfg/mcuconf.h
-========
  * EXT driver system settings.
  */
 #define STM32_EXT_EXTI0_IRQ_PRIORITY        7
@@ -217,7 +217,6 @@
 #define STM32_EXT_EXTI22_IRQ_PRIORITY       15
 
 /*
->>>>>>>> upstream/master:hwconf/mcuconf.h
  * GPT driver system settings.
  */
 #define STM32_GPT_USE_TIM1                  FALSE
@@ -229,11 +228,21 @@
 #define STM32_GPT_USE_TIM7                  FALSE
 #define STM32_GPT_USE_TIM8                  FALSE
 #define STM32_GPT_USE_TIM9                  FALSE
-#define STM32_GPT_USE_TIM10                 FALSE
 #define STM32_GPT_USE_TIM11                 FALSE
 #define STM32_GPT_USE_TIM12                 FALSE
-#define STM32_GPT_USE_TIM13                 FALSE
 #define STM32_GPT_USE_TIM14                 FALSE
+#define STM32_GPT_TIM1_IRQ_PRIORITY         7
+#define STM32_GPT_TIM2_IRQ_PRIORITY         7
+#define STM32_GPT_TIM3_IRQ_PRIORITY         7
+#define STM32_GPT_TIM4_IRQ_PRIORITY         7
+#define STM32_GPT_TIM5_IRQ_PRIORITY         7
+#define STM32_GPT_TIM6_IRQ_PRIORITY         7
+#define STM32_GPT_TIM7_IRQ_PRIORITY         7
+#define STM32_GPT_TIM8_IRQ_PRIORITY         7
+#define STM32_GPT_TIM9_IRQ_PRIORITY         7
+#define STM32_GPT_TIM11_IRQ_PRIORITY        7
+#define STM32_GPT_TIM12_IRQ_PRIORITY        7
+#define STM32_GPT_TIM14_IRQ_PRIORITY        7
 
 /*
  * I2C driver system settings.
@@ -262,32 +271,17 @@
 #define STM32_I2C_DMA_ERROR_HOOK(i2cp)      osalSysHalt("DMA failure")
 
 /*
- * I2S driver system settings.
- */
-#define STM32_I2S_USE_SPI2                  FALSE
-#define STM32_I2S_USE_SPI3                  FALSE
-#define STM32_I2S_SPI2_IRQ_PRIORITY         10
-#define STM32_I2S_SPI3_IRQ_PRIORITY         10
-#define STM32_I2S_SPI2_DMA_PRIORITY         1
-#define STM32_I2S_SPI3_DMA_PRIORITY         1
-#define STM32_I2S_SPI2_RX_DMA_STREAM        STM32_DMA_STREAM_ID(1, 3)
-#define STM32_I2S_SPI2_TX_DMA_STREAM        STM32_DMA_STREAM_ID(1, 4)
-#define STM32_I2S_SPI3_RX_DMA_STREAM        STM32_DMA_STREAM_ID(1, 0)
-#define STM32_I2S_SPI3_TX_DMA_STREAM        STM32_DMA_STREAM_ID(1, 7)
-#define STM32_I2S_DMA_ERROR_HOOK(i2sp)      osalSysHalt("DMA failure")
-
-/*
  * ICU driver system settings.
  */
 #define STM32_ICU_USE_TIM1                  FALSE
 #define STM32_ICU_USE_TIM2                  FALSE
-//#ifdef HW_USE_SERVO_TIM4
-//#define STM32_ICU_USE_TIM3                  FALSE
-//#define STM32_ICU_USE_TIM4                  TRUE
-//#else
-#define STM32_ICU_USE_TIM3                  TRUE
+#ifdef HW_USE_SERVO_TIM4
+#define STM32_ICU_USE_TIM3                  FALSE
 #define STM32_ICU_USE_TIM4                  TRUE
-//#endif
+#else
+#define STM32_ICU_USE_TIM3                  TRUE
+#define STM32_ICU_USE_TIM4                  FALSE
+#endif
 #define STM32_ICU_USE_TIM5                  FALSE
 #define STM32_ICU_USE_TIM8                  FALSE
 #define STM32_ICU_USE_TIM9                  TRUE
@@ -321,21 +315,6 @@
 #define STM32_PWM_USE_TIM5                  FALSE
 #define STM32_PWM_USE_TIM8                  FALSE
 #define STM32_PWM_USE_TIM9                  FALSE
-<<<<<<<< HEAD:cfg/mcuconf.h
-#define STM32_PWM_USE_TIM10                 FALSE
-#define STM32_PWM_USE_TIM11                 FALSE
-#define STM32_PWM_USE_TIM12                 FALSE
-#define STM32_PWM_USE_TIM13                 FALSE
-#define STM32_PWM_USE_TIM14                 FALSE
-
-/*
- * RTC driver system settings.
- */
-#define STM32_RTC_PRESA_VALUE               32
-#define STM32_RTC_PRESS_VALUE               1024
-#define STM32_RTC_CR_INIT                   0
-#define STM32_RTC_TAMPCR_INIT               0
-========
 #define STM32_PWM_TIM1_IRQ_PRIORITY         6
 #define STM32_PWM_TIM2_IRQ_PRIORITY         6
 #define STM32_PWM_TIM3_IRQ_PRIORITY         6
@@ -343,15 +322,14 @@
 #define STM32_PWM_TIM5_IRQ_PRIORITY         6
 #define STM32_PWM_TIM8_IRQ_PRIORITY         6
 #define STM32_PWM_TIM9_IRQ_PRIORITY         6
->>>>>>>> upstream/master:hwconf/mcuconf.h
 
 /*
  * SDC driver system settings.
  */
 #define STM32_SDC_SDIO_DMA_PRIORITY         3
 #define STM32_SDC_SDIO_IRQ_PRIORITY         9
-#define STM32_SDC_WRITE_TIMEOUT_MS          1000
-#define STM32_SDC_READ_TIMEOUT_MS           1000
+#define STM32_SDC_WRITE_TIMEOUT_MS          250
+#define STM32_SDC_READ_TIMEOUT_MS           25
 #define STM32_SDC_CLOCK_ACTIVATION_DELAY    10
 #define STM32_SDC_SDIO_UNALIGNED_SUPPORT    TRUE
 #define STM32_SDC_SDIO_DMA_STREAM           STM32_DMA_STREAM_ID(2, 3)
@@ -365,8 +343,6 @@
 #define STM32_SERIAL_USE_UART4              TRUE
 #define STM32_SERIAL_USE_UART5              TRUE
 #define STM32_SERIAL_USE_USART6             TRUE
-<<<<<<<< HEAD:cfg/mcuconf.h
-========
 // NOTE: These are ignored as there is a hack in the chibios UART driver to increase these
 // based on the baud rate.
 #define STM32_SERIAL_USART1_PRIORITY        7
@@ -375,7 +351,6 @@
 #define STM32_SERIAL_UART4_PRIORITY         7
 #define STM32_SERIAL_UART5_PRIORITY         7
 #define STM32_SERIAL_USART6_PRIORITY        7
->>>>>>>> upstream/master:hwconf/mcuconf.h
 
 /*
  * SPI driver system settings.
@@ -395,7 +370,7 @@
 #define STM32_SPI_SPI1_IRQ_PRIORITY         10
 #define STM32_SPI_SPI2_IRQ_PRIORITY         10
 #define STM32_SPI_SPI3_IRQ_PRIORITY         10
-#define STM32_SPI_DMA_ERROR_HOOK(spip)      { if(spip->err_cb) { spip->err_cb(spip); } else { osalSysHalt("DMA failure"); } }
+//#define STM32_SPI_DMA_ERROR_HOOK(spip)      { if(spip->err_cb) { spip->err_cb(spip); } else { osalSysHalt("DMA failure"); } }
 
 /*
  * ST driver system settings.
@@ -424,14 +399,6 @@
 #define STM32_UART_UART5_TX_DMA_STREAM      STM32_DMA_STREAM_ID(1, 7)
 #define STM32_UART_USART6_RX_DMA_STREAM     STM32_DMA_STREAM_ID(2, 2)
 #define STM32_UART_USART6_TX_DMA_STREAM     STM32_DMA_STREAM_ID(2, 7)
-<<<<<<<< HEAD:cfg/mcuconf.h
-#define STM32_UART_USART1_DMA_PRIORITY      0
-#define STM32_UART_USART2_DMA_PRIORITY      0
-#define STM32_UART_USART3_DMA_PRIORITY      0
-#define STM32_UART_UART4_DMA_PRIORITY       0
-#define STM32_UART_UART5_DMA_PRIORITY       0
-#define STM32_UART_USART6_DMA_PRIORITY      0
-========
 #define STM32_UART_USART1_IRQ_PRIORITY      12
 #define STM32_UART_USART2_IRQ_PRIORITY      12
 #define STM32_UART_USART3_IRQ_PRIORITY      12
@@ -444,7 +411,6 @@
 #define STM32_UART_UART4_DMA_PRIORITY       1
 #define STM32_UART_UART5_DMA_PRIORITY       1
 #define STM32_UART_USART6_DMA_PRIORITY      1
->>>>>>>> upstream/master:hwconf/mcuconf.h
 #define STM32_UART_DMA_ERROR_HOOK(uartp)    osalSysHalt("DMA failure")
 
 /*
@@ -465,5 +431,4 @@
  */
 #define STM32_WDG_USE_IWDG                  FALSE
 
-#endif /* MCUCONF_H */
-
+#endif /* _MCUCONF_H_ */

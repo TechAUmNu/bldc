@@ -100,7 +100,7 @@ MCU  = cortex-m4
 
 # Imported source files and paths.
 CHIBIOS  := ChibiOS_21_11_3
-CONFDIR  := ./cfg
+CONFDIR  := ./
 BUILDDIR := ./build
 DEPDIR   := ./.dep
 
