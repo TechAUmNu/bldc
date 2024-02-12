@@ -25,7 +25,7 @@
 #include "mc_interface.h"
 #include "ch.h"
 #include "hal.h"
-#include "stm32f4xx_conf.h"
+
 #include "digital_filter.h"
 #include "utils_math.h"
 #include "utils_sys.h"

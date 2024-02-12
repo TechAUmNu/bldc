@@ -25,7 +25,6 @@
 #define __EEPROM_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_conf.h"
 #include "datatypes.h"
 
 /* Exported constants --------------------------------------------------------*/

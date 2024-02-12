@@ -19,7 +19,7 @@
 
 #include "timeout.h"
 #include "mc_interface.h"
-#include "stm32f4xx_conf.h"
+
 #include "shutdown.h"
 #include "utils.h"
 

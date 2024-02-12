@@ -21,7 +21,6 @@
 #include "ch.h"
 #include "hal.h"
 #include "mc_interface.h"
-#include "stm32f4xx_conf.h"
 #include "servo_simple.h"
 #include "buffer.h"
 #include "terminal.h"

@@ -25,7 +25,6 @@
 #include "mc_interface.h"
 #include "utils_math.h"
 #include "utils_sys.h"
-#include "stm32f4xx_conf.h"
 #include "timeout.h"
 #include "commands.h"
 #include "encoder/encoder.h"

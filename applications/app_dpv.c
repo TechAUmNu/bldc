@@ -2,7 +2,6 @@
 
 #include "ch.h" // ChibiOS
 #include "hal.h" // ChibiOS HAL
-#include "stm32f4xx_conf.h"
 #include "mc_interface.h" // Motor control functions
 #include "hw.h" // Pin mapping on this hardware
 #include "timeout.h" // To reset the timeout

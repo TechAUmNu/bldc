@@ -19,7 +19,7 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "stm32f4xx_conf.h"
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>

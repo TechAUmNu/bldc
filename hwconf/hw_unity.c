@@ -17,7 +17,7 @@
 #include "hw.h"
 #include "ch.h"
 #include "hal.h"
-#include "stm32f4xx_conf.h"
+
 #include "drv8301.h"
 #include "comm_can.h"
 #include "mc_interface.h"

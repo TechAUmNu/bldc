@@ -21,7 +21,7 @@
 #include "ch.h"
 #include "hal.h"
 #include "conf_general.h"
-#include "stm32f4xx_conf.h"
+
 #include "utils_math.h"
 
 /**

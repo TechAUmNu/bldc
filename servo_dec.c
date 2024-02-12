@@ -18,7 +18,7 @@
     */
 
 #include "servo_dec.h"
-#include "stm32f4xx_conf.h"
+
 #include "ch.h"
 #include "hal.h"
 #include "hw.h"
