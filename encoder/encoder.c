@@ -21,7 +21,7 @@
 #include "encoder.h"
 #include "encoder_datatype.h"
 #include "encoder_cfg.h"
-
+#include "stm32f4xx_conf.h"
 #include "utils.h"
 #include "utils_math.h"
 #include "commands.h"

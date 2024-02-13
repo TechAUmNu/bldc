@@ -17,6 +17,10 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
+/*===========================================================================*/
+/* Driver constants.                                                         */
+/*===========================================================================*/
+
 /*
  * Setup for STMicroelectronics STM32F4-Discovery board.
  */
@@ -26,7 +30,6 @@
  */
 #define BOARD_ST_STM32F4_DISCOVERY
 #define BOARD_NAME                  "STMicroelectronics STM32F4-Discovery"
-
 
 /*
  * Board oscillators-related settings.
@@ -209,6 +212,57 @@
 #define GPIOI_PIN13                 13U
 #define GPIOI_PIN14                 14U
 #define GPIOI_PIN15                 15U
+
+/*
+ * IO lines assignments.
+ */
+#define LINE_BUTTON                 PAL_LINE(GPIOA, 0U)
+#define LINE_LRCK                   PAL_LINE(GPIOA, 4U)
+#define LINE_SPC                    PAL_LINE(GPIOA, 5U)
+#define LINE_SDO                    PAL_LINE(GPIOA, 6U)
+#define LINE_SDI                    PAL_LINE(GPIOA, 7U)
+#define LINE_VBUS_FS                PAL_LINE(GPIOA, 9U)
+#define LINE_OTG_FS_ID              PAL_LINE(GPIOA, 10U)
+#define LINE_OTG_FS_DM              PAL_LINE(GPIOA, 11U)
+#define LINE_OTG_FS_DP              PAL_LINE(GPIOA, 12U)
+#define LINE_SWDIO                  PAL_LINE(GPIOA, 13U)
+#define LINE_SWCLK                  PAL_LINE(GPIOA, 14U)
+#define LINE_SWO                    PAL_LINE(GPIOB, 3U)
+#define LINE_SCL                    PAL_LINE(GPIOB, 6U)
+#define LINE_SDA                    PAL_LINE(GPIOB, 9U)
+#define LINE_CLK_IN                 PAL_LINE(GPIOB, 10U)
+#define LINE_OTG_FS_POWER_ON        PAL_LINE(GPIOC, 0U)
+#define LINE_PDM_OUT                PAL_LINE(GPIOC, 3U)
+#define LINE_MCLK                   PAL_LINE(GPIOC, 7U)
+#define LINE_SCLK                   PAL_LINE(GPIOC, 10U)
+#define LINE_SDIN                   PAL_LINE(GPIOC, 12U)
+#define LINE_RESET                  PAL_LINE(GPIOD, 4U)
+#define LINE_OVER_CURRENT           PAL_LINE(GPIOD, 5U)
+#define LINE_LED4                   PAL_LINE(GPIOD, 12U)
+#define LINE_LED3                   PAL_LINE(GPIOD, 13U)
+#define LINE_LED5                   PAL_LINE(GPIOD, 14U)
+#define LINE_LED6                   PAL_LINE(GPIOD, 15U)
+#define LINE_INT1                   PAL_LINE(GPIOE, 0U)
+#define LINE_INT2                   PAL_LINE(GPIOE, 1U)
+#define LINE_CS_SPI                 PAL_LINE(GPIOE, 3U)
+#define LINE_OSC_IN                 PAL_LINE(GPIOH, 0U)
+#define LINE_OSC_OUT                PAL_LINE(GPIOH, 1U)
+
+/*===========================================================================*/
+/* Driver pre-compile time settings.                                         */
+/*===========================================================================*/
+
+/*===========================================================================*/
+/* Derived constants and error checks.                                       */
+/*===========================================================================*/
+
+/*===========================================================================*/
+/* Driver data structures and types.                                         */
+/*===========================================================================*/
+
+/*===========================================================================*/
+/* Driver macros.                                                            */
+/*===========================================================================*/
 
 /*
  * I/O ports initial setup, this configuration is established soon after reset

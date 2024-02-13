@@ -80,9 +80,9 @@ ifeq ($(USE_FPU_OPT),)
 endif
 
 # Enable this if you really want to use the STM FWLib.
-#ifeq ($(USE_FWLIB),)
-#  USE_FWLIB = yes
-#endif
+ifeq ($(USE_FWLIB),)
+  USE_FWLIB = yes
+endif
 
 #
 # Architecture or project specific options

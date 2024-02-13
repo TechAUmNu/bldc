@@ -20,6 +20,8 @@
 #ifndef HW_60_CORE_H_
 #define HW_60_CORE_H_
 
+#include "stm32f4xx_conf.h"
+
 #ifdef HW60_IS_MK3
 #define HW_NAME					"60_MK3"
 #elif defined(HW60_IS_MK4)

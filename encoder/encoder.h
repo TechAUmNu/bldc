@@ -23,7 +23,7 @@
 
 #include "hal.h"
 #include "encoder_datatype.h"
-
+#include "stm32f4xx_conf.h"
 #include "enc_abi.h"
 #include "enc_ad2s1205.h"
 #include "enc_as5x47u.h"

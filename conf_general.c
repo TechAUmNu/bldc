@@ -36,7 +36,7 @@
 #include "crc.h"
 #include "terminal.h"
 #include "firmware_metadata.h"
-
+#include "stm32f4xx_conf.h"
 #include <string.h>
 #include <math.h>
 

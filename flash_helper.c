@@ -27,7 +27,7 @@
 #include "crc.h"
 #include "buffer.h"
 #include <string.h>
-
+#include "stm32f4xx_conf.h"
 #ifdef USE_LISPBM
 #include "lispif.h"
 #endif

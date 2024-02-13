@@ -89,9 +89,9 @@ typedef struct {
 #define PAL_STM32_OSPEED_HIGHEST        (3U << 3U)
 
 #define PAL_STM32_PUDR_MASK             (3U << 5U)
-#define PAL_STM32_PUDR_FLOATING         (0U << 5U)
-#define PAL_STM32_PUDR_PULLUP           (1U << 5U)
-#define PAL_STM32_PUDR_PULLDOWN         (2U << 5U)
+#define PAL_STM32_PUPDR_FLOATING         (0U << 5U)
+#define PAL_STM32_PUPDR_PULLUP           (1U << 5U)
+#define PAL_STM32_PUPDR_PULLDOWN         (2U << 5U)
 
 #define PAL_STM32_ALTERNATE_MASK        (15U << 7U)
 #define PAL_STM32_ALTERNATE(n)          ((n) << 7U)

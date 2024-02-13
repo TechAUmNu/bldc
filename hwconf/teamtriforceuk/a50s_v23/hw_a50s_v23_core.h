@@ -24,7 +24,7 @@
 #define HW_HAS_PHASE_FILTERS
 #define HW_USE_25MHZ_EXT_CLOCK
 
-
+#include "stm32f4xx_conf.h"
 // Macros
 /*
  * ADC Vector

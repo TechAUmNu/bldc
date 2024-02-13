@@ -23,7 +23,7 @@
 #include "hw.h"
 #include "packet.h"
 #include "commands.h"
-
+#include "stm32f4xx_conf.h"
 // Settings
 
 // By default 7/8 pin uart is index 0, builtin BLE is index 1, and third uart is index 2

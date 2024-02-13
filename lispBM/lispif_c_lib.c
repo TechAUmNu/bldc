@@ -43,6 +43,7 @@
 #include "servo_simple.h"
 #include "flash_helper.h"
 #include "mcpwm_foc.h"
+//#include "stm32f4xx_conf.h"
 
 // Function prototypes otherwise missing
 void packet_init(void (*s_func)(unsigned char *data, unsigned int len),
@@ -286,11 +287,11 @@ static bool lib_io_set_mode(VESC_PIN pin_vesc, VESC_PIN_MODE mode) {
 			res = true;
 			break;
 		case VESC_PIN_MODE_OUTPUT_OPEN_DRAIN_PULL_UP:
-			palSetPadMode(gpio, pin, PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUDR_PULLUP);
+			palSetPadMode(gpio, pin, PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUPDR_PULLUP);
 			res = true;
 			break;
 		case VESC_PIN_MODE_OUTPUT_OPEN_DRAIN_PULL_DOWN:
-			palSetPadMode(gpio, pin, PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUDR_PULLDOWN);
+			palSetPadMode(gpio, pin, PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUPDR_PULLDOWN);
 			res = true;
 			break;
 		case VESC_PIN_MODE_ANALOG:
@@ -385,7 +386,7 @@ static bool lib_uart_start(uint32_t baudrate, bool half_duplex) {
 
 static void wait_uart_tx_task(void *arg) {
 	(void)arg;
-	while(!chOQIsEmptyI(&HW_UART_DEV.oqueue)){
+	while(!oqIsEmptyI(&HW_UART_DEV.oqueue)){
 		chThdSleepMilliseconds(1);
 	}
 	chThdSleepMilliseconds(1);

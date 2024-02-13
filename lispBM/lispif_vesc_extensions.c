@@ -25,7 +25,7 @@
 #include "extensions/string_extensions.h"
 #include "lbm_constants.h"
 #include "lbm_vesc_utils.h"
-
+#include "stm32f4xx_conf.h"
 #include "commands.h"
 #include "mc_interface.h"
 #include "timeout.h"
@@ -2905,9 +2905,9 @@ static lbm_value ext_gpio_configure(lbm_value *args, lbm_uint argn) {
 	} else if (compare_symbol(name, &syms_vesc.pin_mode_od)) {
 		mode = PAL_MODE_OUTPUT_OPENDRAIN;
 	} else if (compare_symbol(name, &syms_vesc.pin_mode_od_pu)) {
-		mode = PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUDR_PULLUP;
+		mode = PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUPDR_PULLUP;
 	} else if (compare_symbol(name, &syms_vesc.pin_mode_od_pd)) {
-		mode = PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUDR_PULLDOWN;
+		mode = PAL_MODE_OUTPUT_OPENDRAIN | PAL_STM32_PUPDR_PULLDOWN;
 	} else if (compare_symbol(name, &syms_vesc.pin_mode_in)) {
 		mode = PAL_MODE_INPUT;
 	} else if (compare_symbol(name, &syms_vesc.pin_mode_in_pu)) {
