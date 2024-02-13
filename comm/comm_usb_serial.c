@@ -273,6 +273,7 @@ static void usb_event(USBDriver *usbp, usbevent_t event) {
     sduConfigureHookI(&SDU1);
 
     chSysUnlockFromISR();
+	configured_cnt++;
     return;
   case USB_EVENT_RESET:
     /* Falls into.*/
