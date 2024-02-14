@@ -301,7 +301,7 @@ uint32_t flash_helper_verify_flash_memory(void) {
 	// Look for a flag indicating that the CRC was previously computed.
 	// If it is blank (0xFFFFFFFF), calculate and store the CRC.
 	if(APP_CRC_WAS_CALCULATED_FLAG_ADDRESS[0] == APP_CRC_WAS_CALCULATED_FLAG) {
-		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
+		rccEnableCRC(FALSE);
 		crc32_reset();
 
 		// compute vector table (sector 0)
@@ -312,7 +312,7 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		// compute application code
 		crc = crc32(APP_START_ADDRESS, (APP_SIZE) / 4);
 
-		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, DISABLE);
+		rccDisableCRC();
 
 		// A CRC over the full image should return zero.
 		return (crc == 0) ? FAULT_CODE_NONE : FAULT_CODE_FLASH_CORRUPTION;
@@ -329,7 +329,7 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		}
 
 		// Compute flash crc including the new flag
-		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
+		rccEnableCRC(FALSE);
 		crc32_reset();
 
 		// compute vector table (sector 0)
@@ -340,7 +340,7 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		// compute application code
 		crc = crc32(APP_START_ADDRESS, (APP_SIZE - 4) / 4);
 
-		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, DISABLE);
+		rccDisableCRC();
 
 		//Store CRC
 		res = FLASH_ProgramWord((uint32_t)APP_CRC_ADDRESS, crc);

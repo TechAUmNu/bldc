@@ -9,7 +9,7 @@
 #include "stm32f4xx_adc.h"
 #include "stm32f4xx_exti.h"
 #include "stm32f4xx_flash.h"
-#include "stm32f4xx_rcc.h"
+//#include "stm32f4xx_rcc.h"
 #include "stm32f4xx_syscfg.h"
 #include "stm32f4xx_tim.h"
 #include "stm32f4xx_wwdg.h"

@@ -37,11 +37,8 @@ static const I2CConfig i2cfg = {
 
 void hw_init_gpio(void) {
 	// GPIO clock enable
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOH, ENABLE);
+	rccResetAHB1(STM32_GPIO_EN_MASK);
+	rccEnableAHB1(STM32_GPIO_EN_MASK, FALSE);
 
 	// LEDs
 	palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL | PAL_STM32_OSPEED_HIGHEST);

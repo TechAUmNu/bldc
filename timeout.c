@@ -174,10 +174,10 @@ void timeout_configure_IWDT(void) {
 
 bool timeout_had_IWDG_reset(void) {
 	// Check if the system has resumed from IWDG reset
-	if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST) != RESET) {
+	if ((RCC->CSR & RCC_CSR_IWDGRSTF) != RESET) {
 		/* IWDGRST flag set */
-		/* Clear reset flags */
-		RCC_ClearFlag();
+		/* Clear IWDGRST flag */
+		RCC->CSR &= ~(RCC_CSR_IWDGRSTF);
 		return true;
 	}
 

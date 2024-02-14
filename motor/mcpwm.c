@@ -231,7 +231,7 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	TIM1->CNT = 0;
 	TIM8->CNT = 0;
 
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
+	rccEnableTIM1(FALSE);
 
 	TIM_TimeBaseStructure.TIM_Prescaler = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -288,8 +288,10 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	DMA_InitTypeDef DMA_InitStructure;
 	ADC_InitTypeDef ADC_InitStructure;
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC, ENABLE);
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_ADC2 | RCC_APB2Periph_ADC3, ENABLE);
+	rccEnableDMA2(FALSE);
+	rccEnableADC1(FALSE);
+	rccEnableADC2(FALSE);
+	rccEnableADC3(FALSE);
 
 	dmaStreamAlloc(STM32_DMA_STREAM_ID(2, 4),
 			5,
@@ -374,7 +376,7 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	ADC_Cmd(ADC3, ENABLE);
 
 	// Timer8 for ADC sampling
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
+	rccEnableTIM8(FALSE);
 
 	TIM_TimeBaseStructure.TIM_Prescaler = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;

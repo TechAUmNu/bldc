@@ -42,7 +42,7 @@ bool enc_abi_init(ABI_config_t *cfg) {
 	HW_ENC_TIM_CLK_EN();
 
 	// Enable SYSCFG clock
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+	rccEnableAHB2(RCC_APB2ENR_SYSCFGEN, FALSE);
 
 	TIM_EncoderInterfaceConfig(cfg->timer,
 			TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);

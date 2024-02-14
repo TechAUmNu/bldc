@@ -18,3 +18,4 @@ workspace.code-workspace
 
 .vscode
 *.launch
+*.prefs
