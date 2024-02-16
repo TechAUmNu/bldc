@@ -333,22 +333,20 @@ void hw_axiom_configure_brownout(uint8_t BOR_level) {
 }
 
 void hw_axiom_configure_VDD_undervoltage(void) {
-
 	// partially configured in mcuconf.h -> STM32_PVD_ENABLE and STM32_PLS
-
-	// Connect EXTI Line to pin
-	EXTI_InitTypeDef   EXTI_InitStructure;
-
-	// Configure EXTI Line
-	EXTI_InitStructure.EXTI_Line = EXTI_Line16;		//Connected to Programmable Voltage Detector
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStructure);
-
-	// Enable and set EXTI Line Interrupt to the highest priority
-	nvicEnableVector(PVD_IRQn, 0);
+	/* EXTI enable.*/
+	extiEnableLine(16, EXTI_MODE_RISING_EDGE | EXTI_MODE_ACTION_INTERRUPT);
 }
+
+// Handler for PVD
+void hw_axiom_pvd_interrupt_handler(uint32_t pr, uint32_t line) {
+	if((pr & EXTI_MASK1(line)) != RESET) {
+		// Log the fault. Supply voltage dropped below 2.9V,
+		// could corrupt an ongoing flash programming
+		mc_interface_fault_stop(FAULT_CODE_MCU_UNDER_VOLTAGE, false, true);
+	}
+}
+#define STM32_EXTI16_ISR(pr, line) hw_axiom_pvd_interrupt_handler(pr, line)
 
 void hw_start_i2c(void) {
 	i2cAcquireBus(&HW_I2C_DEV);

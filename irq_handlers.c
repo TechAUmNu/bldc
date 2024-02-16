@@ -42,15 +42,3 @@ CH_IRQ_HANDLER(TIM2_IRQHandler) {
 	}
 	TIM_ClearITPendingBit(TIM2, TIM_IT_CC2);
 }
-
-CH_IRQ_HANDLER(PVD_IRQHandler) {
-	if (EXTI_GetITStatus(EXTI_Line16) != RESET) {
-		// Log the fault. Supply voltage dropped below 2.9V,
-		// could corrupt an ongoing flash programming
-		mc_interface_fault_stop(FAULT_CODE_MCU_UNDER_VOLTAGE, false, true);
-
-		// Clear the PVD pending bit
-		EXTI_ClearITPendingBit(EXTI_Line16);
-		EXTI_ClearFlag(EXTI_Line16);
-	}
-}
