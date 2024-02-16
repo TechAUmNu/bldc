@@ -30,50 +30,7 @@
 #include <string.h>
 #include <math.h>
 
-bool enc_abi_init(ABI_config_t *cfg) {
-	memset(&cfg->state, 0, sizeof(ABI_state));
-
-	palSetPadMode(cfg->A_gpio, cfg->A_pin, PAL_MODE_ALTERNATE(cfg->tim_af));
-	palSetPadMode(cfg->B_gpio, cfg->B_pin, PAL_MODE_ALTERNATE(cfg->tim_af));
-	palSetPadMode(cfg->I_gpio, cfg->I_pin, PAL_MODE_INPUT_PULLUP);
-
-	// Enable timer clock
-	HW_ENC_TIM_CLK_EN();
-
-	// Enable SYSCFG clock
-	rccEnableAHB2(RCC_APB2ENR_SYSCFGEN, FALSE);
-
-	TIM_EncoderInterfaceConfig(cfg->timer,
-			TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
-	TIM_SetAutoreload(cfg->timer, cfg->counts - 1);
-
-	// Filter
-	cfg->timer->CCMR1 |= 6 << 12 | 6 << 4;
-	cfg->timer->CCMR2 |= 6 << 4;
-
-	TIM_Cmd(cfg->timer, ENABLE);
-
-	// Interrupt on index pulse
-	// Configure Event
-	palSetPadCallback(cfg->exti_portsrc, cfg->exti_pinsrc, (void*)enc_abi_pin_isr, &encoder_cfg_ABI);
-	palEnablePadEvent(cfg->exti_portsrc, cfg->exti_pinsrc, PAL_EVENT_MODE_RISING_EDGE);
-
-	return true;
-}
-
-void enc_abi_deinit(ABI_config_t *cfg) {
-	palDisablePadEvent(cfg->exti_portsrc, cfg->exti_pinsrc);
-	TIM_DeInit(cfg->timer);
-	palSetPadMode(cfg->A_gpio, cfg->A_pin, PAL_MODE_INPUT_PULLUP);
-	palSetPadMode(cfg->B_gpio, cfg->B_pin, PAL_MODE_INPUT_PULLUP);
-	palSetPadMode(cfg->I_gpio, cfg->I_pin, PAL_MODE_INPUT_PULLUP);
-}
-
-float enc_abi_read_deg(ABI_config_t *cfg) {
-	return ((float)cfg->timer->CNT * 360.0) / (float)cfg->counts;
-}
-
-void enc_abi_pin_isr(ABI_config_t *cfg) {
+static void enc_abi_pin_isr(ABI_config_t *cfg) {
 	// Only reset if the pin is still high to avoid too short pulses, which
 	// most likely are noise.
 	__NOP();
@@ -103,3 +60,48 @@ void enc_abi_pin_isr(ABI_config_t *cfg) {
 		}
 	}
 }
+
+bool enc_abi_init(ABI_config_t *cfg) {
+	memset(&cfg->state, 0, sizeof(ABI_state));
+
+	palSetPadMode(cfg->A_gpio, cfg->A_pin, PAL_MODE_ALTERNATE(cfg->tim_af));
+	palSetPadMode(cfg->B_gpio, cfg->B_pin, PAL_MODE_ALTERNATE(cfg->tim_af));
+	palSetPadMode(cfg->I_gpio, cfg->I_pin, PAL_MODE_INPUT_PULLUP);
+
+	// Enable timer clock
+	HW_ENC_TIM_CLK_EN();
+
+	// Enable SYSCFG clock
+	rccEnableAHB2(RCC_APB2ENR_SYSCFGEN, FALSE);
+
+	TIM_EncoderInterfaceConfig(cfg->timer,
+			TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
+	TIM_SetAutoreload(cfg->timer, cfg->counts - 1);
+
+	// Filter
+	cfg->timer->CCMR1 |= 6 << 12 | 6 << 4;
+	cfg->timer->CCMR2 |= 6 << 4;
+
+	TIM_Cmd(cfg->timer, ENABLE);
+
+	// Interrupt on index pulse
+	// Configure Event
+	palSetPadCallback(cfg->exti_portsrc, cfg->exti_pinsrc, (palcallback_t)enc_abi_pin_isr, &encoder_cfg_ABI);
+	palEnablePadEvent(cfg->exti_portsrc, cfg->exti_pinsrc, PAL_EVENT_MODE_RISING_EDGE);
+
+	return true;
+}
+
+void enc_abi_deinit(ABI_config_t *cfg) {
+	palDisablePadEvent(cfg->exti_portsrc, cfg->exti_pinsrc);
+	TIM_DeInit(cfg->timer);
+	palSetPadMode(cfg->A_gpio, cfg->A_pin, PAL_MODE_INPUT_PULLUP);
+	palSetPadMode(cfg->B_gpio, cfg->B_pin, PAL_MODE_INPUT_PULLUP);
+	palSetPadMode(cfg->I_gpio, cfg->I_pin, PAL_MODE_INPUT_PULLUP);
+}
+
+float enc_abi_read_deg(ABI_config_t *cfg) {
+	return ((float)cfg->timer->CNT * 360.0) / (float)cfg->counts;
+}
+
+
