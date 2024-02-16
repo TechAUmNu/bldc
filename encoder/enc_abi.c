@@ -19,6 +19,7 @@
  */
 
 #include "encoder/enc_abi.h"
+#include "encoder/encoder_cfg.h"
 #include "stm32f4xx_conf.h"
 #include "ch.h"
 #include "hal.h"
@@ -30,8 +31,6 @@
 #include <math.h>
 
 bool enc_abi_init(ABI_config_t *cfg) {
-	EXTI_InitTypeDef EXTI_InitStructure;
-
 	memset(&cfg->state, 0, sizeof(ABI_state));
 
 	palSetPadMode(cfg->A_gpio, cfg->A_pin, PAL_MODE_ALTERNATE(cfg->tim_af));
@@ -55,25 +54,15 @@ bool enc_abi_init(ABI_config_t *cfg) {
 	TIM_Cmd(cfg->timer, ENABLE);
 
 	// Interrupt on index pulse
-
-	// Connect EXTI Line to pin
-	SYSCFG_EXTILineConfig(cfg->exti_portsrc, cfg->exti_pinsrc);
-
-	// Configure EXTI Line
-	EXTI_InitStructure.EXTI_Line = cfg->exti_line;
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStructure);
-
-	// Enable and set EXTI Line Interrupt to the highest priority
-	nvicEnableVector(cfg->exti_ch, 0);
+	// Configure Event
+	palSetPadCallback(cfg->exti_portsrc, cfg->exti_pinsrc, (void*)enc_abi_pin_isr, &encoder_cfg_ABI);
+	palEnablePadEvent(cfg->exti_portsrc, cfg->exti_pinsrc, PAL_EVENT_MODE_RISING_EDGE);
 
 	return true;
 }
 
 void enc_abi_deinit(ABI_config_t *cfg) {
-	nvicDisableVector(cfg->exti_ch);
+	palDisablePadEvent(cfg->exti_portsrc, cfg->exti_pinsrc);
 	TIM_DeInit(cfg->timer);
 	palSetPadMode(cfg->A_gpio, cfg->A_pin, PAL_MODE_INPUT_PULLUP);
 	palSetPadMode(cfg->B_gpio, cfg->B_pin, PAL_MODE_INPUT_PULLUP);

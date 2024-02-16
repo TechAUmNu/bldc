@@ -66,8 +66,9 @@ bool encoder_init(volatile mc_configuration *conf) {
 		encoder_deinit();
 	}
 
-	nvicDisableVector(HW_ENC_EXTI_CH);
-	nvicDisableVector(HW_ENC_TIM_ISR_CH);
+	// Handled by PAL
+	//nvicDisableVector(HW_ENC_EXTI_CH);
+	//nvicDisableVector(HW_ENC_TIM_ISR_CH);
 	TIM_DeInit(HW_ENC_TIM);
 
 	switch (conf->m_sensor_port_mode) {
@@ -305,8 +306,9 @@ void encoder_update_config(volatile mc_configuration *conf) {
 }
 
 void encoder_deinit(void) {
-	nvicDisableVector(HW_ENC_EXTI_CH);
-	nvicDisableVector(HW_ENC_TIM_ISR_CH);
+	// Handled by PAL
+	//nvicDisableVector(HW_ENC_EXTI_CH);
+	//nvicDisableVector(HW_ENC_TIM_ISR_CH);
 	TIM_DeInit(HW_ENC_TIM);
 
 	if (m_encoder_type_now == ENCODER_TYPE_AS504x) {
@@ -601,14 +603,6 @@ void encoder_check_faults(volatile mc_configuration *m_conf, bool is_second_moto
 			break;
 		}
 	}
-}
-
-void encoder_pin_isr(void) {
-	enc_abi_pin_isr(&encoder_cfg_ABI);
-}
-
-void encoder_tim_isr(void) {
-	// Use thread. Maybe use this one for encoders with a higher rate.
 }
 
 static void terminal_encoder(int argc, const char **argv) {

@@ -33,25 +33,6 @@ CH_IRQ_HANDLER(ADC1_2_3_IRQHandler) {
 	CH_IRQ_EPILOGUE();
 }
 
-CH_IRQ_HANDLER(HW_ENC_EXTI_ISR_VEC) {
-	if (EXTI_GetITStatus(HW_ENC_EXTI_LINE) != RESET) {
-		encoder_pin_isr();
-
-		// Clear the EXTI line pending bit
-		EXTI_ClearITPendingBit(HW_ENC_EXTI_LINE);
-	}
-}
-
-/// Fix Warning needsto use ch hal
-//CH_IRQ_HANDLER(HW_ENC_TIM_ISR_VEC) {
-//	if (TIM_GetITStatus(HW_ENC_TIM, TIM_IT_Update) != RESET) {
-//		encoder_tim_isr();
-//
-//		// Clear the IT pending bit
-//		TIM_ClearITPendingBit(HW_ENC_TIM, TIM_IT_Update);
-//	}
-//}
-
 CH_IRQ_HANDLER(TIM2_IRQHandler) {
 	if (TIM_GetITStatus(TIM2, TIM_IT_CC2) != RESET) {
 		mcpwm_foc_tim_sample_int_handler();

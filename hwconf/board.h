@@ -47,7 +47,7 @@
 /*
  * MCU type as defined in the ST header.
  */
-#define STM32F40_41xxx
+
 #define STM32F407xx
 
 #if !defined(_FROM_ASM_)

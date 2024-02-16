@@ -150,13 +150,8 @@
 #define HW_ENC_TIM					TIM3
 #define HW_ENC_TIM_AF				GPIO_AF_TIM3
 #define HW_ENC_TIM_CLK_EN()			rccEnableTIM3(FALSE)
-#define HW_ENC_EXTI_PORTSRC			EXTI_PortSourceGPIOC
-#define HW_ENC_EXTI_PINSRC			EXTI_PinSource8
-#define HW_ENC_EXTI_CH				EXTI9_5_IRQn
-#define HW_ENC_EXTI_LINE			EXTI_Line8
-#define HW_ENC_EXTI_ISR_VEC			EXTI9_5_IRQHandler
-#define HW_ENC_TIM_ISR_CH			TIM3_IRQn
-#define HW_ENC_TIM_ISR_VEC			TIM3_IRQHandler
+#define HW_ENC_EXTI_PORTSRC			GPIOC
+#define HW_ENC_EXTI_PINSRC			8
 
 // ICU Peripheral for servo decoding
 #define HW_USE_SERVO_TIM4

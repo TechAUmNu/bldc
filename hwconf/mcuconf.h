@@ -126,7 +126,7 @@
 #define STM32_IRQ_EXTI2_PRIORITY            6
 #define STM32_IRQ_EXTI3_PRIORITY            6
 #define STM32_IRQ_EXTI4_PRIORITY            6
-#define STM32_IRQ_EXTI5_9_PRIORITY          6
+#define STM32_IRQ_EXTI5_9_PRIORITY          0 // Used for ABI encoder
 #define STM32_IRQ_EXTI10_15_PRIORITY        6
 #define STM32_IRQ_EXTI16_PRIORITY           6
 #define STM32_IRQ_EXTI17_PRIORITY           15

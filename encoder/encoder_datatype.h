@@ -136,9 +136,8 @@ typedef struct {
 	TIM_TypeDef *timer;
 	uint8_t tim_af;
 
-	uint8_t exti_portsrc;
-	uint8_t exti_pinsrc;
-	uint32_t exti_line;
+	ioportid_t exti_portsrc;
+	iopadid_t exti_pinsrc;
 	uint32_t exti_ch;
 
 	ABI_state state;
