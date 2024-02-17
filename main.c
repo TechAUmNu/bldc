@@ -218,7 +218,7 @@ bool main_init_done(void) {
 int main(void) {
 	halInit();
 	chSysInit();
-
+	eflStart(&EFLD1, NULL);
 	// Initialize the enable pins here and disable them
 	// to avoid excessive current draw at boot because of
 	// floating pins.

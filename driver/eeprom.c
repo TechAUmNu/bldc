@@ -26,6 +26,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "eeprom.h"
 #include "flash_helper.h"
+#include "hal.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -44,7 +45,7 @@ static FLASH_Status EE_Format(void);
 static uint16_t EE_FindValidPage(uint8_t Operation);
 static uint16_t EE_VerifyPageFullWriteVariable(uint16_t VirtAddress, uint16_t Data);
 static uint16_t EE_PageTransfer(uint16_t VirtAddress, uint16_t Data);
-static uint16_t EE_EraseSectorIfNotEmpty(uint32_t FLASH_Sector, uint8_t VoltageRange);
+static uint16_t EE_EraseSectorIfNotEmpty(uint32_t FLASH_Sector);
 
 /**
  * @brief  Restore the pages to a known good state in case of page's status
@@ -622,16 +623,24 @@ static uint16_t EE_PageTransfer(uint16_t VirtAddress, uint16_t Data)
  * Erase flash page if it is not already erased. This is to save write cycles and
  * prevent the memory from getting erased in case of unstable voltage at boot.
  */
-static uint16_t EE_EraseSectorIfNotEmpty(uint32_t FLASH_Sector, uint8_t VoltageRange) {
+static uint16_t EE_EraseSectorIfNotEmpty(uint32_t FLASH_Sector) {
 	uint8_t *addr = flash_helper_get_sector_address(FLASH_Sector);
 
 	for (unsigned int i = 0;i < PAGE_SIZE;i++) {
 		if (addr[i] != 0xFF) {
-			return FLASH_EraseSector(FLASH_Sector, VoltageRange);
+
+			flash_error_t ferr = FLASH_NO_ERROR;
+
+			ferr = flashStartEraseSector(&EFLD1, FLASH_Sector);
+			if (ferr != FLASH_NO_ERROR)
+			  return ferr;
+			ferr = flashWaitErase((BaseFlash*)&EFLD1);
+
+			return ferr;
 		}
 	}
 
-	return FLASH_COMPLETE;
+	return FLASH_NO_ERROR;
 }
 
 /**
