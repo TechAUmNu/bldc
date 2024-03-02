@@ -42,8 +42,8 @@
 void hw_a50s_read_current_sensor_cal(void);
 void hw_a50s_read_eeprom_data(void);
 static void terminal_cmd_read_current_cal(int argc, const char **argv);
-float current_cal_1 = 0.0;
-float current_cal_2 = 0.0;
+float current_cal_1 = 0.91;
+float current_cal_2 = 0.9;
 static i2c_bb_state m_i2c_bb;
 // Variables
 static volatile bool i2c_running = false;
@@ -300,7 +300,7 @@ void hw_a50s_read_current_sensor_cal() {
 	uint8_t txb[5];
 	uint8_t rxb[5];			
 	
-	float cal1_temp = 0.0;
+	float cal1_temp = 0.91;
 	txb[0] = EEPROM_ADDR_CURRENT_CAL_1;	
 	i2c_bb_tx_rx(&m_i2c_bb, EEPROM_ADDR, txb, 1, rxb, 4);	
 	int32_t index = 0;	
@@ -315,7 +315,7 @@ void hw_a50s_read_current_sensor_cal() {
 	}
 	current_cal_1 = cal1_temp;
 	
-	float cal2_temp = 0.0;
+	float cal2_temp = 0.9;
 	txb[0] = EEPROM_ADDR_CURRENT_CAL_2;	
 	i2c_bb_tx_rx(&m_i2c_bb, EEPROM_ADDR, txb, 1, rxb, 4);	
 	index = 0;	
