@@ -806,8 +806,7 @@ static bool const_heap_write(lbm_uint ix, lbm_uint w) {
 	}
 
 	eflStart(&EFLD1, NULL);
-
-	FLASH_ProgramWord((uint32_t)(const_heap_ptr + ix), w);
+	efl_lld_program(&EFLD1, (uint32_t)(const_heap_ptr + ix) - (uint32_t)0x08000000, 4, (uint8_t *)&w);
 	eflStop(&EFLD1);
 
 	if (const_heap_ptr[ix] != w) {

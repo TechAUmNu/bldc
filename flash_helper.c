@@ -199,7 +199,7 @@ uint16_t flash_helper_erase_code(int ind) {
 	}
 
 	if (!has_data) {
-		return FLASH_COMPLETE;
+		return FLASH_NO_ERROR;
 	}
 
 	code_checks[ind].check_done = false;
