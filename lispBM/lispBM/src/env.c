@@ -33,10 +33,23 @@ int lbm_init_env(void) {
   return 1;
 }
 
+lbm_uint lbm_get_global_env_size(void) {
+  lbm_uint n = 0;
+  for (int i = 0; i < GLOBAL_ENV_ROOTS; i ++) {
+    lbm_value curr = env_global[i];
+    while (lbm_is_cons(curr)) {
+      n++;
+      curr = lbm_cdr(curr);
+    }
+  }
+  return n;
+}
+
 lbm_value *lbm_get_global_env(void) {
   return env_global;
 }
 
+// Copy the list structure of an environment.
 lbm_value lbm_env_copy_spine(lbm_value env) {
 
   lbm_value r = ENC_SYM_MERROR;
@@ -58,13 +71,13 @@ lbm_value lbm_env_copy_spine(lbm_value env) {
 
 // A less safe version of lookup. It should be fine unless env is corrupted.
 bool lbm_env_lookup_b(lbm_value *res, lbm_value sym, lbm_value env) {
-
   lbm_value curr = env;
 
   while (lbm_is_ptr(curr)) {
-    lbm_value c = lbm_ref_cell(curr)->car;
-    if ((lbm_ref_cell(c)->car) == sym) {
-      *res = lbm_ref_cell(c)->cdr;
+    lbm_cons_t *pair = lbm_ref_cell(lbm_ref_cell(curr)->car);
+    if ((pair->car == sym)
+        && (pair->cdr != ENC_SYM_PLACEHOLDER)) {
+      *res = pair->cdr;
       return true;
     }
     curr = lbm_ref_cell(curr)->cdr;
@@ -88,18 +101,6 @@ bool lbm_global_env_lookup(lbm_value *res, lbm_value sym) {
   return false;
 }
 
-lbm_value lbm_env_lookup(lbm_value sym, lbm_value env) {
-  lbm_value curr = env;
-
-  while (lbm_type_of(curr) == LBM_TYPE_CONS) {
-    if (lbm_car(lbm_car(curr)) == sym) {
-      return lbm_cdr(lbm_car(curr));
-    }
-    curr = lbm_cdr(curr);
-  }
-  return ENC_SYM_NOT_FOUND;
-}
-
 // TODO: env set should ideally copy environment if it has to update
 // in place. This has never come up as an issue, the rest of the code
 // must be very well behaved.
@@ -110,8 +111,9 @@ lbm_value lbm_env_set(lbm_value env, lbm_value key, lbm_value val) {
   lbm_value keyval;
 
   while(lbm_type_of(curr) == LBM_TYPE_CONS) {
-    if (lbm_car(lbm_car(curr)) == key) {
-      lbm_set_cdr(lbm_car(curr),val);
+    lbm_value car_val = lbm_car(curr);
+    if (lbm_car(car_val) == key) {
+      lbm_set_cdr(car_val,val);
       return env;
     }
     curr = lbm_cdr(curr);
@@ -137,7 +139,7 @@ lbm_value lbm_env_set_functional(lbm_value env, lbm_value key, lbm_value val) {
   lbm_value curr = env;
 
   while(lbm_type_of(curr) == LBM_TYPE_CONS) {
-    if (lbm_car(lbm_car(curr)) == key) {
+    if (lbm_caar(curr) == key) {
       lbm_set_car(curr,keyval);
       return env;
     }
@@ -153,8 +155,9 @@ lbm_value lbm_env_modify_binding(lbm_value env, lbm_value key, lbm_value val) {
   lbm_value curr = env;
 
   while (lbm_type_of(curr) == LBM_TYPE_CONS) {
-    if (lbm_car(lbm_car(curr)) == key) {
-      lbm_set_cdr(lbm_car(curr), val);
+    lbm_value car_val = lbm_car(curr);
+    if (lbm_car(car_val) == key) {
+      lbm_set_cdr(car_val, val);
       return env;
     }
     curr = lbm_cdr(curr);
@@ -175,7 +178,7 @@ lbm_value lbm_env_drop_binding(lbm_value env, lbm_value key) {
   curr = lbm_cdr(curr);
 
   while (lbm_type_of(curr) == LBM_TYPE_CONS) {
-    if (lbm_car(lbm_car(curr)) == key) {
+    if (lbm_caar(curr) == key) {
       lbm_set_cdr(prev, lbm_cdr(curr));
       return env;
     }
@@ -183,36 +186,4 @@ lbm_value lbm_env_drop_binding(lbm_value env, lbm_value key) {
     curr = lbm_cdr(curr);
   }
   return ENC_SYM_NOT_FOUND;
-}
-
-lbm_value lbm_env_build_params_args(lbm_value params,
-                            lbm_value args,
-                            lbm_value env0) {
-  lbm_value curr_param = params;
-  lbm_value curr_arg = args;
-
-  // TODO: This should be checked outside of this function.
-  //
-  if (lbm_list_length(params) != lbm_list_length(args)) { // programmer error
-    return ENC_SYM_FATAL_ERROR;
-  }
-
-  lbm_value env = env0;
-  while (lbm_type_of(curr_param) == LBM_TYPE_CONS) {
-
-    lbm_value entry = lbm_cons(lbm_car(curr_param), lbm_car(curr_arg));
-    if (lbm_type_of(entry) == LBM_TYPE_SYMBOL &&
-        lbm_dec_sym(entry) == SYM_MERROR)
-      return ENC_SYM_MERROR;
-
-    env = lbm_cons(entry,env);
-
-    if (lbm_type_of(env) == LBM_TYPE_SYMBOL &&
-        lbm_dec_sym(env) == SYM_MERROR)
-      return ENC_SYM_MERROR;
-
-    curr_param = lbm_cdr(curr_param);
-    curr_arg   = lbm_cdr(curr_arg);
-  }
-  return env;
 }

@@ -26,12 +26,12 @@ lbm_cid eval_cps_load_and_eval(lbm_char_channel_t *tokenizer, bool program, bool
   lbm_value stream;
 
   if (!lift_char_channel(tokenizer, &stream)) {
-    return 0;
+    return -1;
   }
 
   if (lbm_type_of(stream) == LBM_TYPE_SYMBOL) {
     // TODO: Check what should be done.
-    return 0;
+    return -1;
   }
 
   lbm_value read_mode = ENC_SYM_READ;
@@ -71,8 +71,7 @@ lbm_cid eval_cps_load_and_eval(lbm_char_channel_t *tokenizer, bool program, bool
   if (lbm_type_of(launcher) != LBM_TYPE_CONS ||
       lbm_type_of(evaluator) != LBM_TYPE_CONS ||
       lbm_type_of(start_prg) != LBM_TYPE_CONS ) {
-    //lbm_explicit_free_token_stream(stream);
-    return 0;
+    return -1;
   }
   return lbm_create_ctx(start_prg, ENC_SYM_NIL, 256, name);
 }
@@ -82,19 +81,18 @@ lbm_cid eval_cps_load_and_define(lbm_char_channel_t *tokenizer, char *symbol, bo
   lbm_value stream;
 
   if (!lift_char_channel(tokenizer, &stream)) {
-    return 0;
+    return -1;
   }
 
   if (lbm_type_of(stream) == LBM_TYPE_SYMBOL) {
-    return 0;
+    return -1;
   }
 
   lbm_uint sym_id;
 
   if (!lbm_get_symbol_by_name(symbol, &sym_id)) {
-    if (!lbm_add_symbol(symbol, &sym_id)) {
-      //lbm_explicit_free_token_stream(stream);
-      return 0;
+    if (!lbm_add_symbol_base(symbol, &sym_id,false)) { //ram
+      return -1;
     }
   }
 
@@ -111,8 +109,7 @@ lbm_cid eval_cps_load_and_define(lbm_char_channel_t *tokenizer, char *symbol, bo
   if (lbm_type_of(launcher) != LBM_TYPE_CONS ||
       lbm_type_of(binding) != LBM_TYPE_CONS ||
       lbm_type_of(definer) != LBM_TYPE_CONS ) {
-    //lbm_explicit_free_token_stream(stream);
-    return 0;
+    return -1;
   }
   return lbm_create_ctx(definer, lbm_enc_sym(SYM_NIL), 256, NULL);
 }
@@ -123,13 +120,13 @@ lbm_cid lbm_eval_defined(char *symbol, bool program) {
 
   if(!lbm_get_symbol_by_name(symbol, &sym_id)) {
     // The symbol does not exist, so it cannot be defined
-    return 0;
+    return -1;
   }
 
   lbm_value binding;
 
   if (!lbm_global_env_lookup(&binding, lbm_enc_sym(sym_id))) {
-    return 0;
+    return -1;
   }
 
   /* LISP ZONE */
@@ -144,7 +141,7 @@ lbm_cid lbm_eval_defined(char *symbol, bool program) {
   if (lbm_type_of(launcher) != LBM_TYPE_CONS ||
       lbm_type_of(evaluator) != LBM_TYPE_CONS ||
       lbm_type_of(start_prg) != LBM_TYPE_CONS ) {
-    return 0;
+    return -1;
   }
   return lbm_create_ctx(start_prg, lbm_enc_sym(SYM_NIL), 256, NULL);
 }
@@ -184,12 +181,9 @@ int lbm_send_message(lbm_cid cid, lbm_value msg) {
 
   if (lbm_get_eval_state() == EVAL_CPS_STATE_PAUSED) {
 
-    lbm_value v = lbm_find_receiver_and_send(cid, msg);
-
-    if (lbm_type_of(v) == LBM_TYPE_SYMBOL &&
-        lbm_dec_sym(v) == SYM_TRUE) {
-      res = 1;
-    }
+    int v = lbm_find_receiver_and_send(cid, msg);
+    if (v == 0) res = 1;
+    else res = 0;
   }
   return res;
 }
@@ -200,7 +194,7 @@ int lbm_define(char *symbol, lbm_value value) {
   lbm_uint sym_id;
   if (lbm_get_eval_state() == EVAL_CPS_STATE_PAUSED) {
     if (!lbm_get_symbol_by_name(symbol, &sym_id)) {
-      if (!lbm_add_symbol_const(symbol, &sym_id)) {
+      if (!lbm_add_symbol_const_base(symbol, &sym_id)) {
         return 0;
       }
     }
@@ -235,7 +229,7 @@ static bool share_const_array(lbm_value flash_cell, char *data, lbm_uint num_elt
   flash_array_header.data = (lbm_uint*)data;
   lbm_uint flash_array_header_ptr;
   lbm_flash_status s = lbm_write_const_raw((lbm_uint*)&flash_array_header,
-                                           sizeof(lbm_array_header_t),
+                                           sizeof(lbm_array_header_t) / sizeof(lbm_uint),
                                            &flash_array_header_ptr);
   if (s != LBM_FLASH_WRITE_OK) return false;
   s = write_const_car(flash_cell, flash_array_header_ptr);
@@ -246,24 +240,47 @@ static bool share_const_array(lbm_value flash_cell, char *data, lbm_uint num_elt
 }
 
 int lbm_share_const_array(lbm_value *res, char *flash_ptr, lbm_uint num_elt) {
-  lbm_value arr = 0;
-  arr = LBM_PTR_BIT | LBM_TYPE_ARRAY;
-
+  lbm_value arr = LBM_PTR_BIT | LBM_TYPE_ARRAY;
   lbm_value flash_arr = 0;
-  lbm_flash_status r = request_flash_storage_cell(arr, &flash_arr);
-  if (r == LBM_FLASH_WRITE_OK) {
-    if (!share_const_array(flash_arr, flash_ptr, num_elt)) {
-      return 0;
+  int r = 0;
+  if (request_flash_storage_cell(arr, &flash_arr) == LBM_FLASH_WRITE_OK) {
+    if (share_const_array(flash_arr, flash_ptr, num_elt)) {
+      *res = flash_arr;
+      r = 1;
     }
   }
-
-  if (r == LBM_FLASH_WRITE_OK) {
-    *res = flash_arr;
-    return 1;
-  }
-  return 0;
+  return r;
 }
 
 int lbm_create_array(lbm_value *value, lbm_uint num_elt) {
   return lbm_heap_allocate_array(value, num_elt);
+}
+
+
+void lbm_clear_env(void) {
+
+  lbm_value *env = lbm_get_global_env();
+  for (int i = 0; i < GLOBAL_ENV_ROOTS; i ++) {
+    env[i] = ENC_SYM_NIL;
+  }
+  lbm_perform_gc();
+}
+
+// Evaluator should be paused when running this.
+// Running gc will reclaim the fv storage.
+bool lbm_flatten_env(int index, lbm_uint** data, lbm_uint *size) {
+  if (index < 0 || index >= GLOBAL_ENV_ROOTS) return false;
+  lbm_value *env = lbm_get_global_env();
+
+  lbm_value fv = flatten_value(env[index]);
+
+  if (lbm_is_symbol(fv)) return false;
+
+  lbm_array_header_t *array = lbm_dec_array_r(fv);
+  if (array) {
+    *size = array->size;
+    *data = array->data;
+    return true;
+  }
+  return false;
 }

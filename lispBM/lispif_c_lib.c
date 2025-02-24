@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 #include "ch.h"
 #include "hal.h"
 #include "hw.h"
@@ -40,7 +43,7 @@
 #include "encoder.h"
 #include "conf_general.h"
 #include "servo_dec.h"
-#include "servo_simple.h"
+#include "pwm_servo.h"
 #include "flash_helper.h"
 #include "mcpwm_foc.h"
 //#include "stm32f4xx_conf.h"
@@ -241,18 +244,18 @@ static bool get_gpio(VESC_PIN io, stm32_gpio_t **port, uint32_t *pin, bool *is_a
 		res = true;
 #endif
 		break;
-#ifdef PIN_HW_1
 	case VESC_PIN_HW_1:
+#ifdef PIN_HW_1
 		*port = PIN_HW_1_GPIO; *pin = PIN_HW_1;
 		res = true;
-		break;
 #endif
-#ifdef PIN_HW_2
+		break;
 	case VESC_PIN_HW_2:
+#ifdef PIN_HW_2
 		*port = PIN_HW_2_GPIO; *pin = PIN_HW_2;
 		res = true;
+#endif
 		break;
-#endif			
 	}
 
 	return res;
@@ -449,6 +452,18 @@ static float lib_get_cfg_float(CFG_PARAM p) {
 		case CFG_PARAM_IMU_rot_roll: res = appconf->imu_conf.rot_roll; break;
 		case CFG_PARAM_IMU_rot_pitch: res = appconf->imu_conf.rot_pitch; break;
 		case CFG_PARAM_IMU_rot_yaw: res = appconf->imu_conf.rot_yaw; break;
+		case CFG_PARAM_IMU_accel_offset_x: res = appconf->imu_conf.accel_offsets[0]; break;
+		case CFG_PARAM_IMU_accel_offset_y: res = appconf->imu_conf.accel_offsets[1]; break;
+		case CFG_PARAM_IMU_accel_offset_z: res = appconf->imu_conf.accel_offsets[2]; break;
+		case CFG_PARAM_IMU_gyro_offset_x: res = appconf->imu_conf.gyro_offsets[0]; break;
+		case CFG_PARAM_IMU_gyro_offset_y: res = appconf->imu_conf.gyro_offsets[1]; break;
+		case CFG_PARAM_IMU_gyro_offset_z: res = appconf->imu_conf.gyro_offsets[2]; break;
+
+		case CFG_PARAM_si_gear_ratio: res = mcconf->si_gear_ratio; break;
+		case CFG_PARAM_si_wheel_diameter: res = mcconf->si_wheel_diameter; break;
+		case CFG_PARAM_si_battery_ah: res = mcconf->si_battery_ah; break;
+		case CFG_PARAM_si_motor_nl_current: res = mcconf->si_motor_nl_current; break;
+
 		default: break;
 	}
 
@@ -458,10 +473,19 @@ static float lib_get_cfg_float(CFG_PARAM p) {
 static int lib_get_cfg_int(CFG_PARAM p) {
 	int res = 0.0;
 
-	const app_configuration *conf = app_get_configuration();
+	const volatile mc_configuration *mcconf = mc_interface_get_configuration();
+	const app_configuration *appconf = app_get_configuration();
 
 	switch (p) {
-		case CFG_PARAM_app_can_mode: res = conf->can_mode; break;
+		case CFG_PARAM_app_can_mode: res = appconf->can_mode; break;
+		case CFG_PARAM_app_can_baud_rate: res = appconf->can_baud_rate; break;
+		case CFG_PARAM_IMU_ahrs_mode: res = appconf->imu_conf.mode; break;
+		case CFG_PARAM_IMU_sample_rate: res = appconf->imu_conf.sample_rate_hz; break;
+		case CFG_PARAM_app_shutdown_mode: res = appconf->shutdown_mode; break;
+
+		case CFG_PARAM_si_motor_poles: res = mcconf->si_motor_poles; break;
+		case CFG_PARAM_si_battery_type: res = mcconf->si_battery_type; break;
+		case CFG_PARAM_si_battery_cells: res = mcconf->si_battery_cells; break;
 		default: break;
 	}
 
@@ -511,6 +535,17 @@ static bool lib_set_cfg_float(CFG_PARAM p, float value) {
 		case CFG_PARAM_IMU_rot_roll: appconf->imu_conf.rot_roll = value; changed_app = 1; res = true; break;
 		case CFG_PARAM_IMU_rot_pitch: appconf->imu_conf.rot_pitch = value; changed_app = 1; res = true; break;
 		case CFG_PARAM_IMU_rot_yaw: appconf->imu_conf.rot_yaw = value; changed_app = 1; res = true; break;
+		case CFG_PARAM_IMU_accel_offset_x: appconf->imu_conf.accel_offsets[0] = value; changed_app = 1; res = true; break;
+		case CFG_PARAM_IMU_accel_offset_y: appconf->imu_conf.accel_offsets[1] = value; changed_app = 1; res = true; break;
+		case CFG_PARAM_IMU_accel_offset_z: appconf->imu_conf.accel_offsets[2] = value; changed_app = 1; res = true; break;
+		case CFG_PARAM_IMU_gyro_offset_x: appconf->imu_conf.gyro_offsets[0] = value; changed_app = 1; res = true; break;
+		case CFG_PARAM_IMU_gyro_offset_y: appconf->imu_conf.gyro_offsets[1] = value; changed_app = 1; res = true; break;
+		case CFG_PARAM_IMU_gyro_offset_z: appconf->imu_conf.gyro_offsets[2] = value; changed_app = 1; res = true; break;
+
+		case CFG_PARAM_si_gear_ratio: mcconf->si_gear_ratio = value; changed_mc = 1; res = true; break;
+		case CFG_PARAM_si_wheel_diameter: mcconf->si_wheel_diameter = value; changed_mc = 1; res = true; break;
+		case CFG_PARAM_si_battery_ah: mcconf->si_battery_ah = value; changed_mc = 1; res = true; break;
+		case CFG_PARAM_si_motor_nl_current: mcconf->si_motor_nl_current = value; changed_mc = 1; res = true; break;
 		default: break;
 	}
 
@@ -530,16 +565,31 @@ static bool lib_set_cfg_float(CFG_PARAM p, float value) {
 static bool lib_set_cfg_int(CFG_PARAM p, int value) {
 	bool res = false;
 
+	mc_configuration *mcconf = (mc_configuration*)mc_interface_get_configuration();
+	int changed_mc = 0;
+
 	app_configuration *appconf = mempools_alloc_appconf();
 	*appconf = *app_get_configuration();
+	int changed_app = 0;
 
 	switch (p) {
-	case CFG_PARAM_app_can_mode: appconf->can_mode = value; res = true; break;
-	case CFG_PARAM_app_can_baud_rate: appconf->can_baud_rate = value; res = true; break;
+	case CFG_PARAM_app_can_mode: appconf->can_mode = value; changed_app = 1; res = true; break;
+	case CFG_PARAM_app_can_baud_rate: appconf->can_baud_rate = value; changed_app = 1; res = true; break;
+	case CFG_PARAM_IMU_ahrs_mode: appconf->imu_conf.mode = value; changed_app = 1; res = true; break;
+	case CFG_PARAM_IMU_sample_rate: appconf->imu_conf.sample_rate_hz = value; changed_app = 1; res = true; break;
+	case CFG_PARAM_app_shutdown_mode: appconf->shutdown_mode = value; changed_app = 1; res = true; break;
+
+	case CFG_PARAM_si_motor_poles: mcconf->si_motor_poles = value; changed_mc = 1; res = true; break;
+	case CFG_PARAM_si_battery_type: mcconf->si_battery_type = value; changed_mc = 1; res = true; break;
+	case CFG_PARAM_si_battery_cells: mcconf->si_battery_cells = value; changed_mc = 1; res = true; break;
 	default: break;
 	}
 
-	if (res) {
+	if (changed_mc > 0) {
+		commands_apply_mcconf_hw_limits(mcconf);
+	}
+
+	if (changed_app > 0) {
 		app_set_configuration(appconf);
 	}
 
@@ -582,6 +632,28 @@ static void lib_mutex_lock(lib_mutex m) {
 
 static void lib_mutex_unlock(lib_mutex m) {
 	chMtxUnlock((mutex_t*)m);
+}
+
+static lib_semaphore lib_sem_create(void) {
+	semaphore_t *s = lbm_malloc_reserve(sizeof(semaphore_t));
+	chSemObjectInit(s, 0);
+	return (lib_semaphore)s;
+}
+
+static void lib_sem_wait(lib_semaphore s) {
+	chSemWait((semaphore_t*)s);
+}
+
+static void lib_sem_signal(lib_semaphore s) {
+	chSemSignal((semaphore_t*)s);
+}
+
+static bool lib_sem_wait_to(lib_semaphore s, systime_t timeout_ticks) {
+	return chSemWaitTimeout((semaphore_t*)s, timeout_ticks) == MSG_OK;
+}
+
+static void lib_sem_reset(lib_semaphore s) {
+	chSemReset((semaphore_t*)s, 0);
 }
 
 static remote_state lib_get_remote_state(void) {
@@ -933,6 +1005,25 @@ lbm_value ext_load_native_lib(lbm_value *args, lbm_uint argn) {
 		// Unblock unboxed
 		cif.cif.lbm_unblock_ctx_unboxed = lbm_unblock_ctx_unboxed;
 
+		// System time
+		cif.cif.system_time_ticks = chVTGetSystemTimeX;
+		cif.cif.sleep_ticks = chThdSleep;
+
+		// FOC Audio
+		cif.cif.foc_beep = mcpwm_foc_beep;
+		cif.cif.foc_play_tone = mcpwm_foc_play_tone;
+		cif.cif.foc_stop_audio = mcpwm_foc_stop_audio;
+		cif.cif.foc_set_audio_sample_table = mcpwm_foc_set_audio_sample_table;
+		cif.cif.foc_get_audio_sample_table = mcpwm_foc_get_audio_sample_table;
+		cif.cif.foc_play_audio_samples = mcpwm_foc_play_audio_samples;
+
+		// Semaphores
+		cif.cif.sem_create = lib_sem_create;
+		cif.cif.sem_wait = lib_sem_wait;
+		cif.cif.sem_signal = lib_sem_signal;
+		cif.cif.sem_wait_to = lib_sem_wait_to;
+		cif.cif.sem_reset = lib_sem_reset;
+
 		lib_init_done = true;
 	}
 
@@ -1018,7 +1109,7 @@ void lispif_stop_lib(void) {
 
 float lispif_get_ppm(void) {
 	if (!servodec_is_running()) {
-		servo_simple_stop();
+		pwm_servo_stop();
 		servodec_init(0);
 	}
 
@@ -1037,3 +1128,5 @@ float lispif_get_ppm(void) {
 
 	return servo_val;
 }
+
+#pragma GCC pop_options

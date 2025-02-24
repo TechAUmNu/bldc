@@ -59,7 +59,10 @@ package_dict["A50S_12S_HG"] = [['a50s_v22_12s_hg', default_name]]
 package_dict["A50S_V23_6S"] = [['a50s_v23_6s', default_name]]
 package_dict["A50S_V23_8S"] = [['a50s_v23_8s', default_name]]
 package_dict["A50S_V23_12S"] = [['a50s_v23_12s', default_name]]
+package_dict["A50S_V23c_8S"] = [['a50s_v23c_8s', default_name]]
+package_dict["A50S_V23c_12S"] = [['a50s_v23c_12s', default_name]]
 package_dict["A50S_V23_20S"] = [['a50s_v23_20s', default_name]]
+package_dict["A100S_V4"] = [['a100s_v4', default_name]]
 package_dict["A200S_V2.1"] = [['a200s_v2.1', default_name]]
 package_dict["A200S_V2.2"] = [['a200s_v2.2', default_name]]
 package_dict["A200S_V3"] = [['a200s_v3', default_name]]
@@ -97,11 +100,18 @@ package_dict["STORMCORE_100S"] = [['stormcore_100s', default_name],
 package_dict["Little_FOCer"] = [['Little_FOCer', default_name]]
 package_dict["Little_FOCer_V3"] = [['Little_FOCer_V3', default_name]]
 package_dict["Little_FOCer_V3_1"] = [['Little_FOCer_V3_1', default_name]]
-package_dict["Thor300"] = [['Thor_300_20s', default_name]]
+package_dict["Little_FOCer_V4"] = [['Little_FOCer_V4', default_name]]
+package_dict["TRONIC_250R"] = [['TRONIC_250R', default_name]]
+package_dict["X12_PRO24"] = [['x12_pro24', default_name]]
+package_dict["X12_PRO30"] = [['x12_pro30', default_name]]
+package_dict["Thor300"] = [['Thor300_20s', default_name]]
+package_dict["JetFleetF6"] = [['JetFleetF6', default_name]]
 package_dict["UXV_SR"] = [['uxv_sr', default_name]]
 package_dict["GESC"] = [['gesc', default_name]]
 package_dict["Warrior6"] = [['warrior6', default_name]]
 package_dict["Raiden7"] = [['raiden7', default_name]]
+package_dict["ADV200"] = [['adv200', default_name]]
+package_dict["ADV500"] = [['adv500', default_name]]
 package_dict["100_500"] = [['100_500', default_name],
                     ['100_500_no_limits', no_limits_name]]
 package_dict["75_600"] = [['75_600', default_name],
@@ -126,7 +136,7 @@ package_dict["UBOX_SINGLE_100"] = [['ubox_single_100', default_name],
                                    ['ubox_single_100_no_limits', no_limits_name]]
 package_dict["UBOX_SINGLE_80"] = [['ubox_single_80', default_name],
                                   ['ubox_single_80_no_limits', no_limits_name]]
-package_dict["UBOX_SINGLE_85_200"] = [['ubox_single_85_200', 'default_name.bin'],
+package_dict["UBOX_SINGLE_85_200"] = [['ubox_single_85_200', default_name],
                                   ['ubox_single_85_200_no_limits', no_limits_name]]
 package_dict["UBOX_V2_100"] = [['ubox_v2_100', default_name],
                                ['ubox_v2_100_no_limits', no_limits_name]]
@@ -159,17 +169,43 @@ package_dict["FSESC_75_200_ALU"] = [['fsesc_75_200_alu', default_name],
                     ['fsesc_75_200_alu_no_limits', no_limits_name]]
 package_dict["MKSESC_75_100"] = [['mksesc_75_100', default_name],
                     ['mksesc_75_100_no_limits', no_limits_name]]
+package_dict["MKSESC_75_100_OLD"] = [['mksesc_75_100_old', default_name],
+                    ['mksesc_75_100_old_no_limits', no_limits_name]]
 package_dict["MKSESC_75_100_V2"] = [['mksesc_75_100_v2', default_name],
-                    ['mksesc_75_100_v2_no_limits', no_limits_name]]                    
+                    ['mksesc_75_100_v2_no_limits', no_limits_name]]      
+package_dict["MKSESC_75_100_V2_OLD"] = [['mksesc_75_100_v2_old', default_name],
+                    ['mksesc_75_100_v2_old_no_limits', no_limits_name]]                
 package_dict["MKSESC_75_200_V2"] = [['mksesc_75_200_v2', default_name],
                     ['mksesc_75_200_v2_no_limits', no_limits_name]]
+package_dict["MKSESC_75_200_V2_OLD"] = [['mksesc_75_200_v2_old', default_name],
+                    ['mksesc_75_200_v2_old_no_limits', no_limits_name]]
 package_dict["MKSESC_84_100_HP"] = [['mksesc_84_100_hp', default_name],
                     ['mksesc_84_100_hp_no_limits', no_limits_name]]                    
 package_dict["MKSESC_84_200_HP"] = [['mksesc_84_200_hp', default_name],
-                    ['mksesc_84_200_hp_no_limits', no_limits_name]]
+                    ['mksesc_84_200_hp_no_limits', no_limits_name]] 
+package_dict["MKSESC_100_300_HP"] = [['mksesc_100_300_hp', default_name],
+                    ['mksesc_100_300_hp_no_limits', no_limits_name]] 
 package_dict["STR500"] = [['str500', default_name],
                     ['str500_no_limits', no_limits_name]]
+package_dict["STR500_01"] = [['str500_01', default_name]]
+package_dict["STR500_HP"] = [['str500_hp', default_name],
+                    ['str500_hp_no_limits', no_limits_name]]
 package_dict["RB"] = [['rb', default_name]]
+package_dict["STR365"] = [['str365', default_name],
+                    ['str365_no_limits', no_limits_name]]
+package_dict["STR365_150"] = [['str365_150', default_name],
+                    ['str365_150_no_limits', no_limits_name]]
+package_dict["SPARKF"] = [['sparkf', default_name]]
+package_dict["VESC_BASIC"] = [['basic', default_name],
+                    ['basic_no_limits', no_limits_name]]
+package_dict["VESC_BASIC_035"] = [['basic_035', default_name],
+                    ['basic_035_no_limits', no_limits_name]]
+package_dict["VESC_BASIC_025"] = [['basic_025', default_name],
+                    ['basic_025_no_limits', no_limits_name]]
+package_dict["RSR_DD_V1"] = [['RSR_DD_V1', default_name],
+                    ['RSR_DD_V1_005', 'RSR_DD_V1_005.bin']]
+package_dict["RSR_DD_V2"] = [['RSR_DD_V2', default_name]]
+package_dict["RSR_DD_V2.1"] = [['RSR_DD_V2.1', default_name]]
 
 # This is the firmware stub string
 res_firmwares_string = '        <file>TARGET_DESTINATION_DIRECTORY/TARGET_DESTINATION_FILENAME</file>\n'

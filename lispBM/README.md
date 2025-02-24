@@ -91,7 +91,7 @@ printed on a separate line.
 Similar to `print`, but only takes one string as an argument and prints it without
 quotes. The string extensions can be used to format the output.
 
-**Note**  
+**Note:**  
 This extension can print longer strings than `print`. `print` will trim any
 output over 256 bytes, while this extension only trims strings over 400 bytes.
 
@@ -101,6 +101,55 @@ Example:
 (puts "Hello World")
 > Hello World
 ```
+
+---
+
+#### set-print-prefix
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.06+ |
+
+```clj
+(set-print-prefix str)
+```
+
+Adds a prefix to prints that are sent to the repl in VESC Tool. Useful when
+multiple devices print to the repl over CAN at the same time for determining
+which print comes from which device. The prefix can't be longer than 50 bytes
+(including the null byte), and `str` will be trimmed if longer. The value is
+remembered until the next power cycle.
+
+**Note:**  
+This is applied to all text sent to the repl, not just text created by
+calling `print` or `puts`.
+
+
+Example:
+
+```clj
+(set-print-prefix "dev-1| ")
+(puts "This message has\na clear origin!")
+```
+which outputs
+```
+dev-1| This message has
+dev-1| a clear origin!
+```
+
+---
+
+#### set-fw-name
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(set-fw-name str)
+```
+
+Set (or override if already set in the firmware) firmware name. The firmware name is printed in the CAN-list in VESC Tool when it is set. It can also be used by packages to determine if they are compatible with the connected hardware.
 
 ---
 
@@ -236,7 +285,10 @@ Get value from BMS. Examples:
 (get-bms-val 'bms-hum) ; Humidity
 (get-bms-val 'bms-pres) ; Pressure in PA (Added in 6.05)
 (get-bms-val 'bms-temp-cell-max) ; Maximum cell temperature
+(get-bms-val 'bms-v-cell-min) ; Minimum cell voltage (added in 6.06)
+(get-bms-val 'bms-v-cell-max) ; Maximum cell voltage (added in 6.06)
 (get-bms-val 'bms-soc) ; State of charge (0.0 to 1.0)
+(get-bms-val 'bms-soh) ; State of health (0.0 to 1.0)
 (get-bms-val 'bms-can-id) ; CAN ID of BMS
 (get-bms-val 'bms-ah-cnt-chg-total) ; Total ah charged
 (get-bms-val 'bms-wh-cnt-chg-total) ; Total wh charged
@@ -244,7 +296,21 @@ Get value from BMS. Examples:
 (get-bms-val 'bms-wh-cnt-dis-total) ; Total wh discharged
 (get-bms-val 'bms-msg-age) ; Age of last message from BMS in seconds
 (get-bms-val 'bms-chg-allowed) ; Charging allowed (Added in 6.05, Express only)
+(get-bms-val 'bms-data-version) ; Data version (added in 6.06)
+(get-bms-val 'bms-status) ; Status string (added in 6.06)
 ```
+
+**Note**  
+In firmware 6.06 the following temperature sensor convention was introduced for bms-temps-adc. So when using (get-bms-val 'bms-temps-adc 2) the maximum cell temperature should be returned. If a temperature returns less than -280 degC that reading is not applicable on that BMS. Keep in mind that it will take some time before all BMSes follow this convention after the 6.06 release. (get-bms-val 'bms-data-version) should return 1 if this convention is used.
+
+| Sensor Index | Function |
+|---|---|
+| 0 | Balance IC |
+| 1 | Cell Min |
+| 2 | Cell Max |
+| 3 | Mosfet Switch |
+| 4 | Ambient Temperature |
+| 5+ | Optional sensors |
 
 ---
 
@@ -310,6 +376,50 @@ Enable or disable charging. 1 means enable and 0 means disable.
 ```
 
 Start or stop balancing. 1 means start and 0 means stop.
+
+---
+
+#### bms-zero-offset
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(bms-zero-offset)
+```
+
+Zero current measurement offset on BMS. Has to be done while no current (or charge-current on charge-only BMS) is flowing. Will be sent to every BMS on the CAN-bus.
+
+---
+
+#### bms-st
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(bms-st can-id)
+```
+
+Run self-test on BMS with can-id. Returns the following list on success, otherwise timeout:
+
+```clj
+(
+    1 ; Balance IC OK
+    1 ; Balamce connection check OK
+    8 ; Cell num (8 Cells)
+    (1 3.691400f32 3.561700f32) ; Cell 1 OK, V_BAL, V_NO_BAL
+    (1 3.687200f32 3.367500f32) ; Cell 2 OK, V_BAL, V_NO_BAL
+    (1 3.687500f32 3.377500f32) ; Cell 3 OK, V_BAL, V_NO_BAL
+    (1 3.688900f32 3.389400f32) ; Cell 4 OK, V_BAL, V_NO_BAL
+    (1 3.690100f32 3.401900f32) ; Cell 5 OK, V_BAL, V_NO_BAL
+    (1 3.688800f32 3.413800f32) ; Cell 6 OK, V_BAL, V_NO_BAL
+    (1 3.689000f32 3.424600f32) ; Cell 7 OK, V_BAL, V_NO_BAL
+    (1 3.688900f32 3.433300f32) ; Cell 8 OK, V_BAL, V_NO_BAL
+)
+```
 
 ---
 
@@ -515,9 +625,9 @@ Same as get-imu-gyro, but derotates the result first. This means that the angula
 | ESC, Express | 6.00+ |
 
 ```clj
-(send-data dataList)
+(send-data dataList optInterface optCanId)
 ```
-Send a list of custom app data to VESC Tool. This can be read from a Qml script for example.
+Send a list of custom app data on the commands-interface of the type COMM_CUSTOM_APP_DATA. This can be read from a Qml script in VESC Tool for example or from another node on the CAN-bus.
 
 Example of sending the numbers 1, 2, 3 and 4:
 
@@ -526,6 +636,20 @@ Example of sending the numbers 1, 2, 3 and 4:
 ```
 
 *dataList* can be a list or a [byte array](#byte-arrays).
+
+The optional argument optInterface (introduced in FW 6.05) can be used to specify which interface to use and the optional argument optCanId can be used to specify which CAN-device to send the message to when using the CAN interface. The available interfaces are:
+
+| Number | Interface Type |
+|---|---|
+| 0 | The last interface data was received on (default) |
+| 1 | USB |
+| 2 | CAN (requires the argument optCanId) |
+| 3 | UART on comm-header |
+| 4 | UART builtin (depending on hardware) |
+| 5 | UART extra (depending on hardware) |
+| 6 | WiFi local (express) |
+| 7 | WiFi TCP Hub (express) |
+| 8 | BLE (express) |
 
 ---
 
@@ -613,10 +737,12 @@ Read system info parameter param. Example:
 (sysinfo 'has-phase-filters) ; t if hardware has phase filters. ESC only.
 (sysinfo 'uuid) ; STM32 UUID. ESC only.
 (sysinfo 'runtime) ; Total runtime in seconds. ESC only.
-(sysinfo 'git-branch) ; Git branch name. ESC only.
-(sysinfo 'git-hash) ; Git hash of current commit. ESC only.
+(sysinfo 'odometer) ; Total odometer in meters. ESC only. Added in 6.06.
+(sysinfo 'git-branch) ; Git branch name.
+(sysinfo 'git-hash) ; Git hash of current commit.
 (sysinfo 'compiler) ; GCC version, e.g. 7.3.1. ESC only.
 (sysinfo 'hw-type) ; Hardware type, e.g. hw-express. Added in 6.02.
+(sysinfo 'part-running) ; Running partition name. Express only.
 ```
 
 ---
@@ -646,6 +772,20 @@ Get statistics about the selected motor since boot (or since stats-reset). The f
 (stats 'stat-temp-motor-max) ; Maximum motor temp in degC
 (stats 'stat-count-time) ; Time since start of stat collection in seconds
 ```
+
+---
+
+#### set-odometer
+
+| Platforms | Firmware |
+|---|---|
+| ESC | 6.06+ |
+
+```clj
+(set-odometer meters)
+```
+
+Set persistent odometer counter to meters.
 
 ---
 
@@ -716,6 +856,22 @@ Returns true when the main-function is done with all initialization.
 ```
 
 Hold shutdown. When hold is true hardware shutdown will be delayed until hold is set to false again. Can be used when catching a shutdown-event if more time is needed for cleanup.
+
+---
+
+#### const-heap-erase
+
+| Platforms | Firmware |
+|---|---|
+| ESC | 6.06+ |
+
+```clj
+(const-heap-erase)
+```
+
+Erase constant heap. This can be used in the beginning of the application to erase the constant memory of the application. That is useful for applications that do not always write the same things to constant memory in the same order after starting. Situations where that can occur is when the application takes different execution paths depending on external events or when writing variables to constant memory that differ based on external events.
+
+Running this command in the beginning of the application should prevent any write-to-flash errors, but the command takes a few seconds to execute and puts some wear on the flash memory. The reader will become slightly slower in const blocks after running this command compared to an application where constant memory already has been written in previous runs.
 
 ---
 
@@ -1101,7 +1257,7 @@ Stop playing tones on all channels.
 
 ### Motor Get Commands
 
-**Note**  
+**Note:**  
 If the optional optFilter-argument is 1 in the commands below the result will be the average since that function was called the last time. That is also how the plots are filtered in VESC Tool. Polling realtime data in VESC Tool at the same time will affect the averaging as it uses the same integrator. This function was added in firmware 6.05.
 
 ---
@@ -1272,6 +1428,26 @@ Get FOC estimated motor inductance Henry. Only works while the first HFI is runn
 
 ---
 
+#### get-hfi-res
+
+| Platforms | Firmware |
+|---|---|
+| ESC | 6.06+ |
+
+```clj
+(get-hfi-res)
+```
+
+Get HFI result. Only valid when using single or double pulse ambiguity resolution mode. Returns a list with the following valies:
+
+```clj
+(i1 i2 diff)
+```
+
+Where i1 is the delta current for the first voltage, i2 is the response current for the second voltage and diff is the difference between them. This can be used to determine how much ambiguity resolution current is required for a given motor.
+
+---
+
 #### get-duty
 
 | Platforms | Firmware |
@@ -1296,7 +1472,49 @@ Get duty cycle. Range -1.0 to 1.0.
 (get-rpm)
 ```
 
-Get motor RPM. Negative values mean that the motor spins in the reverse direction.
+Get motor ERPM. Negative values mean that the motor spins in the reverse direction.
+
+---
+
+#### get-rpm-fast
+
+| Platforms | Firmware |
+|---|---|
+| ESC | 6.05+ |
+
+```clj
+(get-rpm-fast)
+```
+
+Same as get-rpm, but with less filtering. This give the RPM-estimation lower latency at the cost of more noise.
+
+---
+
+#### get-rpm-faster
+
+| Platforms | Firmware |
+|---|---|
+| ESC | 6.05+ |
+
+```clj
+(get-rpm-faster)
+```
+
+Same as get-rpm-fast, but with even less filtering. This give the RPM-estimation even lower latency at the cost of even more noise.
+
+---
+
+#### get-rpm-set
+
+| Platforms | Firmware |
+|---|---|
+| ESC | 6.06+ |
+
+```clj
+(get-rpm-set)
+```
+
+Get motor ERPM setpoint for PID speed controller.
 
 ---
 
@@ -1353,6 +1571,20 @@ Get motor temperature.
 ```
 
 Get speed in meters per second. Requires that the number of motor poles, wheel diameter and gear ratio are set up correctly.
+
+---
+
+#### get-speed-set
+
+| Platforms | Firmware |
+|---|---|
+| ESC | 6.06+ |
+
+```clj
+(get-speed-set)
+```
+
+Get PID speed setpoint in meters per second. Requires that the number of motor poles, wheel diameter and gear ratio are set up correctly.
 
 ---
 
@@ -1738,6 +1970,20 @@ Notice that all canget-commands rely on the status messages being active on the 
 
 ---
 
+#### can-msg-age
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(can-msg-age id msg)
+```
+
+Get age of can-message msg from device with can-id id. Can be used to determine how up-to-date the values are from the different messages. nil is returned if the given message has never been received from the given id.
+
+---
+
 #### canset-current
 
 | Platforms | Firmware |
@@ -2040,6 +2286,28 @@ Actively scan the CAN-bus and return a list with devices that responded. This fu
 
 ---
 
+#### can-ping
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.06+ |
+
+```clj
+(can-ping id)
+```
+
+Ping can-device with id. Valid IDs are 0 to 253. If the device responds 0, 1 or 2 is returned, meaning
+
+| Response | HW Type |
+|---|---|
+| 0 | ESC |
+| 1 | Old BMS |
+| 2 | Custom (e.g. Express or new BMS) |
+
+If the device does not respond nil is returned.
+
+---
+
 #### can-local-id
 
 | Platforms | Firmware |
@@ -2051,6 +2319,25 @@ Actively scan the CAN-bus and return a list with devices that responded. This fu
 ```
 
 Get local CAN ID.
+
+---
+
+#### can-update-baud
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.06+ |
+
+```clj
+(can-update-baud kbits)
+```
+
+Update CAN baudrate locally and on connected CAN-devices. kbits is the new baudrate. Note that this is only supported when all CAN-devices have firmware 6.06 or later. If the update fails the CAN-bus can become unusable until the settings are restored manually on each device. Valid baudrates in kbits are 125, 250, 500, 1000, 10, 20, 50, 75 and 100. Example:
+
+```clj
+(can-update-baud 1000) ; Update baudrate to 1 MBit/s
+(can-update-baud 250) ; Update baudrate to 250 KBit/s
+```
 
 ---
 
@@ -2153,6 +2440,48 @@ Example:
 (def max-speed-kmh 25.0)
 (can-cmd 54 (str-from-n (/ max-speed-kmh 3.6) "(conf-set 'max-speed %.3f)"))
 ```
+
+---
+
+#### can-start
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(can-start optPinTx optPinRx)
+```
+
+Start or restart CAN-driver. The optional arguments optPinTx and optPinRx can be used to specify which pins to use as CAN TX and CAN RX. If they are omitted the default pins will be used. If the hardware does not have default CAN pins and no pins are specified an error is returned. This function can also be used while the CAN-driver is running for changing CAN-pins.
+
+---
+
+#### can-stop
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(can-stop)
+```
+
+Stop CAN-bus driver.
+
+---
+
+#### can-use-vesc
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(can-use-vesc use-vesc)
+```
+
+Enable or disable decoding of the VESC Protocol on the CAN-bus. By default it is enabled. The VESC Protocol is used for communication with VESC Tool, the VESC BMS and VESC motor controllers on the CAN-bus. Disabling the VESC Protocol is useful for using the express as a generic CAN sniffer and debugger.
 
 ---
 
@@ -2544,7 +2873,7 @@ Raw data commands useful for debugging hardware issues.
 
 Get raw current measurements. Motor is the motor index (1 or 2), phase is the phase (1, 2 or 3) and useRaw is whether to convert the measurements to currents or to use raw ADC values.
 
-**NOTE**  
+**Note:**  
 These samples can come from either V0 or V7 depending on when the function is called (although most likely V7 as less other computations happen then), so when the motor is running this is most likely not going to look good, especially if the hardware does not have phase shunts. This function is intended for debugging hardware and returns just was goes into the ADC without any processing.
 
 Example for reading phase B on motor 1 as raw ADC values:
@@ -2656,7 +2985,7 @@ The function (ix list ind) can be used to get an element from the list. Example:
 (uart-start baudrate optHd)
 ```
 
-Start the UART driver at baudrate on the COMM-port on the VESC. optHd is an optional argument that can be set to 'half-duplex to use half-duplex mode. In half-duplex mode only the tx-pin is used. If any app is using the UART pins it will be stopped first. Example:
+Start the UART driver at baudrate on the COMM-port. optHd is an optional argument that can be set to 'half-duplex to use half-duplex mode. In half-duplex mode only the tx-pin is used. If any app is using the UART pins it will be stopped first. Example:
 
 ```clj
 (uart-start 115200) ; Start UART at 115200 baud in full duplex mode
@@ -2665,17 +2994,50 @@ Start the UART driver at baudrate on the COMM-port on the VESC. optHd is an opti
 
 ---
 
+#### uart-start
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(uart-start uart-num rx-pin tx-pin baudrate)
+```
+
+This version of uart-start is for the Express-platform. Start the UART uart-num on the pins rx-pin and tx-pin with baudrate. Uart-num can be 0 or 1 and any pin can be used. Note that GNSS uses uart 0, so when a gnss-receiver is connected uart 1 must be used. Example:
+
+```clj
+; Start UART 1 with pin 20 for RX, pin 21 for TX and 115200 baudrate.
+(uart-start 1 20 21 115200)
+```
+
+---
+
+#### uart-stop
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(uart-stop)
+```
+
+Stop the UART-driver and free the resources it uses.
+
+---
+
 #### uart-write
 
 | Platforms | Firmware |
 |---|---|
-| ESC | 6.00+ |
+| ESC, Express | 6.00+ |
 
 ```clj
 (uart-write array)
 ```
 
-Write array (see [byte array](#byte-arrays) for details) to the UART. Examples:
+Write array (see [byte array](#byte-arrays) for details) to the UART. The array-argument can also be a list. Examples:
 
 ```clj
 (uart-write "Hello World!") ; Write the string hello world!
@@ -2694,13 +3056,21 @@ Write array (see [byte array](#byte-arrays) for details) to the UART. Examples:
 
 | Platforms | Firmware |
 |---|---|
-| ESC | 6.00+ |
+| ESC, Express | 6.00+ |
 
 ```clj
-(uart-read array num optOffset optStopAt)
+(uart-read array num optOffset optStopAt optTimeout)
 ```
 
-Read num bytes into array at offset optOffset. Stop reading if the character optStopAt is received. The last two arguments are optional. Note that this function returns immediately if there is nothing to be read, so it is not blocking. The return value is the number of bytes read.
+Read num bytes into array at offset optOffset. Stop reading if the character optStopAt is received or optTimeout time has passed. The last three arguments are optional. Setting optTimeout to 0 (or omitting the argument) makes this function return immediately, even when there is nothing to read. The return value is the number of bytes read. The optional arguments can also be set to nil in case not all of them are used. Example:
+
+```clj
+; Read at most 10 characters into arr and return if it takes more than
+; 0.5 seconds to receive anything.
+(def arr (bufcreate 10))
+(var res (uart-read arr 10 nil nil 0.5))
+(print (list res arr))
+```
 
 ---
 
@@ -2708,7 +3078,7 @@ Read num bytes into array at offset optOffset. Stop reading if the character opt
 
 | Platforms | Firmware |
 |---|---|
-| ESC | 6.00+ |
+| ESC, Express | 6.00+ |
 
 ```clj
 (uart-read-bytes array num offset)
@@ -2722,13 +3092,41 @@ Read num bytes into buffer at offset. This function is blocking, so it will not 
 
 | Platforms | Firmware |
 |---|---|
-| ESC | 6.00+ |
+| ESC, Express | 6.00+ |
 
 ```clj
 (uart-read-until array num offset end)
 ```
 
 Same as uart-read-bytes, but will return when the byte end is read.
+
+---
+
+#### uartcomm-start
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(uartcomm-start uart-num rx-pin tx-pin baudrate)
+```
+
+Start VESC Tool-compatible packet handler over UART. That allows VESC Tool to connect to those pins using an USB-SERIAL adapter. Uart-num can be 0 or 1 and any pins can be used. Multiple UARTs can be used simultaneously.
+
+---
+
+#### uartcomm-stop
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(uartcomm-stop uart-num)
+```
+
+Stop UARTCOMM on uart-num.
 
 ---
 
@@ -2805,6 +3203,20 @@ Send array (or list) arrTx to the I2C-device with address addr. Optionally recei
 ```
 
 Sends a sequence of bits in an attempt to restore the i2c-bus. Can be used if an i2c-device hangs and refuses to respond.
+
+---
+
+#### i2c-detect-addr
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(i2c-detect-addr address)
+```
+
+Test if address is present on the bus by writing to it and checking the nack-bit. Returns true if the address is present, nil otherwise. Can be used to detect if I2C-devices are plugged in and powered correctly.
 
 ---
 
@@ -2919,6 +3331,90 @@ Write state to pin. If the pin is set to an output 1 will set it to VCC and 0 to
 ```
 
 Read state of pin. Returns 1 if the pin is high, 0 otherwise.
+
+---
+
+#### gpio-hold
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(gpio-hold pin state)
+```
+
+It state is 1, the state of pin will be locked to its state at the moment of the call. If state is 0 the pin will be unlocked. The state persists through reset, but not through deep sleep.
+
+---
+
+#### gpio-hold-deepsleep
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(gpio-hold-deepsleep state)
+```
+
+It state is 1, all digital pads will hold their state during deep sleep. If it is set to 0 they will reset to their initial state when entering deep sleep.
+
+---
+
+### Pulse-Width Modulation (PWM)
+
+A logic-level PWM-signal can be created on GPIO-pins for controlling various accessories. The Express-platform supports up to 4 PWM-channels on any pins and the ESC-platform supports only one PWM-channel on the servo-pin. The arguments prefixed with express in the following functions are ignored on the ESC-platform.
+
+---
+
+#### pwm-start
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(pwm-start freq duty expressChannel expressPin optExpressBits)
+```
+
+Start PWM-generation at frequency freq Hz and duty-cycle duty. The arguments expressChannel, expressPin and optExpressBits are only used on the Express-platform and control which channel and pin to use and optionally how many bits of resolution to use (2 - 14 bits, 10 bits default). On the ESC-platform the PPM/Servo-pin is always used. This function returns the actual frequency that will be used as some rounding can be done when setting up the timer. Example:
+
+```clj
+; Express: 2 kHz PWM with 20% duty, channel 0 pin 20, 12 bits resolution
+(pwm-start 2000 0.2 0 20 12)
+
+; ESC: 2 kHz PWM with 20% duty on the Servo/PPM-pin
+(pwm-start 2000 0.2)
+```
+
+---
+
+#### pwm-stop
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(pwm-stop expressChannel)
+```
+
+Stop PWM-output. On the express-platform the channel must be specified.
+
+---
+
+#### pwm-set-duty
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(pwm-set-duty dutyCycle expressChannel)
+```
+
+Set PWM duty cycle. Range 0.0 to 1.0. On the express-platform the channel must be specified.
 
 ---
 
@@ -3065,12 +3561,25 @@ The following selection of app and motor parameters can be read and set from Lis
 'l-max-duty             ; Maximum duty cycle
 'l-watt-min             ; Minimum power regen in W (a negative value)
 'l-watt-max             ; Maximum power regen in W
-'l-battery-cut-start    ; The voltage where current starts to get reduced
-'l-battery-cut-end      ; The voltage below which current draw is not allowed
+'l-battery-cut-start    ; Voltage where current starts to get reduced
+'l-battery-cut-end      ; Voltage below which current is not allowed
 'l-temp-motor-start     ; Temperature where motor current starts to get reduced
 'l-temp-motor-end       ; Temperature above which motor current is not allowed
 'l-temp-accel-dec       ; Decrease temp limits this much during acceleration
-'bms-limit-mode         ; BMS limit mode bitfield (Added in FW 6.05)
+
+; BMS Settings (Added in FW 6.05)
+'bms-limit-mode         ; BMS limit mode bitfield
+                        ; Bit 0: Enable temperature limit
+                        ; Bit 1: Enable SOC limit
+                        ; Bit 2: Enable VCell min limit
+                        ; Bit 3: Enable VCell max limit
+'bms-t-limit-start      ; Temperature where current starts to get reduced
+'bms-t-limit-end        ; Temperature above which current is not allowed
+'bms-vmin-limit-start   ; VCell where current starts to get reduced
+'bms-vmin-limit-end     ; VCell below which current draw is not allowed
+'bms-vmax-limit-start   ; VCell where regen current starts to get reduced
+'bms-vmax-limit-end     ; VCell above which regen current is not allowed
+
 'motor-type             ; Motor Type
                         ;    0: BLDC (6-step commutation)
                         ;    1: DC (DC motor on phase A and C)
@@ -3091,6 +3600,16 @@ The following selection of app and motor parameters can be read and set from Lis
                         ;    10: OUT_AUX_MODE_MOSFET_70
                         ;    11: OUT_AUX_MODE_MOTOR_MOSFET_50
                         ;    12: OUT_AUX_MODE_MOTOR_MOSFET_70
+'m-motor-temp-sens-type ; Temperature sensor type (Added in FW 6.05). Options:
+                        ;    0:  TEMP_SENSOR_NTC_10K_25C
+                        ;    1:  TEMP_SENSOR_PTC_1K_100C
+                        ;    2:  TEMP_SENSOR_KTY83_122
+                        ;    3:  TEMP_SENSOR_NTC_100K_25C
+                        ;    4:  TEMP_SENSOR_KTY84_130
+                        ;    5:  TEMP_SENSOR_NTCX
+                        ;    6:  TEMP_SENSOR_PTCX
+                        ;    7:  TEMP_SENSOR_PT1000
+                        ;    8:  TEMP_SENSOR_DISABLED
 'foc-sensor-mode        ; FOC sensor mode
                         ;    0: FOC_SENSOR_MODE_SENSORLESS
                         ;    1: FOC_SENSOR_MODE_ENCODER
@@ -3115,6 +3634,12 @@ The following selection of app and motor parameters can be read and set from Lis
 'foc-motor-r            ; Motor resistance in milliOhm
 'foc-motor-flux-linkage ; Motor flux linkage in milliWeber
 'foc-observer-gain      ; Observer gain x1M
+'foc-hfi-amb-mode       ; HFI Ambiguity Resolve Mode (FW 6.06)
+                        ; 0 : Six Vector
+                        ; 1 : ID Single Pulse
+                        ; 2 : ID Double Pulse
+'foc-hfi-amb-current    ; HFI Ambiguity Resolve Current (FW 6.06)
+'foc-hfi-amb-tres       ; HFI Ambiguity Resolve Threshold (FW 6.06)
 'foc-hfi-voltage-start  ; HFI start voltage (V) (for resolving ambiguity)
 'foc-hfi-voltage-run    ; HFI voltage (V) HFI voltage at min current
 'foc-hfi-voltage-max    ; HFI voltage (V) at max current
@@ -3136,8 +3661,14 @@ The following selection of app and motor parameters can be read and set from Lis
 'foc-sl-openloop-time   ; Stay in openloop for this amount of time
 'foc-temp-comp          ; Use observer temperature compensation
 'foc-temp-comp-base-temp ; Temperature at which parameters were measured
+'foc-offsets-cal-on-boot ; Measure offsets at boot (FW 6.05 only)
+'foc-offsets-cal-mode   ; Offset Calibration Mode (Added in FW 6.06)
+                        ; Bit 0: Calibrate on Boot
+                        ; Bit 1: Enable Write from VESC Tool
+                        ; Bit 2: Auto-calibrate when undriven
 'foc-fw-current-max     ; Maximum field weakening current (Added in FW 6.05)
 'foc-fw-duty-start      ; Duty where field weakening starts (Added in FW 6.05)
+'foc-short-ls-on-zero-duty ; Short low-side FETs on 0 duty (Added in FW 6.05)
 'min-speed              ; Minimum speed in meters per second (a negative value)
 'max-speed              ; Maximum speed in meters per second
 'app-to-use             ; App to use
@@ -3153,6 +3684,7 @@ The following selection of app and motor parameters can be read and set from Lis
                         ;    9: APP_PAS
                         ;    10: APP_ADC_PAS
 'controller-id          ; VESC CAN ID
+'timeout-msec           ; Motor timeout in milliseconds (Added in FW 6.06)
 'can-baud-rate          ; CAN-bus baud rate (Added in FW 6.05)
                         ; 0: 125K
                         ; 1: 250K
@@ -3163,6 +3695,16 @@ The following selection of app and motor parameters can be read and set from Lis
                         ; 6: 50K
                         ; 7: 75K
                         ; 8: 100K
+'can-status-rate-1      ; CAN status rate 1 in Hz (Added in FW 6.05)
+'can-status-msgs-r1     ; Bitfield with the status messages (Added in FW 6.05)
+                        ; Bit0: Status 1 (RPM, Current, Duty)
+                        ; Bit1: Status 2 (Ah Used, Ah Charged)
+                        ; Bit2: Status 3 (Wh Used, Wh Charged)
+                        ; Bit3: Status 4 (T FET, T Mot, I In, PID pos)
+                        ; Bit4: Status 5 (V In, Tacho)
+                        ; Bit5: Status 6 (ADC1, ADC2, ADC3, PPM)
+'can-status-rate-2      ; CAN status rate 2 in Hz (Added in FW 6.05)
+'can-status-msgs-r2     ; See can-status-msgs-r1 (Added in FW 6.05)
 'ppm-ctrl-type          ; PPM Control Type
                         ;    0:  PPM_CTRL_TYPE_NONE
                         ;    1:  PPM_CTRL_TYPE_CURRENT
@@ -3235,6 +3777,7 @@ The following selection of app and motor parameters can be read and set from Lis
                         ; 0: Disabled
                         ; 1: Enabled
                         ; 2: Enabled and encrypted with pin
+                        ; 3: Enabled with scripting
 'ble-name               ; Device name (also the name that shows up in VESC Tool)
 'ble-pin                ; BLE pin code
 ```
@@ -3454,7 +3997,7 @@ Get all overridden current limits from speed, temperature, voltage, wattage etc.
 
 ### EEPROM (Nonvolatile Storage)
 
-Up to 128 variables (int32 or float) can be stored in a nonvolatile memory reserved for LispBM. These variables persist between power cycles and configuration changes, but not between firmware updates. Keep in mind that the motor will be stopped briefly when writing them and that they only can be written a limited number of times (about 100 000 writes) before wear on the flash memory starts to become an issue.
+Up to 128 (256 in FW 6.06) variables (int32 or float) can be stored in a nonvolatile memory reserved for LispBM. These variables persist between power cycles and configuration changes, but not between firmware updates. Keep in mind that the motor will be stopped briefly when writing them and that they only can be written a limited number of times (about 100 000 writes) before wear on the flash memory starts to become an issue.
 
 ---
 
@@ -3682,6 +4225,34 @@ Example that forever prints "Hello World" every two seconds:
                 (print "Hello World")
                 (sleep 2)
 })))
+```
+
+From firmware 6.06 it is possible to give the thread a name and/or a stack size. That gives the following combinations of possibilities:
+
+```clj
+; No name and default stack size
+(loopwhile-thd () t {
+        (print "Hello World1")
+        (sleep 2)
+})
+
+; No name and stack size 100
+(loopwhile-thd 100 t {
+        (print "Hello Worl2")
+        (sleep 2)
+})
+
+; Name ThdTest and default stack size
+(loopwhile-thd "ThdTest" t {
+        (print "Hello World3")
+        (sleep 2)
+})
+
+; Name ThdTest2 and stack size 100
+(loopwhile-thd ("ThdTest2" 100) t {
+        (print "Hello World4")
+        (sleep 2)
+})
 ```
 
 ---
@@ -4010,6 +4581,35 @@ Create a string from the number n. Also takes an optional format argument optFor
 
 ---
 
+#### str-join
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(str-join strings opt-delim)
+```
+
+Joins a list of strings into one, with an optional delimeter string placed
+between each.
+
+Note: Passing in an empty list returns `""`.
+
+Examples:
+```clj
+(str-join '("a" "b" "c"))
+> "abc"
+
+(str-join '("I" "love" "lispbm!") " ")
+> "I love lispbm!"
+
+(str-join '() " ")
+> ""
+```
+
+---
+
 #### str-merge
 
 | Platforms | Firmware |
@@ -4155,6 +4755,24 @@ Replace every occurrence of rep in str with optWith. If optWith is omitted every
 
 ---
 
+### str-replicate
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.00+ |
+
+```clj
+(str-replicate n char)
+```
+
+Build a string by replicating char n times.
+
+Example:
+```clj
+(str-replicate 8 \#x)
+> "xxxxxxxx"
+```
+---
+
 #### str-to-upper
 
 | Platforms | Firmware |
@@ -4268,6 +4886,86 @@ Calculate length of string str excluding the null termination. Example:
 ```clj
 (str-len "Hello")
 > 5
+```
+
+---
+
+#### str-find
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.05+ |
+
+```clj
+(str-find str substr [start] [occurrence] [direction])
+```
+
+Finds the index of the first character of a substring `substr` in the string `str`,
+returning this index, or `-1` if it doesn't exist. `substr` can also be a list
+of strings, in which case a certain positon only needs to be equal to one of
+these substrings to be considered a match. If this list is empty, `-1` is always
+returned, and searching for an empty string returns the starting index.
+
+**Optional arguments:**  
+- `start`: Overrides which index the search starts at. May be negative, in which
+  case it specifies which index to start at from the end, with `-1` resulting in
+  starting at the last character of the string (See one of the examples below).
+  Defaults to 0 if searching to the right, otherwise to the end of the string
+  minus the length of `substr` if searching to the left. If it helps, the
+  formula is then `(- (+ (str-len str) 1) (str-len substr))`, if `substr` is a
+  list, the shortest string length is used.
+- `occurrence`: When given, this specifies how many matches to skip before
+  an index is returned, otherwise the index of the first is returned by default.
+- `direction`: The direction to perform the search in. One of the symbols `left`
+  or `right`. Defaults to `right`, starting from the first character. Can be passed
+  in an earlier position if `occurrence` and/or `start` are left out.
+
+It is valid if the resulting start index is outside the range of `str` (i.e.
+being smaller than 0 or larger than the size of `str`), in which case the
+expected behaviour is performed by either immediatly returning no match (`-1`)
+or skipping the index forward to the first potentially valid match (depending on
+the direction).
+
+**Note about byte arrays**  
+`str` is actually considered to be a byte array, meaning that the final
+terminating null byte is considered when searching. The final byte of `substr`
+is on the other hand removed before it is searched for. If you want to search
+for an abitrary byte sequence you must first increase the size of `substr` by
+one, for instance with `(buf-resize substr 1 'copy)`.
+Note however that since specifying `start` to be `-1` starts the search at the
+last character (which is the second to last byte in a null-terminated string),
+**it is impossible to specify that the search should start at the last byte**!
+(If you need that functionality, you'll unfortunately need to implement that
+yourself and only specify positive values for `start`.)  
+This function actually replaces `buf-find` which existed in earlier versions of
+v6.05. This version is almost backwards compatible, so you should be able to
+just search and replace `buf-find` with `str-find` for most cases. The only
+change is that the third argument `occurrence` has been moved to the fourth
+position (with `start` taking the third). So you'll need to replace
+`(buf-find buf seq x)` with `(str-find buf seq 0 x)` in this case.
+
+Examples:
+```clj
+(str-find "-str-" "str")
+> 1
+
+(str-find "-str-str-" "str" 0 1)
+> 5
+
+(str-find "-str-str-" "str" 2)
+> 5
+
+(str-find "-str-str-" "str" 'left)
+> 5
+
+(str-find "-ab-ab-" "ab" 5 'left)
+> 4
+
+(str-find "-ab-ba-" '("ba" "ab") 0 1)
+> 4
+
+(str-find "a--a" "a" -1 'left)
+> 3
 ```
 
 ---
@@ -4553,25 +5251,8 @@ Byte arrays will be de-allocated by the garbage collector on a regular basis, bu
 
 This will clear the allocated memory for `arr`.
 
-**Note**  
+**Note:**  
 Strings in lispBM are treated the same as byte arrays, so all of the above can be done to the characters in strings too.
-
----
-
-#### buf-find
-
-| Platforms | Firmware |
-|---|---|
-| ESC, Express | 6.05+ |
-
-```clj
-(buf-find arr seq optOccurence)
-```
-
-Find position of `seq` in array `arr`. The optional argument optOccurence specifies which occurrence of `seq` to look for - if it is set to 0 or left out the position of the first occurrence will be returned. If `seq` is not found -1 will be returned.
-
-**NOTE**  
-The last byte in `seq` will be ignored as that is the null-terminator if `seq` is a string (which is the most common use case). If the match should be done on the last byte too `seq` can be padded with a dummy-byte.
 
 ---
 
@@ -4612,7 +5293,7 @@ marked as smaller in an efficient manner which avoids any new allocations.
 
 It is possible to shrink an array to a length of zero.
 
-**Note**  
+**Note:**  
 The array will be resized in place. The returned reference to `arr` is just for
 convenience. (Unless `opt-copy-symbol` is `'copy` of course.)
 
@@ -4869,6 +5550,79 @@ Lowering this value is useful if there are one or more timing-critical threads (
 ```
 
 Change the stack size for the garbage collector. If the GC stack is too small the program can crash during garbage collection and print a message stating that it ran out of GC stack. If that happens increasing the size from the default of 160 can help. Note that the GC stack is on LBM memory and increasing its size leaves less memory available for other things.
+
+---
+
+## Mutexes
+
+Mutexes can be used to lock resources from other contexts. Example:
+
+
+```clj
+(def mtx (mutex-create))
+
+(defun print-numbers() {
+        (mutex-lock mtx)
+        (print 1)
+        (sleep 0.5)
+        (print 2)
+        (sleep 0.5)
+        (print 3)
+        (sleep 0.5)
+        (print 4)
+        (mutex-unlock mtx)
+})
+
+(spawn 100 print-numbers)
+(sleep 0.1)
+(spawn 100 print-numbers)
+(sleep 0.1)
+(spawn 100 print-numbers)
+(sleep 0.1)
+(spawn 100 print-numbers)
+```
+
+---
+
+#### mutex-create
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.06+ |
+
+```clj
+(mutex-create)
+```
+
+Creates a mutex object. The mutex object is a dotted pair (ls . last) which contains two references into a single list, implementing a O(1)-insert-last O(1)-remove-first queue. At the surface though, it is a regular lisp dotted pair that can be destroyed with standard lisp functionality, no protection!
+
+---
+
+#### mutex-lock
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.06+ |
+
+```clj
+(mutex-lock mtx)
+```
+
+Lock mutex mtx. If mtx already is locked the current context will sleep until it is unlocked.
+
+---
+
+#### mutex-unlock
+
+| Platforms | Firmware |
+|---|---|
+| ESC, Express | 6.06+ |
+
+```clj
+(mutex-unlock mtx)
+```
+
+Unlock mutex mtx. If one or more contexts are waiting on this mutex the next one in the waiting queue will be unblocked.
 
 ---
 
@@ -5293,12 +6047,14 @@ Returns the age of the last gnss-sample in seconds.
 | Express | 6.05+ |
 
 ```clj
-(ublox-init optRateMs)
+(ublox-init optRateMs optUartNum optPinRx optPinTx)
 ```
 
 Re-initializes the ublox gnss-module. Returns true on success and nil on failure. Nil most likely means that something is wrong with the connection.
 
 The optional argument optRateMs can be used to set the navigation rate in milliseconds. By default 500 ms us used. Not any navigation rate is possible, it depends on the ublox module in use. Common rates that can work are 100, 200, 500, 1000 and 2000 ms.
+
+The optional arguments optUartNum, optPinRx and optPinTx can be used to specify the UART peripheral and pins. optUartNum can be 0 or 1 and the pins can be any valid ESP-pins.
 
 ---
 
@@ -5336,6 +6092,24 @@ Add peer. The argument is a list with the mac address of the peer to add. This m
 
 ```clj
 (esp-now-add-peer '(255 255 255 255 255 255)) ; Add broadcast address as peer
+```
+
+---
+
+#### esp-now-del-peer
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(esp-now-del-peer peer)
+```
+
+Delete peer. There is a limit to how many peers can be added, so if adding another peer does not work old peers can be deleted to free up resources.
+
+```clj
+(esp-now-del-peer '(255 255 255 255 255 255)) ; Remove broadcast peer
 ```
 
 ---
@@ -5463,6 +6237,34 @@ Set wifi bandwidth in MHz. This function is experimental and should only be used
 
 ---
 
+#### wifi-stop
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(wifi-stop)
+```
+
+Stop wifi-driver. Reduces power consumption.
+
+---
+
+#### wifi-start
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(wifi-start)
+```
+
+Start wifi-driver. Re-connects to networks that were connected before. Can be used to restart wifi after sleep-light.
+
+---
+
 ### Receiving Data
 
 Events can be used to receive ESP-NOW data. This is best described with an example:
@@ -5495,6 +6297,48 @@ NOTE: The RSSI was added in firmware 6.05 and should be left out in earlier firm
 ## File System (SD Card)
 
 When a SD-card is present in the VESC Express files can be listed, read, written and removed. Directories can also be created and removed.
+
+---
+
+#### f-connect
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(f-connect pin-mosi pin-miso pin-sck pin-cs optSpiSpeed)
+```
+
+Connect SD-card on pin-mosi, pin-miso, pin-sck and pin-cs. The optional argument optSpiSpeed can be used to specify the SPI speed (default 20000 Hz). Returns true on success, nil otherwise.
+
+---
+
+#### f-connect-nand
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(f-connect-nand pin-mosi pin-miso pin-sck pin-cs optSpiSpeed)
+```
+
+Connect NAND-flash memory on pin-mosi, pin-miso, pin-sck and pin-cs. The optional argument optSpiSpeed can be used to specify the SPI speed (default 20000 Hz). Returns true on success, nil otherwise.
+
+---
+
+#### f-disconnect
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(f-disconnect)
+```
+
+Disconnect SD-card or NAND-Flash.
 
 ---
 
@@ -5663,6 +6507,34 @@ Get the size of a file in bytes. File can be a path (e.g. "test.txt") or a file 
 
 ---
 
+#### f-rename
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(f-rename oldname newname)
+```
+
+Rename file (same as moving a file). Returns true on success, nil otherwise.
+
+---
+
+#### f-sync
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(f-sync file)
+```
+
+Write buffered changes to the memory card.
+
+---
+
 #### f-fatinfo
 
 | Platforms | Firmware |
@@ -5727,6 +6599,84 @@ Write data to firmware-buffer at offset. Returns true on success or nil/timeout 
 ```
 
 Reboot and attempt to load the new firmware from the firmware-buffer using the bootloader. This function always returns true as there is no easy way to get the response from the bootloader. If the optional argument optCanId is omitted or set to -1 the command is performed locally, otherwise it is performed on the CAN-device with id optCanId.
+
+---
+
+#### fw-info
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(fw-info optCanId)
+```
+
+Get an assoc-list containing information about the VESC version number and git commit hashes. If optCanId is `-1` or not given the local device is queried. If the target device does not run a recent enough firmware that supports this, or if the CAN bus is otherwise non-functional, this function will timeout after 2 seconds returning the symbol `timeout`.
+
+The returned assoc-list has the following structure:
+
+```
+(
+    ('version . (majorNumber minorNumber))
+    ('test-version . number)
+    ('commit . str)
+    ('user-commit . str-or-nil)
+)
+```
+
+The test versions exact semantics depend on which firmware is running on the queried device, but on bldc for instance it is the beta version number. The user commit hash can be configured when you are compiling any of the VESC firmwares yourself, and is useful when you have a separate project that is using any of the VESC firmwares as a dependency, you can then configure it to be the commit of said project. If it was not configured when building it is instead set to `nil`. Unfortunately there is currently no documentation written anywhere for how to set it, [but here are the relevant lines of code in bldc's makefile](../Makefile#L167-L172), and [here they are in vesc_express's CMake configuration](https://github.com/vedderb/vesc_express/blob/main/CMakeLists.txt#L32-L37). Similar [flags exist for vesc_bms_fw](https://github.com/vedderb/vesc_bms_fw/blob/main/Makefile#L32-L37) and [vesc_gpstm](https://github.com/vedderb/vesc_gpstm/blob/main/Makefile#L31-L36).
+
+Example where we queried a bldc unit with the CAN id 10 running a development build of v6.6 beta 3:
+```clj
+(fw-info 10)
+> ((version 6u 6u) (test-version . 3u) (commit . "4f2df650c4ed6d820657217e966d1dbd6c2c01e6") (user-commit . nil))
+```
+
+---
+
+#### fw-data
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(fw-data optOffset optLen)
+```
+
+Get the firmware data partition as an array. The optional argument optOffset can be used to specify an offset in the partition and the optional argument optLen can be used to specify the length. By default the offset is 0 and the length is the entire firmware buffer (around 1.5 MB).
+
+Note that this array is read-only, so do not try to write directly to it! It is however possible to write to it using fw-write-raw if fw-erase has been performed first. After the erase each byte can be written to once, in any order.
+
+Example:
+```clj
+; An array with the first 10 bytes of the firmware buffer
+(def fwd (fw-data 0 10))
+
+; Erase at least 100 bytes
+(fw-erase 100)
+
+; Write 1 to 10 to the beginning of the firmware buffer.
+(fw-write-raw 0 [1 2 3 4 5 6 7 8 9 10])
+
+; Print the array
+(print fwd)
+```
+
+---
+
+#### fw-write-raw
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(fw-write-raw offset data)
+```
+
+Write data to firmware-buffer at offset. Returns true on success or nil on failure. Unlike fw-write, this function writes directly to the firmware buffer without an offset shift and it supports writing more than 500 bytes at a time.
 
 ---
 
@@ -5802,7 +6752,7 @@ Write data to qml-buffer at offset. Returns true on success or nil/timeout on fa
 (lbm-run running optCanId)
 ```
 
-Run or stop the lbm-code (run if running is 1, stop otherwise). Returns true on success or nil/timeout on failure. If the optional argument optCanId is omitted or set to -1 the command is performed locally, otherwise it is performed on the CAN-device with id optCanId.
+Run or stop the lbm-code (run if running is 1, stop otherwise). Returns true on success or nil/timeout on failure. If the optional argument optCanId is omitted or set to -1 the command is performed locally, otherwise it is performed on the CAN-device with id optCanId. If running is set to 1 and LispBM already is running a restart is performed.
 
 ---
 
@@ -5816,17 +6766,13 @@ The express can use the remote peripheral to drive addressable LEDs on any pin. 
 
 | Platforms | Firmware |
 |---|---|
-| Express | 6.02+ |
+| Express | 6.05+ |
 
 ```clj
-(rgbled-init pin num-leds)
+(rgbled-init pin)
 ```
 
-Initialize the rgbled-driver on pin for num-leds LEDs. Example:
-
-```clj
-(rgbled-init 8 1) ; This is the LED on the DevKitM-1
-```
+Initialize the rgbled-driver on pin. If the driver already is initialized it will be de-initialized first.
 
 ---
 
@@ -5834,13 +6780,47 @@ Initialize the rgbled-driver on pin for num-leds LEDs. Example:
 
 | Platforms | Firmware |
 |---|---|
-| Express | 6.02+ |
+| Express | 6.05+ |
 
 ```clj
 (rgbled-deinit)
 ```
 
-De-initialize the rgbled-driver and release the resources it used.
+De-initialize the rgbled-driver and release the resources it used. If data is currently sent to the LEDs this function will block until that is done.
+
+---
+
+#### rgbled-buffer
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(rgbled-buffer num-leds optLedType optGammaCorr)
+```
+
+Creates an LED-buffer for num-leds leds. The optional argument optLedType specifies the type of LEDs. If it is omitted type 0 (GRB) is used. The available types are:
+
+| Number | LED Type |
+|---|---|
+| 0 | GRB |
+| 1 | RGB |
+| 2 | GRBW |
+| 3 | RGBW |
+| 4 | WRGB |
+
+The optional argument optGammaCorr can be set to enable gamma correction for this LED-buffer. Gamma correction makes the brightness non-linear matching the response of human eyes. Generally that makes colors look better and it is something that all monitors do. The downside is that fewer distinct colors are available as not all bits can be used.
+
+Example:
+
+```clj
+; Create a buffer for 10 GRBW-LEDs
+(def strip1 (rgbled-buffer 10 2))
+
+; Create a buffer for 10 GRB-LEDs with gamma-correction enabled
+(def strip2 (rgbled-buffer 10 0 1))
+```
 
 ---
 
@@ -5848,16 +6828,390 @@ De-initialize the rgbled-driver and release the resources it used.
 
 | Platforms | Firmware |
 |---|---|
-| Express | 6.02+ |
+| Express | 6.05+ |
 
 ```clj
-(rgbled-color led-num color)
+(rgbled-color buffer led-num color optBrightness)
 ```
 
-Set LED led-num to color. The color is a number in RGB888. Example:
+Set LED led-num to color in buffer. The color is a number in WRGB8888 format, alternatively a list of numbers in WRGB8888 format. When a list of numbers is used all colors after led-num will be set to the corresponding colors in the list. When the white color is used the type must be u32 as all 32 bits are needed then. Buffer must be created with rgbled-buffer. Example:
 
 ```clj
-(rgbled-color 0 0xFF0000) ; Set the first LED to red
+; Create led-buffer and bind it to strip1
+(def strip1 (rgbled-buffer 10 2))
+
+; Set the first LED to red
+(rgbled-color strip1 0 0x00FF0000u32)
+
+; Set the second LED to white
+(rgbled-color strip1 1 0xFF000000u32)
+
+; Set the second LED to white with 30 % brightness
+(rgbled-color strip1 1 0xFF000000u32 0.3)
+
+; Set LED 4 to white, LED 5 to red and LED 6 to green, all at 40 % brightness
+(rgbled-color strip1 4 '(0xFF000000u32 0x00FF0000u32 0x0000FF00u32) 0.4)
+```
+
+Note: This function only updates the color in the buffer. To show the new color the function rgbled-update must be used.
+
+---
+
+#### rgbled-update
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(rgbled-update buffer)
+```
+
+Send buffer to the LEDs.
+
+### Multiple LED-strips
+
+It is possible to use multiple pins to drive different LED-strips. Even different types of LEDs can be used on the different pins. To do that more than one buffer can be used and rgbled-init can be used to move the driver to a different pin. Example:
+
+```clj
+; In this example a strip with 10 GRBW-LEDs is connected to
+; pin 20 and another strip with 10 GRB-LEDs is conneced to pin 21.
+
+; Buffer for 10 GRBW-LEDs
+(def strip1 (rgbled-buffer 10 2))
+; Buffer for 10 GRB-LEDs
+(def strip2 (rgbled-buffer 10 0))
+
+; Write some colors to the buffers of the
+; two strips
+
+(rgbled-color strip1 0 0x330000)
+(rgbled-color strip1 1 0x22000000u32)
+(rgbled-color strip1 9 0x003311)
+
+(rgbled-color strip2 0 0x330000)
+(rgbled-color strip2 1 0x22000000u32)
+(rgbled-color strip2 6 0x330011)
+
+; Start the driver on pin 20 and send the first buffer
+(rgbled-init 20)
+(rgbled-update strip1)
+
+; Now move the driver to pin 21 and send the other buffer. This
+; function will block until the previous update has finished.
+(rgbled-init 21)
+(rgbled-update strip2)
+```
+
+---
+
+## Color Manipulation
+
+The following functions are useful for manipulating colors and lists of colors. The color format used here is RGB888 (or WRGB8888), which is compatible with both the display and the RGB LED extensions. This format is just a u32-number and it is also compatible with common hexadecimal color codes found in most color pickers and HTML color tables.
+
+---
+
+#### color-make
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(color-make red green blue optWhite)
+```
+
+Make color from individual color components. The components can be expressed in 0 to 255 or as floating point 0.0 to 1.0 (in any combination). optWhite is an optional argument for the white component, which often is used in RGBW LED-strips. Example:
+
+```clj
+(color-make 37 150 90) ; Creates the color 0x2596be
+(color-make 0.146 0.59 0.747) ; Creates the color 0x2596be
+```
+
+---
+
+#### color-split
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(color-split color optMode)
+```
+
+Split color into a list of components. The optional argument optMode can be used to define how the color is split. The options are:
+
+| Number | Mode |
+|---|---|
+| 0 | (red green blue) |
+| 1 | (red green blue white) |
+| 2 | (red-float green-float blue-float) |
+| 3 | (red-float green-float blue-float white-float) |
+
+Example:
+
+```clj
+(color-split 0x123456)
+> (18 52 86)
+
+(color-split 0x123456 1)
+> (18 52 86 0)
+
+(color-split 0x50123456u32 1)
+> (18 52 86 80)
+
+(color-split 0x123456 2)
+> (0.070588f32 0.203922f32 0.337255f32)
+
+(color-split 0x123456 3)
+> (0.070588f32 0.203922f32 0.337255f32 0.000000f32)
+
+(color-split (color-make 123 250 99))
+> (123 250 99)
+```
+
+---
+
+#### color-mix
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(color-mix color1 color2 ratio)
+```
+
+Mix color1 with color2 with mix-ratio ratio. Ratio has a range of 0.0 to 1.0. Ratio 0.0 will result in color1 and ratio 1.0 will result in color2. The argument color1 can be a single color or a list of colors. If it is a list of colors a list with the mixed colors will be returned.
+
+Example:
+
+```clj
+; Helper function to print colors as components
+(defun print-color (c)
+    (if (eq (type-of c) type-list)
+        (print (map (fn (x) (color-split x 1)) c))
+        (print (color-split c 1))
+    )
+)
+
+(print-color (color-mix (color-make 123 250 99) (color-make 12 25 9) 0.3))
+> (89 182 71 0)
+
+(print-color (color-mix '(0x224488 0x111111 0x222222) 0x446699 0.5))
+> ((51 85 144 0) (42 59 85 0) (51 68 93 0))
+```
+
+---
+
+#### color-add
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(color-add color1 color2)
+```
+
+Add color2 to color1. The components are truncated at 255. As with color-mix, the argument color1 can be a single color or a list with colors. Example:
+
+```clj
+; Helper function to print colors as components
+(defun print-color (c)
+    (if (eq (type-of c) type-list)
+        (print (map (fn (x) (color-split x 1)) c))
+        (print (color-split c 1))
+    )
+)
+
+(print-color (color-add (color-make 123 250 99) (color-make 12 25 9)))
+> (135 255 108 0)
+
+(print-color (color-add '(0x224488 0x111111 0x222222) 0x446699))
+> ((102 170 255 0) (85 119 170 0) (102 136 187 0))
+```
+
+#### color-sub
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(color-sub color1 color2)
+```
+
+Subtract color2 from color1. The components are truncated at 0. As with color-mix, the argument color1 can be a single color or a list with colors.
+
+---
+
+#### color-scale
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(color-sub color factor)
+```
+
+Scale color with factor. The result is truncated between 0 to 255. As with color-mix, the argument color can be a single color or a list with colors. The argument factor is a scaling factor. Example:
+
+```clj
+; Helper function to print colors as components
+(defun print-color (c)
+    (if (eq (type-of c) type-list)
+        (print (map (fn (x) (color-split x 1)) c))
+        (print (color-split c 1))
+    )
+)
+
+(print-color (color-scale (color-make 123 250 99) 2.0))
+> (246 255 198 0)
+
+(print-color (color-scale '(0x224488 0x111111 0x222222) 0.6))
+> ((20 40 81 0) (10 10 10 0) (20 20 20 0))
+```
+
+---
+
+## File (De-)Compression
+
+---
+
+#### unzip
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(unzip input fileInZip optOutputFile)
+```
+
+Unzip input. Input can be a byte array or a file handle on the SD-card. FileInZip is the file in the zip-archive; if it is a string the filename will be used and if it is an integer its sequence number will be used. The optional argument optOutputFile can be used to specify a file to write the output to - if it is not provided the decompressed file is returned as a byte array.
+
+**Note:**   
+When optOutputFile is used the firmware buffer is used to temporally store the output file in order to make the operation as fast as possible. That means if anything is in the firmware buffer it will be destroyed. It also means that the maximum size of the output file is 1.5 MB.
+
+Examples:
+
+```clj
+; Unzip the first file of the archive test.zip (on the SD-card) to the byte array uz 
+(def f (f-open "test.zip" "r"))
+(def uz (unzip f 0))
+(f-close f)
+```
+
+```clj
+; Unzip the file hello.txt of the archive test.zip (on the SD-card) to the byte array uz 
+(def f (f-open "test.zip" "r"))
+(def uz (unzip f "hello.txt"))
+(f-close f)
+```
+
+```clj
+; Unzip the first file of the imported archive test.zip to the byte array uz 
+(import "test.zip" 'test)
+(def uz (unzip test 0))
+```
+
+```clj
+; Unzip the file hello.txt of the imported archive test.zip to the byte array uz 
+(import "test.zip" 'test)
+(def uz (unzip test "hello.txt"))
+```
+
+```clj
+; Unzip the file hello.txt of the archive test.zip (on the SD-card) to the file hello.txt on the SD-card 
+(def f (f-open "test.zip" "r"))
+(def f-out (f-open "hello.txt" "w"))
+(unzip f "hello.txt" f-out)
+(f-close f)
+(f-close f-out)
+```
+
+```clj
+; Unzip the file hello.txt of the archive imported test.zip to the file hello.txt on the SD-card 
+(import "test.zip" 'test)
+(def f-out (f-open "hello.txt" "w"))
+(unzip test "hello.txt" f-out)
+(f-close f-out)
+```
+
+---
+
+#### zip-ls
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(zip-ls input)
+```
+
+List all files in the archive input. Input can be a byte array or a file handle on the SD-card. Returns a list with the entries; each entry is a list where the first element is the name and the second element is the size when uncompressed.
+
+Example:
+
+```clj
+; List all files in the archive test.zip on the SD-card
+(def f (f-open "test.zip" "r"))
+(print (zip-ls f))
+(f-close f)
+
+> (("test.txt" 7) ("fw.bin" 291871))
+```
+
+```clj
+; List all files in the imported archive test.zip
+(import "test.zip" 'test)
+(print (zip-ls test))
+
+> (("test.txt" 7) ("fw.bin" 291871))
+```
+
+---
+
+## Crypto
+
+---
+
+#### aes-ctr-crypt
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(aes-ctr-crypt key counter data start-offset length)
+```
+
+Performs in-place AES-CTR (128/192/256) encryption/decryption. Counter will also be updated.
+
+Example:
+
+```clj
+(def data [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15]) 
+(def key [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15]) 
+(def counter [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15])
+(def start-offset 5)
+(def len 6)
+; Encrypt data
+(aes-ctr-crypt key counter data start-offset len)
+(print data)
+> [0 1 2 3 4 15 146 12 189 72 100 11 12 13 14 15]
+(print counter)
+> [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 16]
+; Reset counter
+(setq counter [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15])
+; Decrypt data
+(aes-ctr-crypt key counter data start-offset len)
+(print data)
+> [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15]
 ```
 
 ---
@@ -5876,7 +7230,21 @@ Set LED led-num to color. The color is a number in RGB888. Example:
 (sleep-deep time)
 ```
 
-Put the CPU in deep sleep mode for time seconds. If time is negative the CPU will sleep forever, or until a wakeup pin triggers a wakeup.
+Put the CPU in deep sleep mode for time seconds. If time is negative the CPU will sleep forever, or until a wakeup pin triggers a wakeup. Waking up from sleep-deep results in a complete reset.
+
+---
+
+#### sleep-light
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(sleep-light time)
+```
+
+Put the CPU in light sleep mode for time seconds. Waking up will return to the point where sleep-light was called without a complete reset, but the power draw is much higher than for sleep-deep. Note that wifi and bluetooth are disabled when using this function, so they have to be enabled again when waking up.
 
 ---
 
@@ -5891,6 +7259,170 @@ Put the CPU in deep sleep mode for time seconds. If time is negative the CPU wil
 ```
 
 Configure pin to wake up the CPU from sleep mode. The available pins are 0 to 5 and state can be 0 or 1. 0 means that a low state wakes up the CPU and 1 means that a high state wakes up the CPU.
+
+---
+
+#### rtc-data
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(rtc-data)
+```
+
+Returns a 4k byte array from RTC memory that can be used as a general purpose array. What is special about it is that it is retained in deep sleep mode, which is useful for storing state while the CPU is in deep sleep mode.
+
+---
+
+## Connection Checks
+
+---
+
+#### connected-wifi
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(connected-wifi)
+```
+
+Check if any client (e.g. VESC Tool) is connected over wifi. Returns true when connected, nil otherwise.
+
+---
+
+#### connected-hub
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(connected-hub)
+```
+
+Check if we are connected to the TCP hub. Returns true when connected, nil otherwise. Notice that this does not tell if someone is connected to us using the hub, it only tells that we are connected to the hub and that others can connect to us.
+
+---
+
+#### connected-ble
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(connected-ble)
+```
+
+Check if any client (e.g. VESC Tool) is connected over ble. Returns true when connected, nil otherwise.
+
+---
+
+#### connected-usb
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.05+ |
+
+```clj
+(connected-usb)
+```
+
+Check if any client (e.g. VESC Tool) is connected over usb. Returns true when connected, nil otherwise.
+
+---
+
+## Non-Volatile Storage (NVS) on QML Partition
+
+The QML-partition on the ESP32 can be used to store non-volatile data as key-values. Note that QML-data cannot be stored as usual when using the QML-partition as NVS.
+
+---
+
+#### nvs-qml-erase
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(nvs-qml-erase)
+```
+
+Erase all data on QML-partition.
+
+---
+
+#### nvs-qml-init
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(nvs-qml-init)
+```
+
+Initialize the QML-partition with the NVS-module. This has to be done before further NVS-operations can be used. If needed, the QML-partition will be erased; this can happen if other data is stored on the QML-partition that is incompatible with the NVS-module.
+
+---
+
+#### nvs-qml-read
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(nvs-qml-read key)
+```
+
+Read key from QML-partition, return the content as a byte array. This can fail if key does not exist or if (nvs-qml-init) has not been run.
+
+---
+
+#### nvs-qml-write
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(nvs-qml-write key data)
+```
+
+Write data to key on QML-partition. If key already exists the old data will be replaced. This can fail if (nvs-qml-init) has not been run or if there is not enough space.
+
+---
+
+#### nvs-qml-erase-key
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(nvs-qml-erase-key key)
+```
+
+Erase single key from QML-partition. This can fail if key does not exist or if (nvs-qml-init) has not been run.
+
+---
+
+#### nvs-qml-list
+
+| Platforms | Firmware |
+|---|---|
+| Express | 6.06+ |
+
+```clj
+(nvs-qml-list)
+```
+
+Returns a list with all existing NVS keys. If (nvs-qml-init) has not been run this always returns nil.
 
 ---
 

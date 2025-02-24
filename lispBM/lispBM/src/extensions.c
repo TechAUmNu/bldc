@@ -24,6 +24,7 @@
 #include <eval_cps.h>
 
 #include "extensions.h"
+#include "lbm_utils.h"
 
 static lbm_uint ext_max    = 0;
 static lbm_uint ext_num    = 0;
@@ -71,7 +72,7 @@ extension_fptr lbm_get_extension(lbm_uint sym) {
 }
 
 bool lbm_clr_extension(lbm_uint sym_id) {
-  lbm_uint ext_id = sym_id - EXTENSION_SYMBOLS_START;
+  lbm_uint ext_id = SYMBOL_IX(sym_id);
   if (ext_id >= ext_max) {
     return false;
   }
@@ -83,7 +84,7 @@ bool lbm_clr_extension(lbm_uint sym_id) {
 bool lbm_lookup_extension_id(char *sym_str, lbm_uint *ix) {
   for (lbm_uint i = 0; i < ext_max; i ++) {
     if(extension_table[i].name) {
-      if (strcmp(extension_table[i].name, sym_str) == 0) {
+      if (str_eq(extension_table[i].name, sym_str)) {
         *ix = i + EXTENSION_SYMBOLS_START;
         return true;
       }
@@ -99,9 +100,9 @@ bool lbm_add_extension(char *sym_str, extension_fptr ext) {
   if (lbm_get_symbol_by_name(sym_str, &symbol)) {
     if (lbm_is_extension(lbm_enc_sym(symbol))) {
       // update the extension entry.
-      if (strcmp(extension_table[symbol - EXTENSION_SYMBOLS_START].name, sym_str) == 0) {
+      if (str_eq(extension_table[SYMBOL_IX(symbol)].name, sym_str)) {
         // Do not replace name ptr.
-        extension_table[symbol - EXTENSION_SYMBOLS_START].fptr = ext;
+        extension_table[SYMBOL_IX(symbol)].fptr = ext;
         return true;
       }
     }
@@ -162,4 +163,33 @@ bool lbm_check_argn_number(lbm_value *args, lbm_uint argn, lbm_uint n) {
   } else {
     return true;
   }
+}
+
+lbm_value make_list(int num, ...) {
+  va_list arguments;
+  va_start (arguments, num);
+  lbm_value res = ENC_SYM_NIL;
+  for (int i = 0; i < num; i++) {
+    res = lbm_cons(va_arg(arguments, lbm_value), res);
+  }
+  va_end (arguments);
+  return lbm_list_destructive_reverse(res);
+}
+
+bool strmatch(const char *str1, const char *str2) {
+  size_t len = strlen(str1);
+
+  if (str2[len] != ' ') {
+    return false;
+  }
+
+  bool same = true;
+  for (unsigned int i = 0;i < len;i++) {
+    if (str1[i] != str2[i]) {
+      same = false;
+      break;
+    }
+  }
+
+  return same;
 }

@@ -170,8 +170,8 @@ typedef float    lbm_float;
 
 typedef struct {
 	uint8_t *buf;
-	size_t   buf_size;
-	uint32_t buf_pos;
+	lbm_uint buf_size;
+	lbm_uint buf_pos;
 } lbm_flat_value_t;
 
 typedef struct {
@@ -207,6 +207,7 @@ typedef bool (*load_extension_fptr)(char*,extension_fptr);
 
 typedef void* lib_thread;
 typedef void* lib_mutex;
+typedef void* lib_semaphore;
 
 typedef enum {
 	VESC_PIN_COMM_RX = 0,
@@ -277,6 +278,25 @@ typedef enum {
 	CFG_PARAM_IMU_rot_roll,
 	CFG_PARAM_IMU_rot_pitch,
 	CFG_PARAM_IMU_rot_yaw,
+	CFG_PARAM_IMU_ahrs_mode,
+	CFG_PARAM_IMU_sample_rate,
+	CFG_PARAM_IMU_accel_offset_x,
+	CFG_PARAM_IMU_accel_offset_y,
+	CFG_PARAM_IMU_accel_offset_z,
+	CFG_PARAM_IMU_gyro_offset_x,
+	CFG_PARAM_IMU_gyro_offset_y,
+	CFG_PARAM_IMU_gyro_offset_z,
+
+	CFG_PARAM_app_shutdown_mode,
+
+	// Motor Additional Info
+	CFG_PARAM_si_motor_poles,
+	CFG_PARAM_si_gear_ratio,
+	CFG_PARAM_si_wheel_diameter,
+	CFG_PARAM_si_battery_type,
+	CFG_PARAM_si_battery_cells,
+	CFG_PARAM_si_battery_ah,
+	CFG_PARAM_si_motor_nl_current,
 } CFG_PARAM;
 
 typedef struct {
@@ -290,7 +310,10 @@ typedef struct {
 
 /*
  * Function pointer struct. Always add new function pointers to the end in order to not
- * break compatibility with old binaries.
+ * break compatibility with old binaries. If a function is not available (e.g. in an
+ * old firmware) it will be a null-pointer. If you make a package that is meant to
+ * run on older firmware too you can check if the newer functions are null pointers to
+ * know if they are available.
  */
 typedef struct {
 	// LBM
@@ -315,7 +338,7 @@ typedef struct {
 
 	lbm_value (*lbm_enc_i)(lbm_int x);
 	lbm_value (*lbm_enc_u)(lbm_uint x);
-	lbm_value (*lbm_enc_char)(char x);
+	lbm_value (*lbm_enc_char)(uint8_t x);
 	lbm_value (*lbm_enc_float)(float f);
 	lbm_value (*lbm_enc_u32)(uint32_t u);
 	lbm_value (*lbm_enc_i32)(int32_t i);
@@ -324,7 +347,7 @@ typedef struct {
 	float (*lbm_dec_as_float)(lbm_value val);
 	uint32_t (*lbm_dec_as_u32)(lbm_value val);
 	int32_t (*lbm_dec_as_i32)(lbm_value val);
-	char (*lbm_dec_char)(lbm_value x);
+	uint8_t (*lbm_dec_char)(lbm_value x);
 	char* (*lbm_dec_str)(lbm_value);
 	lbm_uint (*lbm_dec_sym)(lbm_value x);
 
@@ -535,7 +558,7 @@ typedef struct {
 	volatile gnss_data* (*mc_gnss)(void);
 
 	// Mutex
-	lib_mutex (*mutex_create)(void);
+	lib_mutex (*mutex_create)(void); // Use VESC_IF->free on the mutex when done with it
 	void (*mutex_lock)(lib_mutex);
 	void (*mutex_unlock)(lib_mutex);
 
@@ -594,6 +617,8 @@ typedef struct {
 	void (*foc_set_openloop_duty)(float dutyCycle, float rpm);
 	void (*foc_set_openloop_duty_phase)(float dutyCycle, float phase);
 
+	// Functions below were added in firmware 6.05
+
 	// Flat values
 	bool (*lbm_start_flatten)(lbm_flat_value_t *v, size_t buffer_size);
 	bool (*lbm_finish_flatten)(lbm_flat_value_t *v);
@@ -611,6 +636,26 @@ typedef struct {
 	// Unblock unboxed
 	bool (*lbm_unblock_ctx_unboxed)(lbm_cid cid, lbm_value unboxed);
 
+	// Time since boot in system ticks. Resolution: 100 uS.
+	// Use ts_to_age_s to get the age of a timestamp in
+	// seconds. ts_to_age_s should handle overflows.
+	systime_t (*system_time_ticks)(void);
+	void (*sleep_ticks)(systime_t ticks);
+
+	// FOC Audio
+	bool (*foc_beep)(float freq, float time, float voltage);
+	bool (*foc_play_tone)(int channel, float freq, float voltage);
+	void (*foc_stop_audio)(bool reset);
+	bool (*foc_set_audio_sample_table)(int channel, float *samples, int len);
+	const float* (*foc_get_audio_sample_table)(int channel);
+	bool (*foc_play_audio_samples)(const int8_t *samples, int num_samp, float f_samp, float voltage);
+
+	// Semaphore
+	lib_semaphore (*sem_create)(void); // Use VESC_IF->free on the semaphore when done with it
+	void (*sem_wait)(lib_semaphore);
+	void (*sem_signal)(lib_semaphore);
+	bool (*sem_wait_to)(lib_semaphore, systime_t); // Returns false on timeout
+	void (*sem_reset)(lib_semaphore);
 } vesc_c_if;
 
 typedef struct {
@@ -618,6 +663,9 @@ typedef struct {
 	void *arg;
 	uint32_t base_addr;
 } lib_info;
+
+// System tick rate. Can be used to convert system ticks to time
+#define SYSTEM_TICK_RATE_HZ 10000
 
 // VESC-interface with function pointers
 #define VESC_IF		((vesc_c_if*)(0x1000F800))

@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 #include "conf_general.h"
 #include "ch.h"
 #include "eeprom.h"
@@ -179,7 +182,7 @@ bool conf_general_store_backup_data(void) {
  * true for success, false if variable was not found.
  */
 bool conf_general_read_eeprom_var_hw(eeprom_var *v, int address) {
-	if (address < 0 || address > (EEPROM_VARS_HW - 1)) {
+	if (address < 0 || address >= EEPROM_VARS_HW) {
 		return false;
 	}
 	return read_eeprom_var(v, address, EEPROM_BASE_HW);
@@ -198,7 +201,7 @@ bool conf_general_read_eeprom_var_hw(eeprom_var *v, int address) {
  * true for success, false if variable was not found.
  */
 bool conf_general_read_eeprom_var_custom(eeprom_var *v, int address) {
-	if (address < 0 || address > (EEPROM_VARS_CUSTOM - 1)) {
+	if (address < 0 || address >= EEPROM_VARS_CUSTOM) {
 		return false;
 	}
 	return read_eeprom_var(v, address, EEPROM_BASE_CUSTOM);
@@ -217,7 +220,7 @@ bool conf_general_read_eeprom_var_custom(eeprom_var *v, int address) {
  * true for success, false if something went wrong.
  */
 bool conf_general_store_eeprom_var_hw(eeprom_var *v, int address) {
-	if (address < 0 || address > (EEPROM_VARS_HW - 1)) {
+	if (address < 0 || address >= EEPROM_VARS_HW) {
 		return false;
 	}
 	return store_eeprom_var(v, address, EEPROM_BASE_HW);
@@ -236,7 +239,7 @@ bool conf_general_store_eeprom_var_hw(eeprom_var *v, int address) {
  * true for success, false if something went wrong.
  */
 bool conf_general_store_eeprom_var_custom(eeprom_var *v, int address) {
-	if (address < 0 || address > (EEPROM_VARS_CUSTOM - 1)) {
+	if (address < 0 || address >= EEPROM_VARS_CUSTOM) {
 		return false;
 	}
 	return store_eeprom_var(v, address, EEPROM_BASE_CUSTOM);
@@ -1811,7 +1814,11 @@ int conf_general_detect_apply_all_foc(float max_power_loss,
 #ifdef HW_HAS_DUAL_MOTORS
 	mcconf->foc_f_zv = 25000.0;
 #else
-	mcconf->foc_f_zv = 40000.0;
+	if (mcconf->foc_control_sample_mode == FOC_CONTROL_SAMPLE_MODE_V0_V7) {
+		mcconf->foc_f_zv = 25000.0;
+	} else {
+		mcconf->foc_f_zv = 40000.0;
+	}
 #endif
 	mc_interface_set_configuration(mcconf);
 
@@ -2187,3 +2194,5 @@ int conf_general_detect_apply_all_foc_can(bool detect_can, float max_power_loss,
 
 	return res;
 }
+
+#pragma GCC pop_options

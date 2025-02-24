@@ -1,6 +1,6 @@
 /** \file env.h */
 /*
-    Copyright 2018 Joel Svensson        svenssonjoel@yahoo.se
+    Copyright 2018, 2025 Joel Svensson        svenssonjoel@yahoo.se
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,6 +39,10 @@ int lbm_init_env(void);
  * \return the global environment
  */
 lbm_value *lbm_get_global_env(void);
+/**
+ * \return the size of the global env in number of heap cells.
+ */
+lbm_uint lbm_get_global_env_size(void);
 /** Copy the spine of an environment. The list structure is
  * recreated but the values themselves are not copied but rather
  * just referenced.
@@ -61,13 +65,6 @@ bool lbm_env_lookup_b(lbm_value *res, lbm_value sym, lbm_value env);
  * \return True on success or false otherwise.
  */
 bool lbm_global_env_lookup(lbm_value *res, lbm_value sym);
-/** Lookup a value in from the global environment.
- *
- * \param sym The key to look for in the environment
- * \param env The environment to search for the key.
- * \return The value bound to key or lbm_enc_sym(SYM_NOT_FOUND).
- */
-lbm_value lbm_env_lookup(lbm_value sym, lbm_value env);
 /** Create a new binding on the environment or replace an old binding.
  *
  * \param env Environment to modify.
@@ -100,17 +97,6 @@ lbm_value lbm_env_modify_binding(lbm_value env, lbm_value key, lbm_value val);
  * \return Updated environment or not_found symbol.
  */
 lbm_value lbm_env_drop_binding(lbm_value env, lbm_value key);
-// Internal use
-/** Extend an environment given a list of keys and a list of values.
- *
- * \param params The list of keys.
- * \param args The list of values.
- * \param env0 An initial environment to extend
- * \return The extended environment on success and lbm_enc_sym(SYM_MERROR) if GC needs to be run.
- */
-lbm_value lbm_env_build_params_args(lbm_value params,
-                                    lbm_value args,
-                                    lbm_value env0);
 
 #ifdef __cplusplus
 }

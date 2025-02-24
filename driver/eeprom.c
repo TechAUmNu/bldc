@@ -23,6 +23,9 @@
  * @{
  */
 
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 /* Includes ------------------------------------------------------------------*/
 #include "eeprom.h"
 #include "flash_helper.h"
@@ -652,6 +655,8 @@ static uint16_t EE_EraseSectorIfNotEmpty(uint32_t FLASH_Sector) {
 
 	return FLASH_NO_ERROR;
 }
+
+#pragma GCC pop_options
 
 /**
  * @}

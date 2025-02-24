@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 #include "ch.h"
 #include "hal.h"
 #include "comm_usb.h"
@@ -29,7 +32,7 @@
 static uint8_t serial_rx_buffer[SERIAL_RX_BUFFER_SIZE];
 static int serial_rx_read_pos = 0;
 static int serial_rx_write_pos = 0;
-static THD_WORKING_AREA(serial_read_thread_wa, 256);
+__attribute__((section(".ram4"))) static THD_WORKING_AREA(serial_read_thread_wa, 256);
 static THD_WORKING_AREA(serial_process_thread_wa, 2048);
 static mutex_t send_mutex;
 static thread_t *process_tp;
@@ -140,3 +143,5 @@ void comm_usb_send_packet(unsigned char *data, unsigned int len) {
 unsigned int comm_usb_get_write_timeout_cnt(void) {
 	return write_timeout_cnt;
 }
+
+#pragma GCC pop_options

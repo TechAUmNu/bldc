@@ -2,19 +2,28 @@
 
 echo "BUILDING"
 
-make clean
-make gc
+rm -f test_lisp_code_cps_gc
+make test_lisp_code_cps_gc
 
-echo "PERFORMING TESTS:"
+timeout="50"
+date=$(date +"%Y-%m-%d_%H-%M")
+logfile="log_gc_${date}.log"
 
-expected_fails=("test_lisp_code_cps -t 360 -h 1024 test_take_iota_0.lisp"
-                "test_lisp_code_cps -t 360 -s -h 1024 test_take_iota_0.lisp"
-                "test_lisp_code_cps -t 360 -h 512 test_take_iota_0.lisp"
-                "test_lisp_code_cps -t 360 -s -h 512 test_take_iota_0.lisp"
-                "test_lisp_code_cps -t 360 -i -h 1024 test_take_iota_0.lisp"
-                "test_lisp_code_cps -t 360 -i -s -h 1024 test_take_iota_0.lisp"
-                "test_lisp_code_cps -t 360 -i -h 512 test_take_iota_0.lisp"
-                "test_lisp_code_cps -t 360 -i -s -h 512 test_take_iota_0.lisp"
+if [ -n "$1" ]; then
+   logfile=$1
+fi
+
+
+echo "PERFORMING TESTS: " $date
+
+expected_fails=("test_lisp_code_cps_gc -t $timeout -h 1024 tests/test_take_iota_0.lisp"
+                "test_lisp_code_cps_gc -t $timeout -s -h 1024 tests/test_take_iota_0.lisp"
+                "test_lisp_code_cps_gc -t $timeout -h 512 tests/test_take_iota_0.lisp"
+                "test_lisp_code_cps_gc -t $timeout -s -h 512 tests/test_take_iota_0.lisp"
+                "test_lisp_code_cps_gc -t $timeout -i -h 1024 tests/test_take_iota_0.lisp"
+                "test_lisp_code_cps_gc -t $timeout -i -s -h 1024 tests/test_take_iota_0.lisp"
+                "test_lisp_code_cps_gc -t $timeout -i -h 512 tests/test_take_iota_0.lisp"
+                "test_lisp_code_cps_gc -t $timeout -i -s -h 512 tests/test_take_iota_0.lisp"
                )
 
 
@@ -23,91 +32,59 @@ fail_count=0
 failing_tests=()
 result=0
 
-for exe in *.exe; do
+test_config=("-t $timeout -h 32768"
+             "-t $timeout -i -h 32768"
+              "-t $timeout -s -h 32768"
+              "-t $timeout -i -s -h 32768"
+              "-t $timeout -h 16384"
+              "-t $timeout -i -h 16384"
+              "-t $timeout -s -h 16384"
+              "-t $timeout -i -s -h 16384"
+              "-t $timeout -h 8192"
+              "-t $timeout -i -h 8192"
+              "-t $timeout -s -h 8192"
+              "-t $timeout -i -s -h 8192"
+              "-t $timeout -h 4096"
+              "-t $timeout -i -h 4096"
+              "-t $timeout -s -h 4096"
+              "-t $timeout -i -s -h 4096"
+              "-t $timeout -h 2048"
+              "-t $timeout -i -h 2048"
+              "-t $timeout -s -h 2048"
+              "-t $timeout -i -s -h 2048"
+              "-t $timeout -h 1024"
+              "-t $timeout -i -h 1024"
+              "-t $timeout -s -h 1024"
+              "-t $timeout -i -s -h 1024"
+              "-t $timeout -h 512"
+              "-t $timeout -i -h 512"
+              "-t $timeout -s -h 512"
+              "-t $timeout -i -s -h 512")
 
-    if [ "$exe" = "test_gensym.exe" ]; then
-        continue
-    fi
 
-    ./$exe
-
-    result=$?
-
-    echo "------------------------------------------------------------"
-    if [ $result -eq 1 ]
-    then
-        success_count=$((success_count+1))
-        echo $exe SUCCESS
-    else
-
-        fail_count=$((fail_count+1))
-        echo $exe FAILED
-    fi
-    echo "------------------------------------------------------------"
+for conf in "${test_config[@]}" ; do
+    expected_fails+=("test_lisp_code_cps_gc $conf tests/test_is_64bit.lisp")
 done
 
-test_config=("-t 360 -h 32768"
-             "-t 360 -i -h 32768"
-              "-t 360 -s -h 32768"
-              "-t 360 -i -s -h 32768"
-              "-t 360 -h 16384"
-              "-t 360 -i -h 16384"
-              "-t 360 -s -h 16384"
-              "-t 360 -i -s -h 16384"
-              "-t 360 -h 8192"
-              "-t 360 -i -h 8192"
-              "-t 360 -s -h 8192"
-              "-t 360 -i -s -h 8192"
-              "-t 360 -h 4096"
-              "-t 360 -i -h 4096"
-              "-t 360 -s -h 4096"
-              "-t 360 -i -s -h 4096"
-              "-t 360 -h 2048"
-              "-t 360 -i -h 2048"
-              "-t 360 -s -h 2048"
-              "-t 360 -i -s -h 2048"
-              "-t 360 -h 1024"
-              "-t 360 -i -h 1024"
-              "-t 360 -s -h 1024"
-              "-t 360 -i -s -h 1024"
-              "-t 360 -h 512"
-              "-t 360 -i -h 512"
-              "-t 360 -s -h 512"
-              "-t 360 -i -s -h 512")
 
-#"test_lisp_code_cps_nc"
-for prg in "test_lisp_code_cps" ; do
+for prg in "test_lisp_code_cps_gc" ; do
     for arg in "${test_config[@]}"; do
-        for lisp in *.lisp; do
-
-            ./$prg $arg $lisp
-
+        echo "Configuration: " $arg
+        for lisp in tests/*.lisp; do
+            tmp_file=$(mktemp)
+            ./$prg $arg $lisp > $tmp_file
             result=$?
-
-            echo "------------------------------------------------------------"
-            #echo $arg
             if [ $result -eq 1 ]
             then
                 success_count=$((success_count+1))
-                echo $lisp SUCCESS
             else
-
-                #!/bin/bash
-                # foo=('foo bar' 'foo baz' 'bar baz')
-                # bar=$(printf ",%s" "${foo[@]}")
-                # bar=${bar:1}
-
-                # echo $bar
-                str=$(printf "%s " "$prg $arg $lisp")
-                #echo $str
-
                 failing_tests+=("$prg $arg $lisp")
                 fail_count=$((fail_count+1))
-                #echo $failing_tests
 
                 echo $lisp FAILED
+                cat $tmp_file >> $logfile
             fi
-            echo "------------------------------------------------------------"
+            rm $tmp_file
         done
     done
 done

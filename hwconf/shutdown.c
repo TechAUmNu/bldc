@@ -26,7 +26,9 @@
 #include "lispif.h"
 #endif
 
-#ifdef HW_SHUTDOWN_HOLD_ON
+#ifdef HW_SHUTDOWN_CUSTOM
+// Do nothing. All shutdown functionality is handled in the hardware file.
+#elif defined(HW_SHUTDOWN_HOLD_ON)
 
 // Private variables
 bool volatile m_button_pressed = false;
@@ -73,15 +75,16 @@ void shutdown_hold(bool hold) {
 }
 
 bool do_shutdown(bool resample) {
-	conf_general_store_backup_data();
 #ifdef USE_LISPBM
 	lispif_process_shutdown();
 #endif
-	chThdSleepMilliseconds(100);
 
 	while (m_shutdown_hold) {
 		chThdSleepMilliseconds(5);
 	}
+
+	conf_general_store_backup_data();
+	chThdSleepMilliseconds(100);
 
 	bool disable_gates = true;
 	if (resample) {

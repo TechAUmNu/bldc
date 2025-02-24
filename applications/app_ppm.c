@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 #include "app.h"
 
 #include "ch.h"
@@ -35,7 +38,7 @@
 
 // Threads
 static THD_FUNCTION(ppm_thread, arg);
-static THD_WORKING_AREA(ppm_thread_wa, 512);
+__attribute__((section(".ram4"))) static THD_WORKING_AREA(ppm_thread_wa, 512);
 static thread_t *ppm_tp;
 static volatile bool ppm_rx = false;
 
@@ -559,3 +562,5 @@ static THD_FUNCTION(ppm_thread, arg) {
 
 	}
 }
+
+#pragma GCC pop_options
