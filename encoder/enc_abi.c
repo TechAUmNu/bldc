@@ -72,7 +72,7 @@ bool enc_abi_init(ABI_config_t *cfg) {
 	HW_ENC_TIM_CLK_EN();
 
 	// Enable SYSCFG clock
-	rccEnableAHB2(RCC_APB2ENR_SYSCFGEN, FALSE);
+	rccEnableAHB2(RCC_APB2ENR_SYSCFGEN, TRUE);
 
 	TIM_EncoderInterfaceConfig(cfg->timer,
 			TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);

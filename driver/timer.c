@@ -26,7 +26,7 @@
 #define TIMER_HZ					1.4e7
 
 void timer_init(void) {
-	rccEnableTIM5(FALSE);
+	rccEnableTIM5(TRUE);
 	uint16_t PrescalerValue = (uint16_t) ((SYSTEM_CORE_CLOCK / 2) / TIMER_HZ) - 1;
 
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;

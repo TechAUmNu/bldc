@@ -149,14 +149,14 @@
 #define HW_HALL_ENC_PIN3			8
 #define HW_ENC_TIM					TIM3
 #define HW_ENC_TIM_AF				GPIO_AF_TIM3
-#define HW_ENC_TIM_CLK_EN()			rccEnableTIM3(FALSE)
+#define HW_ENC_TIM_CLK_EN()			rccEnableTIM3(TRUE)
 #define HW_ENC_EXTI_PORTSRC			GPIOC
 #define HW_ENC_EXTI_PINSRC			8
 
 // ICU Peripheral for servo decoding
 #define HW_USE_SERVO_TIM4
 #define HW_ICU_TIMER				TIM4
-#define HW_ICU_TIM_CLK_EN()			rccEnableTIM4(FALSE)
+#define HW_ICU_TIM_CLK_EN()			rccEnableTIM4(TRUE)
 #define HW_ICU_DEV					ICUD4
 #define HW_ICU_CHANNEL				ICU_CHANNEL_1
 #define HW_ICU_GPIO_AF				GPIO_AF_TIM4

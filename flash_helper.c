@@ -147,7 +147,7 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 
 	for (int i = 0;i < NEW_APP_SECTORS;i++) {
 		if (new_app_size > flash_addr[NEW_APP_BASE + i]) {
-			uint16_t res = efl_lld_start_erase_sector(&EFLD1, flash_sector[NEW_APP_BASE + i]);
+			uint16_t res = efl_lld_start_erase_sector(&EFLD1, NEW_APP_BASE + i);
 			if (res != FLASH_NO_ERROR) {
 				efl_lld_stop(&EFLD1);
 				timeout_configure_IWDT();
@@ -170,7 +170,7 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 }
 
 uint16_t flash_helper_erase_bootloader(void) {
-	return erase_sector(flash_sector[BOOTLOADER_BASE]);
+	return erase_sector(BOOTLOADER_BASE);
 }
 
 uint16_t flash_helper_write_new_app_data(uint32_t offset, uint8_t *data, uint32_t len) {
@@ -186,7 +186,7 @@ uint16_t flash_helper_erase_code(int ind) {
 
 	code_checks[ind].check_done = false;
 	code_checks[ind].ok = false;
-	return erase_sector(flash_sector[code_sectors[ind]]);
+	return erase_sector(code_sectors[ind]);
 }
 
 uint16_t flash_helper_write_code(int ind, uint32_t offset, uint8_t *data, uint32_t len) {
@@ -301,7 +301,7 @@ uint32_t flash_helper_verify_flash_memory(void) {
 	// Look for a flag indicating that the CRC was previously computed.
 	// If it is blank (0xFFFFFFFF), calculate and store the CRC.
 	if(APP_CRC_WAS_CALCULATED_FLAG_ADDRESS[0] == APP_CRC_WAS_CALCULATED_FLAG) {
-		rccEnableCRC(FALSE);
+		rccEnableCRC(TRUE);
 		crc32_reset();
 
 		// compute vector table (sector 0)
@@ -313,7 +313,7 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		crc = crc32(APP_START_ADDRESS, (APP_SIZE) / 4);
 
 		rccDisableCRC();
-		crc = 0;
+		//crc = 0;
 		// A CRC over the full image should return zero.
 		return (crc == 0) ? FAULT_CODE_NONE : FAULT_CODE_FLASH_CORRUPTION;
 	} else {
@@ -331,7 +331,7 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		}
 
 		// Compute flash crc including the new flag
-		rccEnableCRC(FALSE);
+		rccEnableCRC(TRUE);
 		crc32_reset();
 
 		// compute vector table (sector 0)
@@ -509,5 +509,5 @@ bool flash_helper_write_nvm(uint8_t *v, unsigned int len, unsigned int address) 
   * @retval Boolean indicating success or failure
   */
 bool flash_helper_wipe_nvm(void) {
-	return (erase_sector(flash_sector[8]) == FLASH_NO_ERROR);
+	return (erase_sector(8) == FLASH_NO_ERROR);
 }

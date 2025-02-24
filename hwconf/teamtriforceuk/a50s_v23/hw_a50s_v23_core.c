@@ -38,7 +38,7 @@ static const I2CConfig i2cfg = {
 void hw_init_gpio(void) {
 	// GPIO clock enable
 	rccResetAHB1(STM32_GPIO_EN_MASK);
-	rccEnableAHB1(STM32_GPIO_EN_MASK, FALSE);
+	rccEnableAHB1(STM32_GPIO_EN_MASK, TRUE);
 
 	// LEDs
 	palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL | PAL_STM32_OSPEED_HIGHEST);

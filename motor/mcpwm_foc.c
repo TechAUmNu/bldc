@@ -180,8 +180,8 @@ static void timer_reinit(int f_zv) {
 	TIM2->CNT = 0;
 	TIM8->CNT = 0;
 
-	rccEnableTIM1(FALSE);
-	rccEnableTIM8(FALSE);
+	rccEnableTIM1(TRUE);
+	rccEnableTIM8(TRUE);
 
 	TIM_TimeBaseStructure.TIM_Prescaler = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned1;
@@ -257,7 +257,7 @@ static void timer_reinit(int f_zv) {
 	TIM_CCPreloadControl(TIM8, ENABLE);
 	TIM_ARRPreloadConfig(TIM8, ENABLE);
 
-	rccEnableTIM2(FALSE);
+	rccEnableTIM2(TRUE);
 
 	TIM_TimeBaseStructure.TIM_Prescaler = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -388,10 +388,10 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	DMA_InitTypeDef DMA_InitStructure;
 	ADC_InitTypeDef ADC_InitStructure;
 
-	rccEnableDMA2(FALSE);
-	rccEnableADC1(FALSE);
-	rccEnableADC2(FALSE);
-	rccEnableADC3(FALSE);
+	rccEnableDMA2(TRUE);
+	rccEnableADC1(TRUE);
+	rccEnableADC2(TRUE);
+	rccEnableADC3(TRUE);
 
 	dmaStreamAlloc(STM32_DMA_STREAM_ID(2, 4),
 					  5,

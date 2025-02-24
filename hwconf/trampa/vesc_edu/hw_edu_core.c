@@ -48,7 +48,7 @@ void hw_init_gpio(void) {
 
 	// GPIO clock enable
 	rccResetAHB1(STM32_GPIO_EN_MASK);
-	rccEnableAHB1(STM32_GPIO_EN_MASK, FALSE);
+	rccEnableAHB1(STM32_GPIO_EN_MASK, TRUE);
 
 	// LEDs
 	palSetPadMode(LED_GREEN_GPIO, LED_GREEN_PIN,
@@ -121,7 +121,7 @@ void hw_init_gpio(void) {
 
 	// DAC as voltage reference for shunt amps
 	palSetPadMode(GPIOA, 4, PAL_MODE_INPUT_ANALOG);
-	rccEnableDAC1(false);
+	rccEnableDAC1(TRUE);
 	DAC->CR |= DAC_CR_EN1;
 	DAC->DHR12R1 = 2047;
 
