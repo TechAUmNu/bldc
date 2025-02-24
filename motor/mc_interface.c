@@ -2949,10 +2949,6 @@ static THD_FUNCTION(fault_stop_thread, arg) {
 			mcpwm_foc_stop_pwm(fault_data_copy.is_second_motor);
 			break;
 
-		case MOTOR_TYPE_GPD:
-			gpdrive_set_mode(GPD_OUTPUT_MODE_NONE);
-			break;
-
 		default:
 			break;
 		}

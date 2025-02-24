@@ -69,7 +69,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_flash.h"
+//#include "stm32f4xx_flash.h"
 
 #ifndef FLASH_CR_MER1
 #define FLASH_CR_MER1                        FLASH_CR_MER

@@ -771,10 +771,9 @@ static bool const_heap_write(lbm_uint ix, lbm_uint w) {
 		return true;
 	}
 
-	stm32_flash_unlock(&EFLD1);
-	stm32_flash_clear_status(&EFLD1);
+	eflStart(&EFLD1, NULL);
 	FLASH_ProgramWord((uint32_t)(const_heap_ptr + ix), w);
-	stm32_flash_lock(&EFLD1);
+	eflStop(&EFLD1);
 
 	if (const_heap_ptr[ix] != w) {
 		return false;

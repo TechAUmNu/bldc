@@ -218,7 +218,7 @@ bool main_init_done(void) {
 int main(void) {
 	halInit();
 	chSysInit();
-	eflStart(&EFLD1, NULL);
+
 	// Initialize the enable pins here and disable them
 	// to avoid excessive current draw at boot because of
 	// floating pins.
@@ -233,7 +233,7 @@ int main(void) {
 	palClearPad(BOOT_OK_GPIO, BOOT_OK_PIN);
 #endif
 
-	chThdSleepMilliseconds(100);
+	//chThdSleepMilliseconds(100);
 
 	mempools_init();
 	events_init();
@@ -243,8 +243,8 @@ int main(void) {
 
 	timer_init();
 	conf_general_init();
-
-	if (flash_helper_verify_flash_memory() == FAULT_CODE_FLASH_CORRUPTION)	{
+	volatile uint32_t result = flash_helper_verify_flash_memory();
+	if (result == FAULT_CODE_FLASH_CORRUPTION)	{
 		// Loop here, it is not safe to run any code
 		while (1) {
 			chThdSleepMilliseconds(100);
@@ -295,10 +295,10 @@ int main(void) {
 	// Threads
 	chThdCreateStatic(led_thread_wa, sizeof(led_thread_wa), NORMALPRIO, led_thread, NULL);
 	chThdCreateStatic(periodic_thread_wa, sizeof(periodic_thread_wa), NORMALPRIO, periodic_thread, NULL);
-	chThdCreateStatic(flash_integrity_check_thread_wa, sizeof(flash_integrity_check_thread_wa), LOWPRIO, flash_integrity_check_thread, NULL);
+	//chThdCreateStatic(flash_integrity_check_thread_wa, sizeof(flash_integrity_check_thread_wa), LOWPRIO, flash_integrity_check_thread, NULL);
 
-	timeout_init();
-	timeout_configure(appconf->timeout_msec, appconf->timeout_brake_current, appconf->kill_sw_mode);
+	//timeout_init();
+	//timeout_configure(appconf->timeout_msec, appconf->timeout_brake_current, appconf->kill_sw_mode);
 
 #if HAS_BLACKMAGIC
 	bm_init();
@@ -308,7 +308,7 @@ int main(void) {
 
 	imu_reset_orientation();
 
-	chThdSleepMilliseconds(500);
+	//chThdSleepMilliseconds(500);
 	m_init_done = true;
 
 #ifdef BOOT_OK_GPIO

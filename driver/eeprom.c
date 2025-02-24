@@ -90,8 +90,10 @@ uint16_t EE_Init(void)
 			{
 				return FlashStatus;
 			}
+
 			/* Mark Page1 as valid */
-			FlashStatus = FLASH_ProgramHalfWord(PAGE1_BASE_ADDRESS, VALID_PAGE);
+			uint16_t buffer = VALID_PAGE;
+			FlashStatus = efl_lld_program(&EFLD1, (uint32_t)PAGE1_BASE_ADDRESS - FLASH_BASE, 2, (uint8_t *)&buffer);
 			/* If program operation was failed, a Flash error code is returned */
 			if (FlashStatus != FLASH_NO_ERROR)
 			{
@@ -138,7 +140,8 @@ uint16_t EE_Init(void)
 				}
 			}
 			/* Mark Page0 as valid */
-			FlashStatus = FLASH_ProgramHalfWord(PAGE0_BASE_ADDRESS, VALID_PAGE);
+			uint16_t buffer = VALID_PAGE;
+			FlashStatus = efl_lld_program(&EFLD1, (uint32_t)PAGE0_BASE_ADDRESS - FLASH_BASE, 2, (uint8_t *)&buffer);
 			/* If program operation was failed, a Flash error code is returned */
 			if (FlashStatus != FLASH_NO_ERROR)
 			{
@@ -162,7 +165,8 @@ uint16_t EE_Init(void)
 				return FlashStatus;
 			}
 			/* Mark Page0 as valid */
-			FlashStatus = FLASH_ProgramHalfWord(PAGE0_BASE_ADDRESS, VALID_PAGE);
+			uint16_t buffer = VALID_PAGE;
+			FlashStatus = efl_lld_program(&EFLD1, (uint32_t)PAGE0_BASE_ADDRESS - FLASH_BASE, 2, (uint8_t *)&buffer);
 			/* If program operation was failed, a Flash error code is returned */
 			if (FlashStatus != FLASH_NO_ERROR)
 			{
@@ -229,7 +233,8 @@ uint16_t EE_Init(void)
 				}
 			}
 			/* Mark Page1 as valid */
-			FlashStatus = FLASH_ProgramHalfWord(PAGE1_BASE_ADDRESS, VALID_PAGE);
+			uint16_t buffer = VALID_PAGE;
+			FlashStatus = efl_lld_program(&EFLD1, (uint32_t)PAGE1_BASE_ADDRESS - FLASH_BASE, 2, (uint8_t *)&buffer);
 			/* If program operation was failed, a Flash error code is returned */
 			if (FlashStatus != FLASH_NO_ERROR)
 			{
@@ -373,7 +378,8 @@ static flash_error_t EE_Format(void)
 	}
 
 	/* Set Page0 as valid page: Write VALID_PAGE at Page0 base address */
-	FlashStatus = FLASH_ProgramHalfWord(PAGE0_BASE_ADDRESS, VALID_PAGE);
+	uint16_t buffer = VALID_PAGE;
+	FlashStatus = efl_lld_program(&EFLD1, (uint32_t)PAGE0_BASE_ADDRESS - FLASH_BASE, 2, (uint8_t *)&buffer);
 
 	/* If program operation was failed, a Flash error code is returned */
 	if (FlashStatus != FLASH_NO_ERROR)
@@ -497,14 +503,14 @@ static uint16_t EE_VerifyPageFullWriteVariable(uint16_t VirtAddress, uint16_t Da
 		if ((*(__IO uint32_t*)Address) == 0xFFFFFFFF)
 		{
 			/* Set variable data */
-			FlashStatus = FLASH_ProgramHalfWord(Address, Data);
+			FlashStatus = efl_lld_program(&EFLD1, (uint32_t)Address - FLASH_BASE, 2, (uint8_t *)&Data);
 			/* If program operation was failed, a Flash error code is returned */
 			if (FlashStatus != FLASH_NO_ERROR)
 			{
 				return FlashStatus;
 			}
 			/* Set variable virtual address */
-			FlashStatus = FLASH_ProgramHalfWord(Address + 2, VirtAddress);
+			FlashStatus = efl_lld_program(&EFLD1, (uint32_t)Address + 2 - FLASH_BASE, 2, (uint8_t *)&VirtAddress);
 			/* Return program operation status */
 			return FlashStatus;
 		}
@@ -563,7 +569,9 @@ static uint16_t EE_PageTransfer(uint16_t VirtAddress, uint16_t Data)
 	}
 
 	/* Set the new Page status to RECEIVE_DATA status */
-	FlashStatus = FLASH_ProgramHalfWord(NewPageAddress, RECEIVE_DATA);
+
+	uint16_t buffer = RECEIVE_DATA;
+	FlashStatus = efl_lld_program(&EFLD1, (uint32_t)NewPageAddress - FLASH_BASE, 2, (uint8_t *)&buffer);
 	/* If program operation was failed, a Flash error code is returned */
 	if (FlashStatus != FLASH_NO_ERROR)
 	{
@@ -608,7 +616,9 @@ static uint16_t EE_PageTransfer(uint16_t VirtAddress, uint16_t Data)
 	}
 
 	/* Set new Page status to VALID_PAGE status */
-	FlashStatus = FLASH_ProgramHalfWord(NewPageAddress, VALID_PAGE);
+	buffer = VALID_PAGE;
+	FlashStatus = efl_lld_program(&EFLD1, (uint32_t)NewPageAddress - FLASH_BASE, 2, (uint8_t *)&buffer);
+
 	/* If program operation was failed, a Flash error code is returned */
 	if (FlashStatus != FLASH_NO_ERROR)
 	{
