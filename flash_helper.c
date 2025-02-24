@@ -130,9 +130,8 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 	lispif_restart(false, false, false);
 #endif
 
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 
 	new_app_size += flash_addr[NEW_APP_BASE];
 
@@ -148,9 +147,9 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 
 	for (int i = 0;i < NEW_APP_SECTORS;i++) {
 		if (new_app_size > flash_addr[NEW_APP_BASE + i]) {
-			uint16_t res = FLASH_EraseSector(flash_sector[NEW_APP_BASE + i], ERASE_VOLTAGE_RANGE);
-			if (res != FLASH_COMPLETE) {
-				FLASH_Lock();
+			uint16_t res = efl_lld_start_erase_sector(&EFLD1, flash_sector[NEW_APP_BASE + i]);
+			if (res != FLASH_NO_ERROR) {
+				stm32_flash_lock(&EFLD1);
 				timeout_configure_IWDT();
 				mc_interface_ignore_input_both(5000);
 				utils_sys_unlock_cnt();
@@ -161,12 +160,13 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 		}
 	}
 
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
+
 	timeout_configure_IWDT();
 	mc_interface_ignore_input_both(100);
 	utils_sys_unlock_cnt();
 
-	return FLASH_COMPLETE;
+	return FLASH_NO_ERROR;
 }
 
 uint16_t flash_helper_erase_bootloader(void) {
@@ -317,14 +317,14 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		// A CRC over the full image should return zero.
 		return (crc == 0) ? FAULT_CODE_NONE : FAULT_CODE_FLASH_CORRUPTION;
 	} else {
-		FLASH_Unlock();
-		FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-				FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+		stm32_flash_unlock(&EFLD1);
+			stm32_flash_clear_status(&EFLD1);
 
 		// Write the flag to indicate CRC has been computed.
 		uint16_t res = FLASH_ProgramWord((uint32_t)APP_CRC_WAS_CALCULATED_FLAG_ADDRESS, APP_CRC_WAS_CALCULATED_FLAG);
-		if (res != FLASH_COMPLETE) {
-			FLASH_Lock();
+		if (res != FLASH_NO_ERROR) {
+			stm32_flash_lock(&EFLD1);
+
 			return FAULT_CODE_FLASH_CORRUPTION;
 		}
 
@@ -344,11 +344,12 @@ uint32_t flash_helper_verify_flash_memory(void) {
 
 		//Store CRC
 		res = FLASH_ProgramWord((uint32_t)APP_CRC_ADDRESS, crc);
-		if (res != FLASH_COMPLETE) {
-			FLASH_Lock();
+		if (res != FLASH_NO_ERROR) {
+			stm32_flash_lock(&EFLD1);
 			return FAULT_CODE_FLASH_CORRUPTION;
 		}
-		FLASH_Lock();
+		stm32_flash_lock(&EFLD1);
+
 
 		// reboot
 		NVIC_SystemReset();
@@ -390,9 +391,8 @@ uint32_t flash_helper_verify_flash_memory_chunk(void) {
 }
 
 static uint16_t erase_sector(uint32_t sector) {
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 
 	mc_interface_ignore_input_both(5000);
 	mc_interface_release_motor_override_both();
@@ -404,9 +404,10 @@ static uint16_t erase_sector(uint32_t sector) {
 	utils_sys_lock_cnt();
 	timeout_configure_IWDT_slowest();
 
-	uint16_t res = FLASH_EraseSector(sector, ERASE_VOLTAGE_RANGE);
+	uint16_t res = efl_lld_start_erase_sector(&EFLD1, sector);
 
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
+
 	timeout_configure_IWDT();
 	mc_interface_ignore_input_both(100);
 	utils_sys_unlock_cnt();
@@ -414,9 +415,8 @@ static uint16_t erase_sector(uint32_t sector) {
 }
 
 static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 
 	mc_interface_ignore_input_both(5000);
 	mc_interface_release_motor_override_both();
@@ -430,8 +430,8 @@ static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
 
 	for (uint32_t i = 0;i < len;i++) {
 		uint16_t res = FLASH_ProgramByte(base + i, data[i]);
-		if (res != FLASH_COMPLETE) {
-			FLASH_Lock();
+		if (res != FLASH_NO_ERROR) {
+			stm32_flash_lock(&EFLD1);
 			timeout_configure_IWDT();
 			mc_interface_ignore_input_both(5000);
 			utils_sys_unlock_cnt();
@@ -439,12 +439,12 @@ static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
 		}
 	}
 
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
 	timeout_configure_IWDT();
 	mc_interface_ignore_input_both(100);
 	utils_sys_unlock_cnt();
 
-	return FLASH_COMPLETE;
+	return FLASH_NO_ERROR;
 }
 
 static void qmlui_check(int ind) {
@@ -500,7 +500,7 @@ bool flash_helper_write_nvm(uint8_t *v, unsigned int len, unsigned int address) 
 
 	uint16_t res = write_data(ADDR_FLASH_SECTOR_8 + address, v, len);
 
-	return (res == FLASH_COMPLETE);
+	return (res == FLASH_NO_ERROR);
 }
 
 /**
@@ -508,5 +508,5 @@ bool flash_helper_write_nvm(uint8_t *v, unsigned int len, unsigned int address) 
   * @retval Boolean indicating success or failure
   */
 bool flash_helper_wipe_nvm(void) {
-	return (erase_sector(flash_sector[8]) == FLASH_COMPLETE);
+	return (erase_sector(flash_sector[8]) == FLASH_NO_ERROR);
 }

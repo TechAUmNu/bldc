@@ -52,7 +52,7 @@ static uint16_t EE_EraseSectorIfNotEmpty(uint32_t FLASH_Sector);
  *   corruption after a power loss.
  * @param  None.
  * @retval - Flash error code: on write Flash error
- *         - FLASH_COMPLETE: on success
+ *         - FLASH_NO_ERROR: on success
  */
 uint16_t EE_Init(void)
 {
@@ -367,7 +367,7 @@ static flash_error_t EE_Format(void)
 	FlashStatus = EE_EraseSectorIfNotEmpty(PAGE0_ID);
 
 	/* If erase operation was failed, a Flash error code is returned */
-	if (FlashStatus != FLASH_COMPLETE)
+	if (FlashStatus != FLASH_NO_ERROR)
 	{
 		return FlashStatus;
 	}

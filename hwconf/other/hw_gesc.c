@@ -25,7 +25,6 @@
 #include "terminal.h"
 #include "mcpwm.h"
 #include "mcpwm_foc.h"
-#include "gpdrive.h"
 #include "app.h"
 #include "mempools.h"
 #include "timeout.h"

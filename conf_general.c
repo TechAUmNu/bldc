@@ -85,11 +85,10 @@ void conf_general_init(void) {
 		VirtAddVarTab[ind++] = EEPROM_BASE_BACKUP + i;
 	}
 
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 	EE_Init();
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
 
 	// Read backup data
 	bool is_ok = true;
@@ -148,20 +147,19 @@ bool conf_general_store_backup_data(void) {
 	uint8_t *data_addr = (uint8_t*)&g_backup;
 	uint16_t var;
 
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 
 	for (unsigned int i = 0;i < (sizeof(backup_data) / 2);i++) {
 		var = (data_addr[2 * i] << 8) & 0xFF00;
 		var |= data_addr[2 * i + 1] & 0xFF;
 
-		if (EE_WriteVariable(EEPROM_BASE_BACKUP + i, var) != FLASH_COMPLETE) {
+		if (EE_WriteVariable(EEPROM_BASE_BACKUP + i, var) != FLASH_NO_ERROR) {
 			is_ok = false;
 			break;
 		}
 	}
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
 
 	timeout_configure_IWDT();
 
@@ -268,21 +266,20 @@ static bool store_eeprom_var(eeprom_var *v, int address, uint16_t base) {
 
 	timeout_configure_IWDT_slowest();
 
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 
-	if (EE_WriteVariable(base + address * 2, var0) != FLASH_COMPLETE) {
+	if (EE_WriteVariable(base + address * 2, var0) != FLASH_NO_ERROR) {
 		is_ok = false;
 	}
 
 	if (is_ok) {
-		if (EE_WriteVariable(base + address * 2 + 1, var1) != FLASH_COMPLETE) {
+		if (EE_WriteVariable(base + address * 2 + 1, var1) != FLASH_NO_ERROR) {
 			is_ok = false;
 		}
 	}
 
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
 
 	timeout_configure_IWDT();
 
@@ -369,20 +366,20 @@ bool conf_general_store_app_configuration(app_configuration *conf) {
 
 	conf->crc = app_calc_crc(conf);
 
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 
 	for (unsigned int i = 0;i < (sizeof(app_configuration) / 2);i++) {
 		var = (conf_addr[2 * i] << 8) & 0xFF00;
 		var |= conf_addr[2 * i + 1] & 0xFF;
 
-		if (EE_WriteVariable(EEPROM_BASE_APPCONF + i, var) != FLASH_COMPLETE) {
+		if (EE_WriteVariable(EEPROM_BASE_APPCONF + i, var) != FLASH_NO_ERROR) {
 			is_ok = false;
 			break;
 		}
 	}
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
+
 
 	timeout_configure_IWDT();
 
@@ -480,20 +477,19 @@ bool conf_general_store_mc_configuration(mc_configuration *conf, bool is_motor_2
 
 	conf->crc = mc_interface_calc_crc(conf, is_motor_2);
 
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 
 	for (unsigned int i = 0;i < (sizeof(mc_configuration) / 2);i++) {
 		uint16_t var = (conf_addr[2 * i] << 8) & 0xFF00;
 		var |= conf_addr[2 * i + 1] & 0xFF;
 
-		if (EE_WriteVariable(base + i, var) != FLASH_COMPLETE) {
+		if (EE_WriteVariable(base + i, var) != FLASH_NO_ERROR) {
 			is_ok = false;
 			break;
 		}
 	}
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
 
 	timeout_configure_IWDT();
 

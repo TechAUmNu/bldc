@@ -771,11 +771,10 @@ static bool const_heap_write(lbm_uint ix, lbm_uint w) {
 		return true;
 	}
 
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-			FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	stm32_flash_unlock(&EFLD1);
+	stm32_flash_clear_status(&EFLD1);
 	FLASH_ProgramWord((uint32_t)(const_heap_ptr + ix), w);
-	FLASH_Lock();
+	stm32_flash_lock(&EFLD1);
 
 	if (const_heap_ptr[ix] != w) {
 		return false;
