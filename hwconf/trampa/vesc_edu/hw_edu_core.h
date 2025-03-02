@@ -197,6 +197,7 @@
 #define HW_ICU_GPIO_AF			GPIO_AF_TIM4
 #define HW_ICU_GPIO				GPIOB
 #define HW_ICU_PIN				6
+#define HW_ICU_RESET()			rccResetTIM4()
 
 // I2C Peripheral
 #define HW_I2C_DEV				I2CD2
@@ -216,8 +217,9 @@
 #define HW_ENC_TIM				TIM3
 #define HW_ENC_TIM_AF			GPIO_AF_TIM3
 #define HW_ENC_TIM_CLK_EN()		rccEnableTIM3(TRUE)
-#define HW_ENC_EXTI_PORTSRC			GPIOC
-#define HW_ENC_EXTI_PINSRC			8
+#define HW_ENC_EXTI_PORTSRC		GPIOC
+#define HW_ENC_EXTI_PINSRC		8
+#define HW_ENC_TIM_RESET()		rccResetTIM3()
 
 // SPI pins
 #define HW_SPI_DEV				SPID1

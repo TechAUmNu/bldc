@@ -94,7 +94,7 @@ bool enc_abi_init(ABI_config_t *cfg) {
 
 void enc_abi_deinit(ABI_config_t *cfg) {
 	palDisablePadEvent(cfg->exti_portsrc, cfg->exti_pinsrc);
-	TIM_DeInit(cfg->timer);
+	HW_ENC_TIM_RESET();
 	palSetPadMode(cfg->A_gpio, cfg->A_pin, PAL_MODE_INPUT_PULLUP);
 	palSetPadMode(cfg->B_gpio, cfg->B_pin, PAL_MODE_INPUT_PULLUP);
 	palSetPadMode(cfg->I_gpio, cfg->I_pin, PAL_MODE_INPUT_PULLUP);

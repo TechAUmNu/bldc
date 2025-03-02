@@ -69,7 +69,7 @@ bool encoder_init(volatile mc_configuration *conf) {
 	// Handled by PAL
 	//nvicDisableVector(HW_ENC_EXTI_CH);
 	//nvicDisableVector(HW_ENC_TIM_ISR_CH);
-	TIM_DeInit(HW_ENC_TIM);
+	HW_ENC_TIM_RESET();
 
 	switch (conf->m_sensor_port_mode) {
 	case SENSOR_PORT_MODE_ABI: {
@@ -310,7 +310,7 @@ void encoder_deinit(void) {
 	// Handled by PAL
 	//nvicDisableVector(HW_ENC_EXTI_CH);
 	//nvicDisableVector(HW_ENC_TIM_ISR_CH);
-	TIM_DeInit(HW_ENC_TIM);
+	HW_ENC_TIM_RESET();
 
 	if (m_encoder_type_now == ENCODER_TYPE_AS504x) {
 		enc_as504x_deinit(&encoder_cfg_as504x);

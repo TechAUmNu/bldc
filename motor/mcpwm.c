@@ -226,8 +226,9 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	// Create current FIR filter
 	filter_create_fir_lowpass((float*)current_fir_coeffs, CURR_FIR_FCUT, CURR_FIR_TAPS_BITS, 1);
 
-	TIM_DeInit(TIM1);
-	TIM_DeInit(TIM8);
+	rccResetTIM1();
+	rccResetTIM8();
+
 	TIM1->CNT = 0;
 	TIM8->CNT = 0;
 
@@ -467,8 +468,8 @@ void mcpwm_deinit(void) {
 		chThdSleepMilliseconds(1);
 	}
 
-	TIM_DeInit(TIM1);
-	TIM_DeInit(TIM8);
+	rccResetTIM1();
+	rccResetTIM8();
 	ADC_DeInit();
 	DMA_DeInit(DMA2_Stream4);
 	nvicDisableVector(ADC_IRQn);

@@ -80,7 +80,7 @@ void pwm_servo_stop(void) {
 		palSetPadMode(HW_ICU_GPIO, HW_ICU_PIN, PAL_MODE_INPUT);
 	}
 
-	TIM_DeInit(HW_ICU_TIMER);
+	HW_ICU_RESET();
 	m_is_running = false;
 }
 
