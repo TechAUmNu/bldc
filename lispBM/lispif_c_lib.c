@@ -46,7 +46,7 @@
 #include "pwm_servo.h"
 #include "flash_helper.h"
 #include "mcpwm_foc.h"
-//#include "stm32f4xx_conf.h"
+#include "stm32f4xx_conf.h"
 
 // Function prototypes otherwise missing
 void packet_init(void (*s_func)(unsigned char *data, unsigned int len),

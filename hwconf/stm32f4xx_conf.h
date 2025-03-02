@@ -12,7 +12,7 @@
 //#include "stm32f4xx_rcc.h"
 //#include "stm32f4xx_syscfg.h"
 #include "stm32f4xx_tim.h"
-#include "stm32f4xx_wwdg.h"
-#include "stm32f4xx_iwdg.h"
+//#include "stm32f4xx_wwdg.h"
+//#include "stm32f4xx_iwdg.h"
 
 #endif

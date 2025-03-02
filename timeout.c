@@ -33,6 +33,43 @@ static volatile bool has_timeout;
 static volatile bool kill_sw_active;
 static volatile uint32_t feed_counter[MAX_THREADS_MONITOR];
 
+
+/* Set counter reload value to obtain 12ms IWDG TimeOut.
+ *
+ * LSI timer per datasheet is 32KHz typical, but 17KHz min
+ * and 47KHz max over the complete range of operating conditions,
+ * so reload time must ensure watchdog will work correctly under
+ * all conditions.
+ *
+ * Timeout threads runs every 10ms. Take 20% margin so wdt should
+ * be fed every 12ms. The worst condition occurs when the wdt clock
+ * runs at the max freq (47KHz) due to oscillator tolerances.
+ *
+ * t_IWDG(ms) = t_LSI(ms) * 4 * 2^(IWDG_PR[2:0]) * (IWDG_RLR[11:0] + 1)
+ * t_LSI(ms) [MAX] = 0.021276ms
+ * 12ms = 0.0212765 * 4 * 1 * (140 + 1)
+ *
+ * Counter Reload Value = 140
+ *
+ * When LSI clock runs the slowest, the IWDG will expire every 33.17ms
+ */
+static const WDGConfig wdgcfg_normal = {
+  .pr           = STM32_IWDG_PR_4,
+  .rlr          = STM32_IWDG_RL(140),
+#if STM32_IWDG_IS_WINDOWED
+  .winr         = STM32_IWDG_WIN_DISABLED,
+#endif
+};
+
+
+static const WDGConfig wdgcfg_slowest = {
+  .pr           = STM32_IWDG_PR_256,
+  .rlr          = STM32_IWDG_RL(4000),
+#if STM32_IWDG_IS_WINDOWED
+  .winr         = STM32_IWDG_WIN_DISABLED,
+#endif
+};
+
 // Threads
 static THD_WORKING_AREA(timeout_thread_wa, 256);
 static THD_FUNCTION(timeout_thread, arg);
@@ -46,36 +83,7 @@ void timeout_init(void) {
 	kill_sw_active = false;
 	init_done = true;
 
-	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
-
-	// IWDG counter clock: LSI/4
-	IWDG_SetPrescaler(IWDG_Prescaler_4);
-
-	/* Set counter reload value to obtain 12ms IWDG TimeOut.
-	 *
-	 * LSI timer per datasheet is 32KHz typical, but 17KHz min
-	 * and 47KHz max over the complete range of operating conditions,
-	 * so reload time must ensure watchdog will work correctly under
-	 * all conditions.
-	 *
-	 * Timeout threads runs every 10ms. Take 20% margin so wdt should
-	 * be fed every 12ms. The worst condition occurs when the wdt clock
-	 * runs at the max freq (47KHz) due to oscillator tolerances.
-	 *
-	 * t_IWDG(ms) = t_LSI(ms) * 4 * 2^(IWDG_PR[2:0]) * (IWDG_RLR[11:0] + 1)
-	 * t_LSI(ms) [MAX] = 0.021276ms
-	 * 12ms = 0.0212765 * 4 * 1 * (140 + 1)
-	 *
-	 * Counter Reload Value = 140
-	 *
-	 * When LSI clock runs the slowest, the IWDG will expire every 33.17ms
-	*/
-	IWDG_SetReload(140);
-
-	IWDG_ReloadCounter();
-
-	/* Enable IWDG (the LSI oscillator will be enabled by hardware) */
-	IWDG_Enable();
+	wdgStart(&WDGD1, &wdgcfg_normal);
 
 	chThdSleepMilliseconds(10);
 
@@ -129,22 +137,9 @@ void timeout_configure_IWDT_slowest(void) {
 	// as that can cause a shutdown.
 	SHUTDOWN_SET_SAMPLING_DISABLED(true);
 
-	while(((IWDG->SR & IWDG_SR_RVU) != 0) || ((IWDG->SR & IWDG_SR_PVU) != 0)) {
-		// Continue to kick the dog
-		IWDG_ReloadCounter();
-	}
+	wdgReset(&WDGD1);
 
-	// Unlock register
-	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
-	// Update configuration
-	IWDG_SetReload(4000);
-	IWDG_SetPrescaler(IWDG_Prescaler_256);
-
-	// Wait for the new configuration to be taken into account
-	while(((IWDG->SR & IWDG_SR_RVU) != 0) || ((IWDG->SR & IWDG_SR_PVU) != 0)) {
-		// Continue to kick the dog
-		IWDG_ReloadCounter();
-	}
+	wdgStart(&WDGD1, &wdgcfg_slowest);
 }
 
 void timeout_configure_IWDT(void) {
@@ -154,22 +149,9 @@ void timeout_configure_IWDT(void) {
 
 	SHUTDOWN_SET_SAMPLING_DISABLED(false);
 
-	while(((IWDG->SR & IWDG_SR_RVU) != 0) || ((IWDG->SR & IWDG_SR_PVU) != 0)) {
-		// Continue to kick the dog
-		IWDG_ReloadCounter();
-	}
+	wdgReset(&WDGD1);
 
-	// Unlock register
-	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
-	// Update configuration
-	IWDG_SetReload(140);
-	IWDG_SetPrescaler(IWDG_Prescaler_4);
-
-	// Wait for the new configuration to be taken into account
-	while(((IWDG->SR & IWDG_SR_RVU) != 0) || ((IWDG->SR & IWDG_SR_PVU) != 0)) {
-		// Continue to kick the dog
-		IWDG_ReloadCounter();
-	}
+	wdgStart(&WDGD1, &wdgcfg_normal);
 }
 
 bool timeout_had_IWDG_reset(void) {
@@ -255,7 +237,7 @@ static THD_FUNCTION(timeout_thread, arg) {
 
 		if (threads_ok == true) {
 			// Feed WDT
-			IWDG_ReloadCounter();	// must reload in <12ms
+			wdgReset(&WDGD1);	// must reload in <12ms
 		} else {
 			// not reloading the watchdog will produce a reset.
 			// This can be checked from the GUI logs as
