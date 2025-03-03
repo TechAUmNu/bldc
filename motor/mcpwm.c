@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "mcpwm.h"
+#include "mcpwm_common.h"
 #include "mc_interface.h"
 #include "digital_filter.h"
 #include "utils_math.h"
@@ -159,73 +160,6 @@ static void pll_run(float phase, float dt, volatile float *phase_var,
 
 // Defines
 #define IS_DETECTING()			(state == MC_STATE_DETECTING)
-
-#define TIMER_UPDATE_CH1_0() \
-		TIM1->CCER &= ~TIM_CCER_CC1E; \
-		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; \
-		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; \
-		TIM1->CCER |= TIM_CCER_CC1E; \
-		TIM1->CCER &= ~TIM_CCER_CC1NE;
-
-#define TIMER_UPDATE_CH1_POS() \
-		TIM1->CCER &= ~TIM_CCER_CC1E; \
-		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; \
-		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; \
-		TIM1->CCER |= TIM_CCER_CC1E; \
-		TIM1->CCER |= TIM_CCER_CC1NE;
-
-#define TIMER_UPDATE_CH1_NEG() \
-		TIM1->CCER &= ~TIM_CCER_CC1E; \
-		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; \
-		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; \
-		TIM1->CCER |= TIM_CCER_CC1E; \
-		TIM1->CCER |= TIM_CCER_CC1NE;
-
-
-#define TIMER_UPDATE_CH2_0() \
-		TIM1->CCER &= ~TIM_CCER_CC2E; \
-		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; \
-		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; \
-		TIM1->CCER |= TIM_CCER_CC2E; \
-		TIM1->CCER &= ~TIM_CCER_CC2NE;
-
-#define TIMER_UPDATE_CH2_POS() \
-		TIM1->CCER &= ~TIM_CCER_CC2E; \
-		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; \
-		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; \
-		TIM1->CCER |= TIM_CCER_CC2E; \
-		TIM1->CCER |= TIM_CCER_CC2NE;
-
-#define TIMER_UPDATE_CH2_NEG() \
-		TIM1->CCER &= ~TIM_CCER_CC2E; \
-		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; \
-		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; \
-		TIM1->CCER |= TIM_CCER_CC2E; \
-		TIM1->CCER |= TIM_CCER_CC2NE;
-
-
-#define TIMER_UPDATE_CH3_0() \
-		TIM1->CCER &= ~TIM_CCER_CC3E; \
-		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; \
-		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; \
-		TIM1->CCER |= TIM_CCER_CC3E; \
-		TIM1->CCER &= ~TIM_CCER_CC3NE;
-
-#define TIMER_UPDATE_CH3_POS() \
-		TIM1->CCER &= ~TIM_CCER_CC3E; \
-		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; \
-		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; \
-		TIM1->CCER |= TIM_CCER_CC3E; \
-		TIM1->CCER |= TIM_CCER_CC3NE;
-
-#define TIMER_UPDATE_CH3_NEG() \
-		TIM1->CCER &= ~TIM_CCER_CC3E; \
-		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; \
-		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; \
-		TIM1->CCER |= TIM_CCER_CC3E; \
-		TIM1->CCER |= TIM_CCER_CC3NE;
-
-
 
 // Threads
 static THD_WORKING_AREA(timer_thread_wa, 512);
@@ -2775,49 +2709,16 @@ static void set_switching_frequency(float frequency) {
 
 static void set_next_comm_step(int next_step) {
 	if (conf->motor_type == MOTOR_TYPE_DC) {
-		// 0
 		TIMER_UPDATE_CH2_0();
 
 		if (direction) {
-			// +
 			TIMER_UPDATE_CH1_POS();
-
-			// -
 			TIMER_UPDATE_CH3_NEG();
 		} else {
-			// +
 			TIMER_UPDATE_CH3_POS();
-
-			// -
 			TIMER_UPDATE_CH1_NEG();
 		}
-
 		return;
-	}
-
-	uint16_t positive_oc_mode = TIM_OCMode_PWM1;
-	uint16_t negative_oc_mode = TIM_OCMode_Inactive;
-
-	uint16_t positive_highside = TIM_CCx_Enable;
-	uint16_t positive_lowside = TIM_CCxN_Enable;
-
-	uint16_t negative_highside = TIM_CCx_Enable;
-	uint16_t negative_lowside = TIM_CCxN_Enable;
-
-	// TODO: nobody uses this right?
-	if (!IS_DETECTING()) {
-		switch (conf->pwm_mode) {
-		case PWM_MODE_NONSYNCHRONOUS_HISW:
-			positive_lowside = TIM_CCxN_Disable;
-			break;
-
-		case PWM_MODE_SYNCHRONOUS:
-			break;
-
-		case PWM_MODE_BIPOLAR:
-			negative_oc_mode = TIM_OCMode_PWM2;
-			break;
-		}
 	}
 
 	if (next_step == 1) {
@@ -2827,13 +2728,8 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR2();
 			ENABLE_BR3();
 #endif
-			// 0
 			TIMER_UPDATE_CH1_0();
-
-			// +
 			TIMER_UPDATE_CH2_POS();
-
-			// -
 			TIMER_UPDATE_CH3_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
@@ -2841,14 +2737,9 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR3();
 			ENABLE_BR2();
 #endif
-			// 0
 			TIMER_UPDATE_CH1_0();
-
-			// +
-			TIMER_UPDATE_CH3_POS();
-
-			// -
 			TIMER_UPDATE_CH2_NEG();
+			TIMER_UPDATE_CH3_POS();
 		}
 	} else if (next_step == 2) {
 		if (direction) {
@@ -2857,13 +2748,8 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR1();
 			ENABLE_BR3();
 #endif
-			// 0
-			TIMER_UPDATE_CH2_0();
-
-			// +
 			TIMER_UPDATE_CH1_POS();
-
-			// -
+			TIMER_UPDATE_CH2_0();
 			TIMER_UPDATE_CH3_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
@@ -2871,14 +2757,9 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR1();
 			ENABLE_BR2();
 #endif
-			// 0
-			TIMER_UPDATE_CH3_0();
-
-			// +
 			TIMER_UPDATE_CH1_POS();
-
-			// -
 			TIMER_UPDATE_CH2_NEG();
+			TIMER_UPDATE_CH3_0();
 		}
 	} else if (next_step == 3) {
 		if (direction) {
@@ -2887,27 +2768,17 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR1();
 			ENABLE_BR2();
 #endif
-			// 0
-			TIMER_UPDATE_CH3_0();
-
-			// +
 			TIMER_UPDATE_CH1_POS();
-
-			// -
 			TIMER_UPDATE_CH2_NEG();
+			TIMER_UPDATE_CH3_0();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR2();
 			ENABLE_BR1();
 			ENABLE_BR3();
 #endif
-			// 0
-			TIMER_UPDATE_CH2_0();
-
-			// +
 			TIMER_UPDATE_CH1_POS();
-
-			// -
+			TIMER_UPDATE_CH2_0();
 			TIMER_UPDATE_CH3_NEG();
 		}
 	} else if (next_step == 4) {
@@ -2917,27 +2788,17 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR3();
 			ENABLE_BR2();
 #endif
-			// 0
 			TIMER_UPDATE_CH1_0();
-
-			// +
-			TIMER_UPDATE_CH3_POS();
-
-			// -
 			TIMER_UPDATE_CH2_NEG();
+			TIMER_UPDATE_CH3_POS();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR1();
 			ENABLE_BR2();
 			ENABLE_BR3();
 #endif
-			// 0
 			TIMER_UPDATE_CH1_0();
-
-			// +
 			TIMER_UPDATE_CH2_POS();
-
-			// -
 			TIMER_UPDATE_CH3_NEG();
 		}
 	} else if (next_step == 5) {
@@ -2947,28 +2808,18 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR3();
 			ENABLE_BR1();
 #endif
-			// 0
-			TIMER_UPDATE_CH2_0();
-
-			// +
-			TIMER_UPDATE_CH3_POS();
-
-			// -
 			TIMER_UPDATE_CH1_NEG();
+			TIMER_UPDATE_CH2_0();
+			TIMER_UPDATE_CH3_POS();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR3();
 			ENABLE_BR2();
 			ENABLE_BR1();
 #endif
-			// 0
-			TIMER_UPDATE_CH3_0();
-
-			// +
-			TIMER_UPDATE_CH2_POS();
-
-			// -
 			TIMER_UPDATE_CH1_NEG();
+			TIMER_UPDATE_CH2_POS();
+			TIMER_UPDATE_CH3_0();
 		}
 	} else if (next_step == 6) {
 		if (direction) {
@@ -2977,28 +2828,18 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR2();
 			ENABLE_BR1();
 #endif
-			// 0
-			TIMER_UPDATE_CH3_0();
-
-			// +
-			TIMER_UPDATE_CH2_POS();
-
-			// -
 			TIMER_UPDATE_CH1_NEG();
+			TIMER_UPDATE_CH2_POS();
+			TIMER_UPDATE_CH3_0();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR2();
 			ENABLE_BR3();
 			ENABLE_BR1();
 #endif
-			// 0
-			TIMER_UPDATE_CH2_0();
-
-			// +
-			TIMER_UPDATE_CH3_POS();
-
-			// -
 			TIMER_UPDATE_CH1_NEG();
+			TIMER_UPDATE_CH2_0();
+			TIMER_UPDATE_CH3_POS();
 		}
 	} else {
 #ifdef HW_HAS_DRV8313
