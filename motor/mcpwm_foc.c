@@ -272,20 +272,26 @@ static void timer_reinit(int f_zv) {
 
 #if defined HW_HAS_DUAL_MOTORS || defined HW_HAS_DUAL_PARALLEL
 	// See: https://www.cnblogs.com/shangdawei/p/4758988.html
-	TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_Enable);
-	TIM_SelectMasterSlaveMode(TIM1, TIM_MasterSlaveMode_Enable);
-	TIM_SelectInputTrigger(TIM8, TIM_TS_ITR0);
-	TIM_SelectSlaveMode(TIM8, TIM_SlaveMode_Trigger);
-	TIM_SelectOutputTrigger(TIM8, TIM_TRGOSource_Enable);
-	TIM_SelectOutputTrigger(TIM8, TIM_TRGOSource_Update);
-	TIM_SelectInputTrigger(TIM2, TIM_TS_ITR1);
-	TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Reset);
+	// Master mode - Enable
+	TIM1->CR2 |= TIM_CR2_MMS_0;
+	// Select master slave mode to allow synchronisation with TIM2
+	TIM1->SMCR |= TIM_SMCR_MSM;
+	// Select input trigger for TIM8 - Internal trigger 0
+	TIM8->SMCR &= (uint16_t)~TIM_SMCR_TS;
+	// Select slave mode - trigger
+	TIM8->SMCR |= TIM_SMCR_SMS_1 | TIM_SMCR_SMS_2;
+	// Master mode - Update
+	TIM8->CR2 |= TIM_CR2_MMS_1;
+	// Select input trigger for TIM2 - Internal trigger 0
+	TIM2->SMCR |= TIM_SMCR_ETF_0;
+	// Slave mode - Reset - Rising edge of the selected trigger input (TRGI) reinitializes the counter
+	// and generates an update of the registers.
+	TIM2->SMCR |= TIM_SMCR_SMS_2;
 #else
 	// Master mode - Update
 	TIM1->CR2 |= TIM_CR2_MMS_1;
 	// Select master slave mode to allow synchronisation with TIM2
 	TIM1->SMCR |= TIM_SMCR_MSM;
-
 	// Select input trigger for TIM2 - Internal trigger 0
 	TIM2->SMCR &= (uint16_t)~TIM_SMCR_TS;
 	// Slave mode - Reset - Rising edge of the selected trigger input (TRGI) reinitializes the counter
@@ -2476,10 +2482,15 @@ int mcpwm_foc_dc_cal(bool cal_undriven) {
 	// Start PWM on phase 1
 	stop_pwm_hw((motor_all_state_t*)&m_motor_1);
 	PHASE_FILTER_ON();
-	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+
+	TIM1->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; // Set Output compare to mode PWM1
+	TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+	TIM1->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM1->EGR = TIM_EGR_COMG;
 
 #ifdef HW_HAS_DUAL_MOTORS
 	float current_sum_m2[3] = {0.0, 0.0, 0.0};
@@ -2488,10 +2499,14 @@ int mcpwm_foc_dc_cal(bool cal_undriven) {
 
 	stop_pwm_hw((motor_all_state_t*)&m_motor_2);
 	PHASE_FILTER_ON_M2();
-	TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM8, TIM_Channel_1, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM8, TIM_Channel_1, TIM_CCxN_Enable);
-	TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
+	TIM8->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+	TIM8->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+	TIM8->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; // Set Output compare to mode PWM1
+	TIM8->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+	TIM8->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM8->EGR = TIM_EGR_COMG;
 #endif
 
 	chThdSleep(1);
@@ -2509,18 +2524,26 @@ int mcpwm_foc_dc_cal(bool cal_undriven) {
 	// Start PWM on phase 2
 	stop_pwm_hw((motor_all_state_t*)&m_motor_1);
 	PHASE_FILTER_ON();
-	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+	TIM1->CCER &= ~TIM_CCER_CC2E;		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; // Set Output compare to mode PWM1
+	TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+	TIM1->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM1->EGR = TIM_EGR_COMG;
 
 #ifdef HW_HAS_DUAL_MOTORS
 	stop_pwm_hw((motor_all_state_t*)&m_motor_2);
 	PHASE_FILTER_ON_M2();
-	TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM8, TIM_Channel_2, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM8, TIM_Channel_2, TIM_CCxN_Enable);
-	TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
+	TIM8->CCER &= ~TIM_CCER_CC2E;		// Disable the Channel
+	TIM8->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+	TIM8->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; // Set Output compare to mode PWM1
+	TIM8->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+	TIM8->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM8->EGR = TIM_EGR_COMG;
 #endif
 
 	chThdSleep(1);
@@ -2538,18 +2561,26 @@ int mcpwm_foc_dc_cal(bool cal_undriven) {
 	// Start PWM on phase 3
 	stop_pwm_hw((motor_all_state_t*)&m_motor_1);
 	PHASE_FILTER_ON();
-	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+	TIM1->CCER &= ~TIM_CCER_CC3E;		// Disable the Channel
+	TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+	TIM1->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; // Set Output compare to mode PWM1
+	TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+	TIM1->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM1->EGR = TIM_EGR_COMG;
 
 #ifdef HW_HAS_DUAL_MOTORS
 	stop_pwm_hw((motor_all_state_t*)&m_motor_2);
 	PHASE_FILTER_ON_M2();
-	TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM8, TIM_Channel_3, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM8, TIM_Channel_3, TIM_CCxN_Enable);
-	TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
+	TIM8->CCER &= ~TIM_CCER_CC3E;		// Disable the Channel
+	TIM8->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+	TIM8->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; // Set Output compare to mode PWM1
+	TIM8->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+	TIM8->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM8->EGR = TIM_EGR_COMG;
 #endif
 
 	chThdSleep(1);
@@ -2686,19 +2717,27 @@ int mcpwm_foc_dc_cal(bool cal_undriven) {
 	PHASE_FILTER_ON();
 	
 	// Start PWM on all phases at 50% to get a V0 measurement
-	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+	TIM1->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; // Set Output compare to mode PWM1
+	TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+	TIM1->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+	TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; // Set Output compare to mode PWM1
+	TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+	TIM1->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
-	TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+	TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+	TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+	TIM1->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; // Set Output compare to mode PWM1
+	TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+	TIM1->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 		
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM1->EGR = TIM_EGR_COMG;
 
 	chThdSleep(1);	
 
@@ -2801,8 +2840,10 @@ float mcpwm_foc_get_last_adc_isr_duration(void) {
 void mcpwm_foc_tim_sample_int_handler(void) {
 	if (m_init_done) {
 		// Generate COM event here for synchronization
-		TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
-		TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
+		// Generate event - Capture/Compare control update generation
+		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+		TIM1->EGR = TIM_EGR_COMG;
+		TIM8->EGR = TIM_EGR_COMG;
 
 		virtual_motor_int_handler(
 				m_motor_1.m_motor_state.v_alpha,
@@ -4962,34 +5003,50 @@ static void stop_pwm_hw(motor_all_state_t *motor) {
 	motor->m_iq_set = 0.0;
 
 	if (motor == &m_motor_1) {
-		TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+		TIM1->CCER &= ~TIM_CCER_CC1E; 		// Disable the Channel
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+		TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM1->CCER &= ~TIM_CCER_CC1NE; 		// Disable Channel 1N
 
-		TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+		TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+		TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM1->CCER &= ~TIM_CCER_CC2NE; 		// Disable Channel 2N
 
-		TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+		TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+		TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM1->CCER &= ~TIM_CCER_CC3NE; 		// Disable Channel 3N
 
-		TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+		// Generate event - Capture/Compare control update generation
+		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+		TIM1->EGR = TIM_EGR_COMG;
 
 #ifdef HW_HAS_DUAL_PARALLEL
-		TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_1, TIM_CCxN_Disable);
+		TIM8->CCER &= ~TIM_CCER_CC1E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM8->CCER &= ~TIM_CCER_CC1NE; 		// Disable Channel 1N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_2, TIM_CCxN_Disable);
+		TIM8->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM8->CCER &= ~TIM_CCER_CC2NE; 		// Disable Channel 2N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_3, TIM_CCxN_Disable);
+		TIM8->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM8->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM8->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM8->CCER &= ~TIM_CCER_CC3NE; 		// Disable Channel 3N
 
-		TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
+		// Generate event - Capture/Compare control update generation
+		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+		TIM8->EGR = TIM_EGR_COMG;
 #endif
 
 #ifdef HW_HAS_DRV8313
@@ -4997,20 +5054,27 @@ static void stop_pwm_hw(motor_all_state_t *motor) {
 #endif
 		PHASE_FILTER_OFF();
 	} else {
-		TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_1, TIM_CCxN_Disable);
+		TIM8->CCER &= ~TIM_CCER_CC1E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM8->CCER &= ~TIM_CCER_CC1NE; 		// Disable Channel 1N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_2, TIM_CCxN_Disable);
+		TIM8->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM8->CCER &= ~TIM_CCER_CC2NE; 		// Disable Channel 2N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_3, TIM_CCxN_Disable);
+		TIM8->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM8->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM8->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM8->CCER &= ~TIM_CCER_CC3NE; 		// Disable Channel 3N
 
-		TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
-
+		// Generate event - Capture/Compare control update generation
+		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+		TIM8->EGR = TIM_EGR_COMG;
 #ifdef HW_HAS_DRV8313_2
 		DISABLE_BR_2();
 #endif
@@ -5023,30 +5087,42 @@ static void stop_pwm_hw(motor_all_state_t *motor) {
 
 static void start_pwm_hw(motor_all_state_t *motor) {
 	if (motor == &m_motor_1) {
-		TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+		TIM1->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; // Set Output compare to mode PWM1
+		TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM1->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-		TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+		TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; // Set Output compare to mode PWM1
+		TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM1->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-		TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+		TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; // Set Output compare to mode PWM1
+		TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM1->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 
 #ifdef HW_HAS_DUAL_PARALLEL
-		TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM8, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_1, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; // Set Output compare to mode PWM1
+		TIM8->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM8->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM8, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_2, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; // Set Output compare to mode PWM1
+		TIM8->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM8->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM8, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_3, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM8->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM8->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; // Set Output compare to mode PWM1
+		TIM8->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM8->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 
 		PHASE_FILTER_ON_M2();
 
@@ -5056,24 +5132,29 @@ static void start_pwm_hw(motor_all_state_t *motor) {
 #endif
 
 		// Generate COM event in ADC interrupt to get better synchronization
-		//	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
-
+		// TIM1->EGR = TIM_EGR_COMG;
 #ifdef HW_HAS_DRV8313
 		ENABLE_BR();
 #endif
 		PHASE_FILTER_ON();
 	} else {
-		TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM8, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_1, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; // Set Output compare to mode PWM1
+		TIM8->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM8->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM8, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_2, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; // Set Output compare to mode PWM1
+		TIM8->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM8->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_OCMode_PWM1);
-		TIM_CCxCmd(TIM8, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_3, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM8->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM8->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; // Set Output compare to mode PWM1
+		TIM8->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM8->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 
 #ifdef HW_HAS_DRV8313_2
 		ENABLE_BR_2();
@@ -5086,19 +5167,27 @@ static void start_pwm_hw(motor_all_state_t *motor) {
 
 static void full_brake_hw(motor_all_state_t *motor) {
 	if (motor == &m_motor_1) {
-		TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+		TIM1->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+		TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM1->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-		TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+		TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+		TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM1->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-		TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+		TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+		TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM1->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 
-		TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+		// Generate event - Capture/Compare control update generation
+		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+		TIM1->EGR = TIM_EGR_COMG;
 		PHASE_FILTER_ON();
 
 #ifdef HW_HAS_DRV8313
@@ -5106,19 +5195,28 @@ static void full_brake_hw(motor_all_state_t *motor) {
 #endif
 
 #ifdef HW_HAS_DUAL_PARALLEL
-		TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_1, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM8->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_2, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM8->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_3, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM8->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM8->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM8->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 
-		TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
+		// Generate event - Capture/Compare control update generation
+		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+		TIM8->EGR = TIM_EGR_COMG;
+		PHASE_FILTER_ON();
 		PHASE_FILTER_ON_M2();
 
 #ifdef HW_HAS_DRV8313_2
@@ -5126,19 +5224,27 @@ static void full_brake_hw(motor_all_state_t *motor) {
 #endif
 #endif
 	} else {
-		TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_1, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+		TIM8->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_2, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+		TIM8->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+		TIM8->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+		TIM8->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-		TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM8, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM8, TIM_Channel_3, TIM_CCxN_Enable);
+		TIM8->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+		TIM8->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+		TIM8->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+		TIM8->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+		TIM8->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 
-		TIM_GenerateEvent(TIM8, TIM_EventSource_COM);
+		// Generate event - Capture/Compare control update generation
+		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+		TIM8->EGR = TIM_EGR_COMG;
 		PHASE_FILTER_ON_M2();
 
 #ifdef HW_HAS_DRV8313_2

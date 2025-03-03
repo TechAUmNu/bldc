@@ -160,6 +160,73 @@ static void pll_run(float phase, float dt, volatile float *phase_var,
 // Defines
 #define IS_DETECTING()			(state == MC_STATE_DETECTING)
 
+#define TIMER_UPDATE_CH1_0() \
+		TIM1->CCER &= ~TIM_CCER_CC1E; \
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; \
+		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; \
+		TIM1->CCER |= TIM_CCER_CC1E; \
+		TIM1->CCER &= ~TIM_CCER_CC1NE;
+
+#define TIMER_UPDATE_CH1_POS() \
+		TIM1->CCER &= ~TIM_CCER_CC1E; \
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; \
+		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1; \
+		TIM1->CCER |= TIM_CCER_CC1E; \
+		TIM1->CCER |= TIM_CCER_CC1NE;
+
+#define TIMER_UPDATE_CH1_NEG() \
+		TIM1->CCER &= ~TIM_CCER_CC1E; \
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; \
+		TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; \
+		TIM1->CCER |= TIM_CCER_CC1E; \
+		TIM1->CCER |= TIM_CCER_CC1NE;
+
+
+#define TIMER_UPDATE_CH2_0() \
+		TIM1->CCER &= ~TIM_CCER_CC2E; \
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; \
+		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; \
+		TIM1->CCER |= TIM_CCER_CC2E; \
+		TIM1->CCER &= ~TIM_CCER_CC2NE;
+
+#define TIMER_UPDATE_CH2_POS() \
+		TIM1->CCER &= ~TIM_CCER_CC2E; \
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; \
+		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1; \
+		TIM1->CCER |= TIM_CCER_CC2E; \
+		TIM1->CCER |= TIM_CCER_CC2NE;
+
+#define TIMER_UPDATE_CH2_NEG() \
+		TIM1->CCER &= ~TIM_CCER_CC2E; \
+		TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; \
+		TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; \
+		TIM1->CCER |= TIM_CCER_CC2E; \
+		TIM1->CCER |= TIM_CCER_CC2NE;
+
+
+#define TIMER_UPDATE_CH3_0() \
+		TIM1->CCER &= ~TIM_CCER_CC3E; \
+		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; \
+		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; \
+		TIM1->CCER |= TIM_CCER_CC3E; \
+		TIM1->CCER &= ~TIM_CCER_CC3NE;
+
+#define TIMER_UPDATE_CH3_POS() \
+		TIM1->CCER &= ~TIM_CCER_CC3E; \
+		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; \
+		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1; \
+		TIM1->CCER |= TIM_CCER_CC3E; \
+		TIM1->CCER |= TIM_CCER_CC3NE;
+
+#define TIMER_UPDATE_CH3_NEG() \
+		TIM1->CCER &= ~TIM_CCER_CC3E; \
+		TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; \
+		TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; \
+		TIM1->CCER |= TIM_CCER_CC3E; \
+		TIM1->CCER |= TIM_CCER_CC3NE;
+
+
+
 // Threads
 static THD_WORKING_AREA(timer_thread_wa, 512);
 static THD_FUNCTION(timer_thread, arg);
@@ -915,19 +982,27 @@ static void stop_pwm_hw(void) {
 	DISABLE_BR();
 #endif
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
-	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+	TIM1->CCER &= ~TIM_CCER_CC1E; 		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+	TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+	TIM1->CCER &= ~TIM_CCER_CC1NE; 		// Disable Channel 1N
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_InActive);
-	TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+	TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+	TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+	TIM1->CCER &= ~TIM_CCER_CC2NE; 		// Disable Channel 2N
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_ForcedAction_InActive);
-	TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+	TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+	TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+	TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+	TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+	TIM1->CCER &= ~TIM_CCER_CC3NE; 		// Disable Channel 3N
 
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM1->EGR = TIM_EGR_COMG;
 
 	set_switching_frequency(conf->m_bldc_f_sw_max);
 }
@@ -943,19 +1018,27 @@ static void full_brake_hw(void) {
 	ENABLE_BR();
 #endif
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
-	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+	TIM1->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
+	TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
+	TIM1->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_InActive);
-	TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+	TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
+	TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
+	TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
+	TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
+	TIM1->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_ForcedAction_InActive);
-	TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+	TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
+	TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
+	TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
+	TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
+	TIM1->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
 
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+	// Generate event - Capture/Compare control update generation
+	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
+	TIM1->EGR = TIM_EGR_COMG;
 
 	set_switching_frequency(conf->m_bldc_f_sw_max);
 }
@@ -2693,30 +2776,20 @@ static void set_switching_frequency(float frequency) {
 static void set_next_comm_step(int next_step) {
 	if (conf->motor_type == MOTOR_TYPE_DC) {
 		// 0
-		TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_Inactive);
-		TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+		TIMER_UPDATE_CH2_0();
 
 		if (direction) {
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_PWM1);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+			TIMER_UPDATE_CH1_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+			TIMER_UPDATE_CH3_NEG();
 		} else {
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+			TIMER_UPDATE_CH3_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+			TIMER_UPDATE_CH1_NEG();
 		}
 
 		return;
@@ -2731,6 +2804,7 @@ static void set_next_comm_step(int next_step) {
 	uint16_t negative_highside = TIM_CCx_Enable;
 	uint16_t negative_lowside = TIM_CCxN_Enable;
 
+	// TODO: nobody uses this right?
 	if (!IS_DETECTING()) {
 		switch (conf->pwm_mode) {
 		case PWM_MODE_NONSYNCHRONOUS_HISW:
@@ -2754,19 +2828,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR3();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH1_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, positive_lowside);
+			TIMER_UPDATE_CH2_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, negative_lowside);
+			TIMER_UPDATE_CH3_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR1();
@@ -2774,19 +2842,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR2();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH1_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, positive_lowside);
+			TIMER_UPDATE_CH3_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, negative_lowside);
+			TIMER_UPDATE_CH2_NEG();
 		}
 	} else if (next_step == 2) {
 		if (direction) {
@@ -2796,19 +2858,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR3();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH2_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, positive_lowside);
+			TIMER_UPDATE_CH1_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, negative_lowside);
+			TIMER_UPDATE_CH3_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR3();
@@ -2816,19 +2872,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR2();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH3_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, positive_lowside);
+			TIMER_UPDATE_CH1_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, negative_lowside);
+			TIMER_UPDATE_CH2_NEG();
 		}
 	} else if (next_step == 3) {
 		if (direction) {
@@ -2838,19 +2888,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR2();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH3_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, positive_lowside);
+			TIMER_UPDATE_CH1_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, negative_lowside);
+			TIMER_UPDATE_CH2_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR2();
@@ -2858,19 +2902,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR3();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH2_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, positive_lowside);
+			TIMER_UPDATE_CH1_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, negative_lowside);
+			TIMER_UPDATE_CH3_NEG();
 		}
 	} else if (next_step == 4) {
 		if (direction) {
@@ -2880,19 +2918,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR2();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH1_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, positive_lowside);
+			TIMER_UPDATE_CH3_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, negative_lowside);
+			TIMER_UPDATE_CH2_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR1();
@@ -2900,19 +2932,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR3();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH1_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, positive_lowside);
+			TIMER_UPDATE_CH2_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, negative_lowside);
+			TIMER_UPDATE_CH3_NEG();
 		}
 	} else if (next_step == 5) {
 		if (direction) {
@@ -2922,19 +2948,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR1();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH2_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, positive_lowside);
+			TIMER_UPDATE_CH3_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, negative_lowside);
+			TIMER_UPDATE_CH1_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR3();
@@ -2942,19 +2962,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR1();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH3_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, positive_lowside);
+			TIMER_UPDATE_CH2_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, negative_lowside);
+			TIMER_UPDATE_CH1_NEG();
 		}
 	} else if (next_step == 6) {
 		if (direction) {
@@ -2964,19 +2978,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR1();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH3_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, positive_lowside);
+			TIMER_UPDATE_CH2_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, negative_lowside);
+			TIMER_UPDATE_CH1_NEG();
 		} else {
 #ifdef HW_HAS_DRV8313
 			DISABLE_BR2();
@@ -2984,19 +2992,13 @@ static void set_next_comm_step(int next_step) {
 			ENABLE_BR1();
 #endif
 			// 0
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+			TIMER_UPDATE_CH2_0();
 
 			// +
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, positive_lowside);
+			TIMER_UPDATE_CH3_POS();
 
 			// -
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, negative_lowside);
+			TIMER_UPDATE_CH1_NEG();
 		}
 	} else {
 #ifdef HW_HAS_DRV8313
@@ -3005,16 +3007,8 @@ static void set_next_comm_step(int next_step) {
 		DISABLE_BR3();
 #endif
 		// Invalid phase.. stop PWM!
-		TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
-
-		TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
-
-		TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_ForcedAction_InActive);
-		TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-		TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+		TIMER_UPDATE_CH1_0();
+		TIMER_UPDATE_CH2_0();
+		TIMER_UPDATE_CH3_0();
 	}
 }
