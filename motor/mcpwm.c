@@ -174,10 +174,6 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 	init_done= false;
 
-	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	TIM_OCInitTypeDef  TIM_OCInitStructure;
-	TIM_BDTRInitTypeDef TIM_BDTRInitStructure;
-
 	conf = configuration;
 
 	comm_step = 1;
@@ -235,56 +231,48 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 	rccEnableTIM1(TRUE);
 
-	TIM_TimeBaseStructure.TIM_Prescaler = 0;
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseStructure.TIM_Period = SYSTEM_CORE_CLOCK / (int)switching_frequency_now;
-	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+	// Select the Counter Mode, UP (default)
 
-	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
+	// Set the Autoreload value
+	TIM1->ARR = (SYSTEM_CORE_CLOCK / (int)switching_frequency_now);
 
-	// Channel 1, 2 and 3 Configuration in PWM mode
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = TIM1->ARR / 2;
+	// PWM Mode 1
+	TIM1->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
+	TIM1->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1;
 
-#ifndef INVERTED_TOP_DRIVER_INPUT
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; // gpio high = top fets on
-#else
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+	// output enable
+	TIM1->CCER = TIM_CCER_CC1E | TIM_CCER_CC1NE | TIM_CCER_CC2E | TIM_CCER_CC2NE | TIM_CCER_CC3E | TIM_CCER_CC3NE | TIM_CCER_CC4E;
+
+	// Idle state high
+	TIM1->CR2 = TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 | TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N | TIM_CR2_OIS4;
+
+	// Capture compare value
+	TIM1->CCR1 = TIM1->ARR / 2;
+	TIM1->CCR2 = TIM1->ARR / 2;
+	TIM1->CCR3 = TIM1->ARR / 2;
+	TIM1->CCR4 = TIM1->ARR / 2;
+
+	// Enable Output Compare Preload feature
+	TIM1->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
+	TIM1->CCMR2 |= TIM_CCMR2_OC3PE | TIM_CCMR2_OC4PE;
+
+	// Dead-time and off state
+	uint8_t deadtime = conf_general_calculate_deadtime(HW_DEAD_TIME_NSEC, SYSTEM_CORE_CLOCK);
+	TIM1->BDTR =  deadtime | TIM_BDTR_OSSI | TIM_BDTR_OSSR;
+
+#ifdef HW_USE_BRK
+	// Enable BRK function. Hardware will asynchronously stop any PWM activity upon an
+	// external fault signal. PWM outputs remain disabled until MCU is reset.
+	// software will catch the BRK flag to report the fault code
+	TIM1->BDTR |= TIM_BDTR_BKE;
 #endif
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
 
-#ifndef INVERTED_BOTTOM_DRIVER_INPUT
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;  // gpio high = bottom fets on
-#else
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_Low;
-#endif
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
+	// Enable Capture/Compare Preload
+	TIM1->CR2 |= TIM_CR2_CCPC;
 
-	TIM_OC1Init(TIM1, &TIM_OCInitStructure);
-	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
-	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
-	TIM_OC4Init(TIM1, &TIM_OCInitStructure);
+	// Enable auto-reload preload
+	TIM1->CR1 |= TIM_CR1_ARPE;
 
-	TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
-	TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
-	TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
-	TIM_OC4PreloadConfig(TIM1, TIM_OCPreload_Enable);
-
-	// Automatic Output enable, Break, dead time and lock configuration
-	TIM_BDTRInitStructure.TIM_OSSRState = TIM_OSSRState_Enable;
-	TIM_BDTRInitStructure.TIM_OSSIState = TIM_OSSIState_Enable;
-	TIM_BDTRInitStructure.TIM_LOCKLevel = TIM_LOCKLevel_OFF;
-	TIM_BDTRInitStructure.TIM_DeadTime = conf_general_calculate_deadtime(HW_DEAD_TIME_NSEC, SYSTEM_CORE_CLOCK);
-	TIM_BDTRInitStructure.TIM_Break = TIM_Break_Disable;
-	TIM_BDTRInitStructure.TIM_BreakPolarity = TIM_BreakPolarity_High;
-	TIM_BDTRInitStructure.TIM_AutomaticOutput = TIM_AutomaticOutput_Disable;
-
-	TIM_BDTRConfig(TIM1, &TIM_BDTRInitStructure);
-	TIM_CCPreloadControl(TIM1, ENABLE);
-	TIM_ARRPreloadConfig(TIM1, ENABLE);
 
 	ADC_CommonInitTypeDef ADC_CommonInitStructure;
 	DMA_InitTypeDef DMA_InitStructure;
@@ -380,45 +368,55 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	// Timer8 for ADC sampling
 	rccEnableTIM8(TRUE);
 
-	TIM_TimeBaseStructure.TIM_Prescaler = 0;
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseStructure.TIM_Period = 0xFFFF;
-	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-	TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure);
+	// Select the Counter Mode, UP (default)
+	// Set the Autoreload value
+	TIM8->ARR = 0xFFFF;
 
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = 500;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-	TIM_OC1Init(TIM8, &TIM_OCInitStructure);
-	TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);
-	TIM_OC2Init(TIM8, &TIM_OCInitStructure);
-	TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);
-	TIM_OC3Init(TIM8, &TIM_OCInitStructure);
-	TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);
+	// PWM Mode 1
+	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
+	TIM8->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
 
-	TIM_ARRPreloadConfig(TIM8, ENABLE);
-	TIM_CCPreloadControl(TIM8, ENABLE);
+	// output enable
+	TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1NE | TIM_CCER_CC2E | TIM_CCER_CC2NE | TIM_CCER_CC3E | TIM_CCER_CC3NE;
+
+	// Idle state high
+	TIM8->CR2 = TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 | TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N;
+
+	// Capture compare value
+	TIM8->CCR1 = 500;
+	TIM8->CCR2 = 500;
+	TIM8->CCR3 = 500;
+
+	// Enable Output Compare Preload feature
+	TIM8->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
+	TIM8->CCMR2 |= TIM_CCMR2_OC3PE;
+
+	// Enable Capture/Compare Preload
+	TIM8->CR2 |= TIM_CR2_CCPC;
+
+	// Enable auto-reload preload
+	TIM8->CR1 |= TIM_CR1_ARPE;
 
 	// PWM outputs have to be enabled in order to trigger ADC on CCx
-	TIM_CtrlPWMOutputs(TIM8, ENABLE);
+	TIM8->BDTR |= TIM_BDTR_MOE;
 
-	// TIM1 Master and TIM8 slave
-	TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_Update);
-	TIM_SelectMasterSlaveMode(TIM1, TIM_MasterSlaveMode_Enable);
-	TIM_SelectInputTrigger(TIM8, TIM_TS_ITR0);
-	TIM_SelectSlaveMode(TIM8, TIM_SlaveMode_Reset);
+	// Master mode - Update
+	TIM1->CR2 |= TIM_CR2_MMS_1;
+	// Select master slave mode to allow synchronisation with TIM2
+	TIM1->SMCR |= TIM_SMCR_MSM;
+	// Select input trigger for TIM2 - Internal trigger 0
+	TIM8->SMCR &= (uint16_t)~TIM_SMCR_TS;
+	// Slave mode - Reset - Rising edge of the selected trigger input (TRGI) reinitializes the counter
+	// and generates an update of the registers.
+	TIM8->SMCR |= TIM_SMCR_SMS_2;
 
-	// Enable TIM1 and TIM8
-	TIM_Cmd(TIM1, ENABLE);
-	TIM_Cmd(TIM8, ENABLE);
+	// Enable timer
+	TIM1->CR1 |= TIM_CR1_CEN;
+	TIM8->CR1 |= TIM_CR1_CEN;
 
 	// Main Output Enable
-	TIM_CtrlPWMOutputs(TIM1, ENABLE);
+	TIM1->BDTR |= TIM_BDTR_MOE;
+
 
 	// ADC sampling locations
 	stop_pwm_hw();
@@ -916,27 +914,10 @@ static void stop_pwm_hw(void) {
 	DISABLE_BR();
 #endif
 
-	TIM1->CCER &= ~TIM_CCER_CC1E; 		// Disable the Channel
-	TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
-	TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
-	TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
-	TIM1->CCER &= ~TIM_CCER_CC1NE; 		// Disable Channel 1N
-
-	TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
-	TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
-	TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
-	TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
-	TIM1->CCER &= ~TIM_CCER_CC2NE; 		// Disable Channel 2N
-
-	TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
-	TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
-	TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
-	TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
-	TIM1->CCER &= ~TIM_CCER_CC3NE; 		// Disable Channel 3N
-
-	// Generate event - Capture/Compare control update generation
-	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
-	TIM1->EGR = TIM_EGR_COMG;
+	TIMER_UPDATE_CH1_0();
+	TIMER_UPDATE_CH2_0();
+	TIMER_UPDATE_CH3_0();
+	TIMER_CONTROL_UPDATE();
 
 	set_switching_frequency(conf->m_bldc_f_sw_max);
 }
@@ -952,27 +933,10 @@ static void full_brake_hw(void) {
 	ENABLE_BR();
 #endif
 
-	TIM1->CCER &= ~TIM_CCER_CC1E;		// Disable the Channel
-	TIM1->CCMR1 &= ~TIM_CCMR1_OC1M_Msk; // Clear output compare mode
-	TIM1->CCMR1 |= TIM_CCMR1_OC1M_2; 	// Set Output compare to mode Forced Inactive
-	TIM1->CCER |= TIM_CCER_CC1E; 		// Enable Channel 1
-	TIM1->CCER |= TIM_CCER_CC1NE; 		// Enable Channel 1N
-
-	TIM1->CCER &= ~TIM_CCER_CC2E; 		// Disable the Channel
-	TIM1->CCMR1 &= ~TIM_CCMR1_OC2M_Msk; // Clear output compare mode
-	TIM1->CCMR1 |= TIM_CCMR1_OC2M_2; 	// Set Output compare to mode Forced Inactive
-	TIM1->CCER |= TIM_CCER_CC2E; 		// Enable Channel 2
-	TIM1->CCER |= TIM_CCER_CC2NE; 		// Enable Channel 2N
-
-	TIM1->CCER &= ~TIM_CCER_CC3E; 		// Disable the Channel
-	TIM1->CCMR2 &= ~TIM_CCMR2_OC3M_Msk; // Clear output compare mode
-	TIM1->CCMR2 |= TIM_CCMR2_OC3M_2; 	// Set Output compare to mode Forced Inactive
-	TIM1->CCER |= TIM_CCER_CC3E; 		// Enable Channel 3
-	TIM1->CCER |= TIM_CCER_CC3NE; 		// Enable Channel 3N
-
-	// Generate event - Capture/Compare control update generation
-	// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
-	TIM1->EGR = TIM_EGR_COMG;
+	TIMER_UPDATE_CH1_NEG();
+	TIMER_UPDATE_CH2_NEG();
+	TIMER_UPDATE_CH3_NEG();
+	TIMER_CONTROL_UPDATE();
 
 	set_switching_frequency(conf->m_bldc_f_sw_max);
 }
