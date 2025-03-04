@@ -45,18 +45,20 @@ uint32_t pwm_servo_init(uint32_t freq_hz, float duty) {
 	HW_ICU_TIMER->CR1 = 0;
 	HW_ICU_TIMER->ARR = (uint16_t)((uint32_t)TIM_CLOCK / (uint32_t)freq_hz);
 	HW_ICU_TIMER->PSC = (uint16_t)((168000000 / 2) / TIM_CLOCK) - 1;
-	HW_ICU_TIMER->EGR = TIM_PSCReloadMode_Immediate;
+	HW_ICU_TIMER->EGR = TIM_EGR_UG;
 
 	utils_truncate_number(&duty, 0.0, 1.0);
 	uint32_t output = (uint32_t)((float)HW_ICU_TIMER->ARR * duty);
 
 	if (HW_ICU_CHANNEL == ICU_CHANNEL_1) {
-		HW_ICU_TIMER->CCER = TIM_OutputState_Enable;
-		HW_ICU_TIMER->CCMR1 = TIM_OCMode_PWM1 | TIM_OCPreload_Enable;
+		HW_ICU_TIMER->CCER = TIM_CCER_CC1E;
+		// PWM Mode 1, output compare preload enable
+		HW_ICU_TIMER->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1PE;
 		HW_ICU_TIMER->CCR1 = output;
 	} else if (HW_ICU_CHANNEL == ICU_CHANNEL_2) {
-		HW_ICU_TIMER->CCER = (TIM_OutputState_Enable << 4);
-		HW_ICU_TIMER->CCMR1 = (TIM_OCMode_PWM1 << 8) | (TIM_OCPreload_Enable << 8);
+		HW_ICU_TIMER->CCER = TIM_CCER_CC2E;
+		// PWM Mode 1, output compare preload enable
+		HW_ICU_TIMER->CCMR1 = TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2PE;
 		HW_ICU_TIMER->CCR2 = output;
 	}
 

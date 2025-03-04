@@ -26,18 +26,18 @@
 #define TIMER_HZ					1.4e7
 
 void timer_init(void) {
+	rccResetTIM5();
+
 	rccEnableTIM5(TRUE);
-	uint16_t PrescalerValue = (uint16_t) ((SYSTEM_CORE_CLOCK / 2) / TIMER_HZ) - 1;
 
-	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	TIM_TimeBaseStructure.TIM_Period = 0xFFFFFFFF;
-	TIM_TimeBaseStructure.TIM_Prescaler = PrescalerValue;
-	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);
-
+	// Select the Counter Mode, UP (default)
+	// Set the Autoreload value
+	TIM5->ARR = 0xFFFFFFFF;
+	TIM5->PSC = ((SYSTEM_CORE_CLOCK / 2) / TIMER_HZ) - 1;
 	TIM5->CNT = 0;
-	TIM_Cmd(TIM5, ENABLE);
+
+	// Enable timer
+	TIM5->CR1 |= TIM_CR1_CEN;
 }
 
 uint32_t timer_time_now(void) {

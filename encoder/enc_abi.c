@@ -72,17 +72,21 @@ bool enc_abi_init(ABI_config_t *cfg) {
 	HW_ENC_TIM_CLK_EN();
 
 	// Enable SYSCFG clock
-	rccEnableAHB2(RCC_APB2ENR_SYSCFGEN, TRUE);
+	rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, true);
 
-	TIM_EncoderInterfaceConfig(cfg->timer,
-			TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
-	TIM_SetAutoreload(cfg->timer, cfg->counts - 1);
-
+	// Set the encoder Mode - Encoder mode 3 - Counter counts up/down on both TI1FP1 and TI2FP2 edges
+	//depending on the level of the other input
+	cfg->timer->SMCR |= TIM_SMCR_SMS_0 | TIM_SMCR_SMS_1;
+	// Select the Capture Compare 1 and the Capture Compare 2 as input
+	cfg->timer->CCMR1 |= TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0;
+	// Set the Autoreload Register value
+	cfg->timer->ARR = cfg->counts - 1;
 	// Filter
 	cfg->timer->CCMR1 |= 6 << 12 | 6 << 4;
 	cfg->timer->CCMR2 |= 6 << 4;
 
-	TIM_Cmd(cfg->timer, ENABLE);
+	// Enable timer
+	cfg->timer->CR1 |= TIM_CR1_CEN;
 
 	// Interrupt on index pulse
 	// Configure Event

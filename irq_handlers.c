@@ -34,11 +34,12 @@ CH_IRQ_HANDLER(ADC1_2_3_IRQHandler) {
 }
 
 CH_IRQ_HANDLER(TIM2_IRQHandler) {
-	if (TIM_GetITStatus(TIM2, TIM_IT_CC2) != RESET) {
+	if((TIM2->SR & TIM_SR_CC2IF) && (TIM2->DIER & TIM_DIER_CC2IE)){
 		mcpwm_foc_tim_sample_int_handler();
 
 		// Clear the IT pending bit
-		TIM_ClearITPendingBit(TIM2, TIM_IT_CC2);
+		TIM2->SR = ~TIM_SR_CC2IF;
 	}
-	TIM_ClearITPendingBit(TIM2, TIM_IT_CC2);
+	// Clear the IT pending bit
+	TIM2->SR = ~TIM_SR_CC2IF;
 }

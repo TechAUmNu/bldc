@@ -324,7 +324,7 @@ static void timer_reinit(int f_zv) {
 	TIMER_UPDATE_SAMP(MCPWM_FOC_CURRENT_SAMP_OFFSET);
 
 	// Enable CC2 interrupt, which will be fired in V0 and V7
-	TIM2->DIER |= TIM_IT_CC2;
+	TIM2->DIER |= TIM_DIER_CC2IE;
 	utils_sys_unlock_cnt();
 
 	nvicEnableVector(TIM2_IRQn, 6);

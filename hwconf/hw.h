@@ -655,10 +655,10 @@
 #ifndef HW_ICU_TIMER
 #ifdef HW_USE_SERVO_TIM4
 #define HW_ICU_TIMER			TIM4
-#define HW_ICU_TIM_CLK_EN()		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE)
+#define HW_ICU_TIM_CLK_EN()		rccEnableTIM4(TRUE);
 #else
 #define HW_ICU_TIMER			TIM3
-#define HW_ICU_TIM_CLK_EN()		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE)
+#define HW_ICU_TIM_CLK_EN()		rccEnableTIM3(TRUE);
 #endif
 #endif
 

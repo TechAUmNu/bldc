@@ -174,6 +174,7 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 	init_done= false;
 
+
 	conf = configuration;
 
 	comm_step = 1;
@@ -402,9 +403,9 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 	// Master mode - Update
 	TIM1->CR2 |= TIM_CR2_MMS_1;
-	// Select master slave mode to allow synchronisation with TIM2
+	// Select master slave mode to allow synchronisation with TIM8
 	TIM1->SMCR |= TIM_SMCR_MSM;
-	// Select input trigger for TIM2 - Internal trigger 0
+	// Select input trigger for TIM8 - Internal trigger 0
 	TIM8->SMCR &= (uint16_t)~TIM_SMCR_TS;
 	// Slave mode - Reset - Rising edge of the selected trigger input (TRGI) reinitializes the counter
 	// and generates an update of the registers.
@@ -1714,7 +1715,8 @@ void mcpwm_adc_inj_int_handler(void) {
 			comm_step = detect_step + 1;
 
 			set_next_comm_step(comm_step);
-			TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+
+			TIMER_CONTROL_UPDATE();
 		}
 	}
 
@@ -2600,7 +2602,7 @@ static void commutate(int steps) {
 		set_next_comm_step(comm_step);
 	}
 
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+	TIMER_CONTROL_UPDATE();
 	has_commutated = 1;
 
 	mc_timer_struct timer_tmp;
