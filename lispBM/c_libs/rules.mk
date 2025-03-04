@@ -7,20 +7,6 @@ PYTHON = python3
 
 STLIB_PATH = $(VESC_C_LIB_PATH)/stdperiph_stm32f4/
 
-ifeq ($(USE_STLIB),yes)
-	SOURCES += \
-		$(STLIB_PATH)/src/misc.c \
-		$(STLIB_PATH)/src/stm32f4xx_adc.c \
-		$(STLIB_PATH)/src/stm32f4xx_dma.c \
-		$(STLIB_PATH)/src/stm32f4xx_exti.c \
-		$(STLIB_PATH)/src/stm32f4xx_flash.c \
-		$(STLIB_PATH)/src/stm32f4xx_rcc.c \
-		$(STLIB_PATH)/src/stm32f4xx_syscfg.c \
-		$(STLIB_PATH)/src/stm32f4xx_tim.c \
-		$(STLIB_PATH)/src/stm32f4xx_iwdg.c \
-		$(STLIB_PATH)/src/stm32f4xx_wwdg.c
-endif
-
 UTILS_PATH = $(VESC_C_LIB_PATH)/utils/
 
 SOURCES += $(UTILS_PATH)/rb.c
@@ -40,10 +26,6 @@ CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mcpu=cortex-m4
 CFLAGS += -fdata-sections -ffunction-sections
 CFLAGS += -DIS_VESC_LIB
 CFLAGS += $(USE_OPT)
-
-ifeq ($(USE_STLIB),yes)
-	CFLAGS += -DUSE_STLIB -I$(STLIB_PATH)/inc
-endif
 
 LDFLAGS = -nostartfiles -static -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mcpu=cortex-m4
 LDFLAGS += -lm -Wl,--gc-sections,--undefined=init
