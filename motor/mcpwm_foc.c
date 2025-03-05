@@ -192,6 +192,10 @@ static void timer_reinit(int f_zv) {
 	TIM1->ARR = (SYSTEM_CORE_CLOCK / f_zv);
 	TIM8->ARR = (SYSTEM_CORE_CLOCK / f_zv);
 
+	// Update
+	TIM1->EGR = TIM_EGR_UG;
+	TIM8->EGR = TIM_EGR_UG;
+
 	// PWM Mode 1
 	TIM1->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
 	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
@@ -248,6 +252,10 @@ static void timer_reinit(int f_zv) {
 
 	// Set the Auto reload value
 	TIM2->ARR = 0xFFFF;
+
+	// Update
+	TIM2->EGR = TIM_EGR_UG;
+
 
 	// PWM Mode 1
 	TIM2->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;

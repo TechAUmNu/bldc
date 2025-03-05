@@ -237,6 +237,9 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	// Set the Autoreload value
 	TIM1->ARR = (SYSTEM_CORE_CLOCK / (int)switching_frequency_now);
 
+	// Update
+	TIM1->EGR = TIM_EGR_UG;
+
 	// PWM Mode 1
 	TIM1->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;
 	TIM1->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1;
@@ -375,6 +378,9 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	// Select the Counter Mode, UP (default)
 	// Set the Autoreload value
 	TIM8->ARR = 0xFFFF;
+
+	// Update
+	TIM8->EGR = TIM_EGR_UG;
 
 	// PWM Mode 1
 	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1;

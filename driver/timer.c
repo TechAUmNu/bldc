@@ -35,7 +35,8 @@ void timer_init(void) {
 	TIM5->ARR = 0xFFFFFFFF;
 	TIM5->PSC = ((SYSTEM_CORE_CLOCK / 2) / TIMER_HZ) - 1;
 	TIM5->CNT = 0;
-
+	// Update
+	TIM5->EGR = TIM_EGR_UG;
 	// Enable timer
 	TIM5->CR1 |= TIM_CR1_CEN;
 }
