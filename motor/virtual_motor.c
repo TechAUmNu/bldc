@@ -167,8 +167,8 @@ float virtual_motor_get_angle_deg(void){
 /**
  * void connect_virtual_motor( )
  *
- * -disconnects TIM8 trigger to the ADC:
- * 		mcpwm_foc_adc_int_handler() will be called from TIM8 interrupt
+ * -disconnects TIM2 trigger to the ADC:
+ * 		mcpwm_foc_adc_int_handler() will be called from TIM2 interrupt
  * 		while virtual motor is connected
  * -sets virtual motor parameters
  *
@@ -180,18 +180,9 @@ static void connect_virtual_motor(float ml , float J, float Vbus){
 	if(virtual_motor.connected == false){
 		//first we send 0.0 current command to make system stop PWM outputs
 		mcpwm_foc_set_current(0.0);
-		//first we disconnect the ADC triggering from TIM8_CC1
-		ADC_InitTypeDef ADC_InitStructure;
 
-		ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
-		ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-		ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
-		ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-		ADC_InitStructure.ADC_ExternalTrigConv = 0;
-		ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-		ADC_InitStructure.ADC_NbrOfConversion = HW_ADC_NBR_CONV;
-
-		ADC_Init(ADC1, &ADC_InitStructure);
+		//first we disconnect the ADC triggering
+		ADC1->CR2 &= ~(ADC_CR2_EXTSEL | ADC_CR2_EXTEN);
 
 		//save current offsets
 		mcpwm_foc_get_current_offsets(&m_curr0_offset_backup,
@@ -260,18 +251,10 @@ static void disconnect_virtual_motor( void ){
 		mcpwm_foc_set_current_offsets(m_curr0_offset_backup, m_curr1_offset_backup,
 															m_curr2_offset_backup);
 
-		//then we reconnect the ADC triggering to TIM8_CC1
-		ADC_InitTypeDef ADC_InitStructure;
-
-		ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
-		ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-		ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
-		ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Falling;
-		ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T8_CC1;
-		ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-		ADC_InitStructure.ADC_NbrOfConversion = HW_ADC_NBR_CONV;
-
-		ADC_Init(ADC1, &ADC_InitStructure);
+		//then we reconnect the ADC triggering to TIM2_CC2
+		// External trigger - T2 CC2 (0011)
+		// External trigger Edge - Falling	(10)
+		ADC1->CR2 |= ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
 
 		if (m_conf->foc_sensor_mode == FOC_SENSOR_MODE_ENCODER) {
 			encoder_deinit();

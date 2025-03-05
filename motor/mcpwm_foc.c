@@ -391,13 +391,13 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	rccResetTIM1();
 	rccResetTIM2();
 	rccResetTIM8();
+	rccResetADC();
 
 	TIM1->CNT = 0;
 	TIM2->CNT = 0;
 	TIM8->CNT = 0;
 
-	ADC_CommonInitTypeDef ADC_CommonInitStructure;
-	ADC_InitTypeDef ADC_InitStructure;
+
 
 	rccEnableDMA2(TRUE);
 	rccEnableADC1(TRUE);
@@ -444,36 +444,35 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	DMA2_Stream4->CR |= DMA_SxCR_EN;
 
 
-	// Note that the ADC is running at 42MHz, which is higher than the
-	// specified 36MHz in the data sheet, but it works.
-	ADC_CommonInitStructure.ADC_Mode = ADC_TripleMode_RegSimult;
-	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div2;
-	ADC_CommonInitStructure.ADC_DMAAccessMode = ADC_DMAAccessMode_1;
-	ADC_CommonInitStructure.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
-	ADC_CommonInit(&ADC_CommonInitStructure);
-
-	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
-	ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
-	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Falling;
-	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T2_CC2;
-	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-	ADC_InitStructure.ADC_NbrOfConversion = HW_ADC_NBR_CONV;
-
-	ADC_Init(ADC1, &ADC_InitStructure);
-	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-	ADC_InitStructure.ADC_ExternalTrigConv = 0;
-	ADC_Init(ADC2, &ADC_InitStructure);
-	ADC_Init(ADC3, &ADC_InitStructure);
-
-	ADC_TempSensorVrefintCmd(ENABLE);
-	ADC_MultiModeDMARequestAfterLastTransferCmd(ENABLE);
+	// ADC Common Init
+	// Multi ADC mode selection - Triple Regular simultaneous mode 10110
+	// Prescaler divide by 2 (default)
+	// DMA mode 1 enabled, 3 (1 per ADC) half-words one by one - 1 then 2 then 3
+	ADC->CCR = ADC_CCR_MULTI_4 | ADC_CCR_MULTI_2 | ADC_CCR_MULTI_1 | ADC_CCR_DMA_0;
+	// ADC 1, 2, 3 config
+	// Scan Conversion Mode - Enable
+	ADC1->CR1 = ADC_CR1_SCAN;
+	ADC2->CR1 = ADC_CR1_SCAN;
+	ADC3->CR1 = ADC_CR1_SCAN;
+	// External trigger - T2 CC2 (0011)
+	// External trigger Edge - Falling	(10)
+	ADC1->CR2 = ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
+	// Number of conversions (0 = 1 conversion)
+	ADC1->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	ADC2->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	ADC3->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	// Temperature Sensor and VREFINT Enable
+	ADC->CCR |= ADC_CCR_TSVREFE;
+	// Multi Mode DMA Request After Last Transfer Cmd
+	// DMA requests are issued as long as data are converted and DMA = 01, 10 or 11
+	ADC->CCR |= ADC_CCR_DDS;
 
 	hw_setup_adc_channels();
 
-	ADC_Cmd(ADC1, ENABLE);
-	ADC_Cmd(ADC2, ENABLE);
-	ADC_Cmd(ADC3, ENABLE);
+	// Enable ADCs
+	ADC1->CR2 |= ADC_CR2_ADON;
+	ADC2->CR2 |= ADC_CR2_ADON;
+	ADC3->CR2 |= ADC_CR2_ADON;
 
 	timer_reinit((int)m_motor_1.m_conf->foc_f_zv);
 
@@ -620,7 +619,7 @@ void mcpwm_foc_deinit(void) {
 	rccResetTIM2();
 	rccResetTIM8();
 
-	ADC_DeInit();
+	rccResetADC();
 	dmaStreamFree(STM32_DMA2_STREAM4);
 	nvicDisableVector(ADC_IRQn);
 }

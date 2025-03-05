@@ -82,3 +82,44 @@ uint8_t hw_id_from_pins(void) {
 	return id;
 }
 #endif //defined(HW_ID_PIN_GPIOS) && defined(HW_ID_PIN_PINS)
+
+// These assume they are only called after reset
+void hw_setup_adc_channel_helper(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime)
+{
+	// Sample time
+	if (ADC_Channel > 9)
+	{
+		ADCx->SMPR1 |= (uint32_t)ADC_SampleTime << (3 * (ADC_Channel - 10));
+	}
+	else /* ADC_Channel include in ADC_Channel_[0..9] */
+	{
+		ADCx->SMPR2 |= (uint32_t)ADC_SampleTime << (3 * ADC_Channel);
+	}
+
+	// Sequence
+	if (Rank < 7)
+	{
+		ADCx->SQR3 |= (uint32_t)ADC_Channel << (5 * (Rank - 1));
+	}
+	// For Rank 7 to 12
+	else if (Rank < 13)
+	{
+		ADCx->SQR2 |= (uint32_t)ADC_Channel << (5 * (Rank - 7));
+	}
+}
+
+void hw_setup_inj_adc_channel_helper(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime)
+{
+	// Sample time
+	if (ADC_Channel > 9)
+	{
+	  ADCx->SMPR1 |= (uint32_t)ADC_SampleTime << (3*(ADC_Channel - 10));
+	}
+	else /* ADC_Channel include in ADC_Channel_[0..9] */
+	{
+	  ADCx->SMPR2 |= (uint32_t)ADC_SampleTime << (3 * ADC_Channel);
+	}
+	// Rank configuration
+	// Calculate the mask to set: ((Rank-1)+(4-JL-1))
+	ADCx->JSQR |= (uint32_t)ADC_Channel << (5 * (Rank - 1));
+}

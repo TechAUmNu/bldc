@@ -140,39 +140,39 @@ void hw_init_gpio(void) {
 
 void hw_setup_adc_channels(void) {
 	// ADC1 regular channels
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 2, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 3, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_14, 4, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint, 5, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 6, ADC_SampleTime_15Cycles);
+	hw_setup_adc_channel_helper(ADC1, ADC_CHANNEL_IN10, 1, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC1, ADC_CHANNEL_IN0, 2, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC1, ADC_CHANNEL_IN5, 3, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC1, ADC_CHANNEL_IN14, 4, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC1, ADC_CHANNEL_VREFINT, 5, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC1, ADC_CHANNEL_IN8, 6, ADC_SAMPLE_15);
 
 	// ADC2 regular channels
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_1, 2, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_6, 3, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_15, 4, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_0, 5, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_9, 6, ADC_SampleTime_15Cycles);
+	hw_setup_adc_channel_helper(ADC2, ADC_CHANNEL_IN11, 1, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC2, ADC_CHANNEL_IN1, 2, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC2, ADC_CHANNEL_IN6, 3, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC2, ADC_CHANNEL_IN15, 4, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC2, ADC_CHANNEL_IN0, 5, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC2, ADC_CHANNEL_IN9, 6, ADC_SAMPLE_15);
 
 	// ADC3 regular channels
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_2, 2, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_3, 3, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 4, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_1, 5, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_2, 6, ADC_SampleTime_15Cycles);
+	hw_setup_adc_channel_helper(ADC3, ADC_CHANNEL_IN12, 1, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC3, ADC_CHANNEL_IN2, 2, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC3, ADC_CHANNEL_IN3, 3, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC3, ADC_CHANNEL_IN13, 4, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC3, ADC_CHANNEL_IN1, 5, ADC_SAMPLE_15);
+	hw_setup_adc_channel_helper(ADC3, ADC_CHANNEL_IN2, 6, ADC_SAMPLE_15);
 
 	// Injected channels
-	ADC_InjectedChannelConfig(ADC1, ADC_Channel_10, 1, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 1, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC3, ADC_Channel_12, 1, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC1, ADC_Channel_10, 2, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 2, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC3, ADC_Channel_12, 2, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC1, ADC_Channel_10, 3, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 3, ADC_SampleTime_15Cycles);
-	ADC_InjectedChannelConfig(ADC3, ADC_Channel_12, 3, ADC_SampleTime_15Cycles);
+	hw_setup_inj_adc_channel_helper(ADC1, ADC_CHANNEL_IN10, 1, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC2, ADC_CHANNEL_IN11, 1, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC3, ADC_CHANNEL_IN12, 1, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC1, ADC_CHANNEL_IN10, 2, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC2, ADC_CHANNEL_IN11, 2, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC3, ADC_CHANNEL_IN12, 2, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC1, ADC_CHANNEL_IN10, 3, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC2, ADC_CHANNEL_IN11, 3, ADC_SAMPLE_15);
+	hw_setup_inj_adc_channel_helper(ADC3, ADC_CHANNEL_IN12, 3, ADC_SAMPLE_15);
 }
 
 void hw_start_i2c(void) {

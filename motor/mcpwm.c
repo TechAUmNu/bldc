@@ -226,6 +226,8 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 	rccResetTIM1();
 	rccResetTIM8();
+	rccResetADC();
+	rccResetDMA2();
 
 	TIM1->CNT = 0;
 	TIM8->CNT = 0;
@@ -278,9 +280,6 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	TIM1->CR1 |= TIM_CR1_ARPE;
 
 
-	ADC_CommonInitTypeDef ADC_CommonInitStructure;
-	ADC_InitTypeDef ADC_InitStructure;
-
 	rccEnableDMA2(TRUE);
 	rccEnableADC1(TRUE);
 	rccEnableADC2(TRUE);
@@ -320,57 +319,55 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	// ADC Common Init
 	// Note that the ADC is running at 42MHz, which is higher than the
 	// specified 36MHz in the data sheet, but it works.
-	ADC_CommonInitStructure.ADC_Mode = ADC_TripleMode_RegSimult;
-	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div2;
-	ADC_CommonInitStructure.ADC_DMAAccessMode = ADC_DMAAccessMode_1;
-	ADC_CommonInitStructure.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
-	ADC_CommonInit(&ADC_CommonInitStructure);
-
-	// Channel-specific settings
-	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
-	ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
-	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Falling;
-	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T8_CC1;
-	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-	ADC_InitStructure.ADC_NbrOfConversion = HW_ADC_NBR_CONV;
-
-	ADC_Init(ADC1, &ADC_InitStructure);
-	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-	ADC_InitStructure.ADC_ExternalTrigConv = 0;
-	ADC_Init(ADC2, &ADC_InitStructure);
-	ADC_Init(ADC3, &ADC_InitStructure);
-
-	ADC_TempSensorVrefintCmd(ENABLE);
-
-	// Enable DMA request after last transfer (Multi-ADC mode)
-	ADC_MultiModeDMARequestAfterLastTransferCmd(ENABLE);
+	// Multi ADC mode selection - Triple Regular simultaneous mode 10110
+	// Prescaler divide by 2 (default)
+	// DMA mode 1 enabled, 3 (1 per ADC) half-words one by one - 1 then 2 then 3
+	ADC->CCR = ADC_CCR_MULTI_4 | ADC_CCR_MULTI_2 | ADC_CCR_MULTI_1 | ADC_CCR_DMA_0;
+	// ADC 1, 2, 3 config
+	// Scan Conversion Mode - Enable
+	ADC1->CR1 = ADC_CR1_SCAN;
+	ADC2->CR1 = ADC_CR1_SCAN;
+	ADC3->CR1 = ADC_CR1_SCAN;
+	// External trigger - T8 CC1 (1101)
+	// External trigger Edge - Falling	(10)
+	ADC1->CR2 = ADC_CR2_EXTSEL_3 | ADC_CR2_EXTSEL_2 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
+	// Number of conversions (0 = 1 conversion)
+	ADC1->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	ADC2->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	ADC3->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	// Temperature Sensor and VREFINT Enable
+	ADC->CCR |= ADC_CCR_TSVREFE;
+	// Multi Mode DMA Request After Last Transfer Cmd
+	// DMA requests are issued as long as data are converted and DMA = 01, 10 or 11
+	ADC->CCR |= ADC_CCR_DDS;
 
 	// Injected channels for current measurement at end of cycle
-	ADC_ExternalTrigInjectedConvConfig(ADC1, ADC_ExternalTrigInjecConv_T1_CC4);
-	ADC_ExternalTrigInjectedConvConfig(ADC2, ADC_ExternalTrigInjecConv_T8_CC2);
+	// ADC1 Injected channel trigger T1 CC4 - 0 (default), falling edge
+	ADC1->CR2 |= ADC_CR2_JEXTEN_1;
+	// ADC2 Injected channel trigger T8 CC2 - 1100, falling edge
+	ADC2->CR2 |= ADC_CR2_JEXTSEL_3 | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTEN_1;
 #ifdef HW_HAS_3_SHUNTS
-	ADC_ExternalTrigInjectedConvConfig(ADC3, ADC_ExternalTrigInjecConv_T8_CC3);
+	// ADC3 Injected channel trigger T8 CC3 - 1101, falling edge
+	ADC3->CR2 |= ADC_CR2_JEXTSEL_3 | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTSEL_0 | ADC_CR2_JEXTEN_1;
 #endif
-	ADC_ExternalTrigInjectedConvEdgeConfig(ADC1, ADC_ExternalTrigInjecConvEdge_Falling);
-	ADC_ExternalTrigInjectedConvEdgeConfig(ADC2, ADC_ExternalTrigInjecConvEdge_Falling);
+
+	// Number of injected channels
+	ADC1->JSQR = (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
+	ADC2->JSQR = (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
 #ifdef HW_HAS_3_SHUNTS
-	ADC_ExternalTrigInjectedConvEdgeConfig(ADC3, ADC_ExternalTrigInjecConvEdge_Falling);
-#endif
-	ADC_InjectedSequencerLengthConfig(ADC1, HW_ADC_INJ_CHANNELS);
-	ADC_InjectedSequencerLengthConfig(ADC2, HW_ADC_INJ_CHANNELS);
-#ifdef HW_HAS_3_SHUNTS
-	ADC_InjectedSequencerLengthConfig(ADC3, HW_ADC_INJ_CHANNELS);
+	ADC3->JSQR |= (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
 #endif
 
 	hw_setup_adc_channels();
 
-	ADC_ITConfig(ADC1, ADC_IT_JEOC, ENABLE);
+	// Enable injected channels interrupt
+	ADC1->CR1 |= ADC_CR1_JEOCIE;
 	nvicEnableVector(ADC_IRQn, 6);
 
-	ADC_Cmd(ADC1, ENABLE);
-	ADC_Cmd(ADC2, ENABLE);
-	ADC_Cmd(ADC3, ENABLE);
+	// Enable ADCs
+	ADC1->CR2 |= ADC_CR2_ADON;
+	ADC2->CR2 |= ADC_CR2_ADON;
+	ADC3->CR2 |= ADC_CR2_ADON;
 
 	// Timer8 for ADC sampling
 	rccEnableTIM8(TRUE);
@@ -479,7 +476,7 @@ void mcpwm_deinit(void) {
 
 	rccResetTIM1();
 	rccResetTIM8();
-	ADC_DeInit();
+	rccResetADC();
 	dmaStreamFree(STM32_DMA2_STREAM4);
 	nvicDisableVector(ADC_IRQn);
 

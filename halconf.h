@@ -41,10 +41,10 @@
 #endif
 
 /**
- * @brief   Enables the ADC subsystem.
+ * @brief   Enables the ADC subsystem. Only for defines.
  */
 #if !defined(HAL_USE_ADC) || defined(__DOXYGEN__)
-#define HAL_USE_ADC                         FALSE
+#define HAL_USE_ADC                         TRUE
 #endif
 
 /**

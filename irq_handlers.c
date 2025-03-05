@@ -28,7 +28,8 @@
 
 CH_IRQ_HANDLER(ADC1_2_3_IRQHandler) {
 	CH_IRQ_PROLOGUE();
-	ADC_ClearITPendingBit(ADC1, ADC_IT_JEOC);
+	// Clear the IT pending bit
+	ADC1->SR = ~ADC_SR_JEOC;
 	mc_interface_adc_inj_int_handler();
 	CH_IRQ_EPILOGUE();
 }

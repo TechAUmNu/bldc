@@ -703,19 +703,19 @@
 #endif
 
 #ifndef HW_GET_INJ_CURR1
-#define HW_GET_INJ_CURR1()		ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_1)
+#define HW_GET_INJ_CURR1()		((uint16_t) ADC1->JDR1)
 #endif
 #ifndef HW_GET_INJ_CURR2
-#define HW_GET_INJ_CURR2()		ADC_GetInjectedConversionValue(ADC2, ADC_InjectedChannel_1)
+#define HW_GET_INJ_CURR2()		((uint16_t) ADC2->JDR1)
 #endif
 #ifndef HW_GET_INJ_CURR3
-#define HW_GET_INJ_CURR3()		ADC_GetInjectedConversionValue(ADC3, ADC_InjectedChannel_1)
+#define HW_GET_INJ_CURR3()		((uint16_t) ADC3->JDR1)
 #endif
 #ifndef HW_GET_INJ_CURR1_S2
-#define HW_GET_INJ_CURR1_S2()	ADC_GetInjectedConversionValue(ADC2, ADC_InjectedChannel_2)
+#define HW_GET_INJ_CURR1_S2()	((uint16_t) ADC2->JDR2)
 #endif
 #ifndef HW_GET_INJ_CURR2_S2
-#define HW_GET_INJ_CURR2_S2()	ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_2)
+#define HW_GET_INJ_CURR2_S2()	((uint16_t) ADC1->JDR1)
 #endif
 
 // Functions
@@ -726,5 +726,7 @@ void hw_stop_i2c(void);
 void hw_try_restore_i2c(void);
 uint8_t hw_id_from_uuid(void);
 uint8_t hw_id_from_pins(void);
+void hw_setup_adc_channel_helper(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime);
+void hw_setup_inj_adc_channel_helper(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime);
 
 #endif /* HW_H_ */

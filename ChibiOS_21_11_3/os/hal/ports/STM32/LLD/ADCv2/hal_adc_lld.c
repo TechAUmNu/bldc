@@ -66,6 +66,7 @@ ADCDriver ADCD3;
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
+#if STM32_ADC_USE_ADC1 || STM32_ADC_USE_ADC2 || STM32_ADC_USE_ADC3
 /**
  * @brief   ADC DMA service routine.
  *
@@ -126,6 +127,7 @@ static void adc_lld_serve_interrupt(ADCDriver *adcp, uint32_t sr) {
     }
   }
 }
+#endif
 
 /*===========================================================================*/
 /* Driver interrupt handlers.                                                */
@@ -231,7 +233,7 @@ void adc_lld_init(void) {
 
   /* The shared vector is initialized on driver initialization and never
      disabled because sharing.*/
-  nvicEnableVector(STM32_ADC_NUMBER, STM32_ADC_IRQ_PRIORITY);
+  //nvicEnableVector(STM32_ADC_NUMBER, STM32_ADC_IRQ_PRIORITY);
 }
 
 /**
