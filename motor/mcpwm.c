@@ -276,7 +276,6 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 
 	ADC_CommonInitTypeDef ADC_CommonInitStructure;
-	DMA_InitTypeDef DMA_InitStructure;
 	ADC_InitTypeDef ADC_InitStructure;
 
 	rccEnableDMA2(TRUE);
@@ -289,27 +288,31 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 			(stm32_dmaisr_t)mcpwm_adc_int_handler,
 			(void *)0);
 
-	// DMA for the ADC
-	DMA_InitStructure.DMA_Channel = DMA_Channel_0;
-	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&ADC_Value;
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&ADC->CDR;
-	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-	DMA_InitStructure.DMA_BufferSize = HW_ADC_CHANNELS;
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
-	DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-	DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
-	DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
-	DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-	DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-	DMA_Init(DMA2_Stream4, &DMA_InitStructure);
-
-	DMA_Cmd(DMA2_Stream4, ENABLE);
-
-	DMA_ITConfig(DMA2_Stream4, DMA_IT_TC, ENABLE);
+	// DMA Channel 0 (default)
+	// Direction - peripheral to memory (default)
+	// Peripheral Increment (default)
+	// Memory Increment
+	DMA2_Stream4->CR |= DMA_SxCR_MINC;
+	// Peripheral Data size - half word
+	DMA2_Stream4->CR |= DMA_SxCR_PSIZE_0;
+	// Memory data size - half word
+	DMA2_Stream4->CR |= DMA_SxCR_MSIZE_0;
+	// Mode - circular
+	DMA2_Stream4->CR |= DMA_SxCR_CIRC;
+	// Priority - high
+	DMA2_Stream4->CR |= DMA_SxCR_PL_1;
+	// Memory Burst - single (default)
+	// Peripheral Burst - single (default)
+	// Memory base address
+	DMA2_Stream4->M0AR = (uint32_t)&ADC_Value;
+	// Peripheral base address
+	DMA2_Stream4->PAR = (uint32_t)&ADC->CDR;
+	// Buffer Size
+	DMA2_Stream4->NDTR = HW_ADC_CHANNELS;
+	// Enable transfer complete interrupt
+	DMA2_Stream4->CR |= DMA_SxCR_TCIE;
+	// Enable stream
+	DMA2_Stream4->CR |= DMA_SxCR_EN;
 
 	// ADC Common Init
 	// Note that the ADC is running at 42MHz, which is higher than the
@@ -471,9 +474,9 @@ void mcpwm_deinit(void) {
 	rccResetTIM1();
 	rccResetTIM8();
 	ADC_DeInit();
-	DMA_DeInit(DMA2_Stream4);
+	dmaStreamFree(STM32_DMA2_STREAM4);
 	nvicDisableVector(ADC_IRQn);
-	dmaStreamFree(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)));
+
 }
 
 bool mcpwm_init_done(void) {

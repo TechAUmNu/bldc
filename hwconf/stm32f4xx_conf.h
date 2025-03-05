@@ -5,7 +5,7 @@
 
 //#include "misc.h"
 //#include "stm32f4_gpio_af.h"
-#include "stm32f4xx_dma.h"
+//#include "stm32f4xx_dma.h"
 #include "stm32f4xx_adc.h"
 //#include "stm32f4xx_exti.h"
 //#include "stm32f4xx_flash.h"

@@ -389,7 +389,6 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	TIM8->CNT = 0;
 
 	ADC_CommonInitTypeDef ADC_CommonInitStructure;
-	DMA_InitTypeDef DMA_InitStructure;
 	ADC_InitTypeDef ADC_InitStructure;
 
 	rccEnableDMA2(TRUE);
@@ -397,39 +396,45 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	rccEnableADC2(TRUE);
 	rccEnableADC3(TRUE);
 
+
+	// Configure DMA Stream to pull data from ADC
 	dmaStreamAlloc(STM32_DMA_STREAM_ID(2, 4),
 					  5,
 					  (stm32_dmaisr_t)mcpwm_foc_adc_int_handler,
 					  (void *)0);
-
-	DMA_InitStructure.DMA_Channel = DMA_Channel_0;
-	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&ADC_Value;
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&ADC->CDR;
-	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-	DMA_InitStructure.DMA_BufferSize = HW_ADC_CHANNELS;
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
-	DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-	DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
-	DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
-	DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-	DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-	DMA_Init(DMA2_Stream4, &DMA_InitStructure);
-
-	DMA_Cmd(DMA2_Stream4, ENABLE);
-
+	// DMA Channel 0 (default)
+	// Direction - peripheral to memory (default)
+	// Peripheral Increment (default)
+	// Memory Increment
+	DMA2_Stream4->CR |= DMA_SxCR_MINC;
+	// Peripheral Data size - half word
+	DMA2_Stream4->CR |= DMA_SxCR_PSIZE_0;
+	// Memory data size - half word
+	DMA2_Stream4->CR |= DMA_SxCR_MSIZE_0;
+	// Mode - circular
+	DMA2_Stream4->CR |= DMA_SxCR_CIRC;
+	// Priority - high
+	DMA2_Stream4->CR |= DMA_SxCR_PL_1;
+	// Memory Burst - single (default)
+	// Peripheral Burst - single (default)
+	// Memory base address
+	DMA2_Stream4->M0AR = (uint32_t)&ADC_Value;
+	// Peripheral base address
+	DMA2_Stream4->PAR = (uint32_t)&ADC->CDR;
+	// Buffer Size
+	DMA2_Stream4->NDTR = HW_ADC_CHANNELS;
 	// Note: The half transfer interrupt is used as we already have all current and voltage
 	// samples by then and we can start processing them. Entering the interrupt earlier gives
 	// more cycles to finish it and update the timer before the next zero vector. This helps
 	// at higher f_zv. Only use this if the three first samples are current samples.
 #if ADC_IND_CURR1 < 3 && ADC_IND_CURR2 < 3 && ADC_IND_CURR3 < 3
-	DMA_ITConfig(DMA2_Stream4, DMA_IT_HT, ENABLE);
+	DMA2_Stream4->CR |= DMA_SxCR_HTIE;
 #else
-	DMA_ITConfig(DMA2_Stream4, DMA_IT_TC, ENABLE);
+	DMA2_Stream4->CR |= DMA_SxCR_TCIE;
 #endif
+	// Enable stream
+	DMA2_Stream4->CR |= DMA_SxCR_EN;
+
 
 	// Note that the ADC is running at 42MHz, which is higher than the
 	// specified 36MHz in the data sheet, but it works.
@@ -608,9 +613,8 @@ void mcpwm_foc_deinit(void) {
 	rccResetTIM8();
 
 	ADC_DeInit();
-	DMA_DeInit(DMA2_Stream4);
+	dmaStreamFree(STM32_DMA2_STREAM4);
 	nvicDisableVector(ADC_IRQn);
-	dmaStreamFree(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)));
 }
 
 static volatile motor_all_state_t *get_motor_now(void) {
