@@ -335,7 +335,7 @@
 
 /* At least one ADC must be assigned.*/
 #if !STM32_ADC_USE_ADC12 && !STM32_ADC_USE_ADC3
-#error "ADC driver activated but no ADC peripheral assigned"
+//#error "ADC driver activated but no ADC peripheral assigned"
 #endif
 
 /* Dual mode is only supported with ADC12.*/

@@ -30,7 +30,6 @@
 #include "extensions/lbm_dyn_lib.h"
 #include "lbm_constants.h"
 #include "lbm_vesc_utils.h"
-#include "stm32f4xx_conf.h"
 #include "commands.h"
 #include "mc_interface.h"
 #include "timeout.h"

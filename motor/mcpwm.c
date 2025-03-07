@@ -226,7 +226,8 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 	rccResetTIM1();
 	rccResetTIM8();
-	rccResetADC();
+	rccResetADC12();
+	rccResetADC3();
 	rccResetDMA2();
 
 	TIM1->CNT = 0;
@@ -281,8 +282,7 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 
 
 	rccEnableDMA2(TRUE);
-	rccEnableADC1(TRUE);
-	rccEnableADC2(TRUE);
+	rccEnableADC12(TRUE);
 	rccEnableADC3(TRUE);
 
 	dmaStreamAlloc(STM32_DMA_STREAM_ID(2, 4),

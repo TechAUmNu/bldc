@@ -29,7 +29,6 @@
 #include "timeout.h"
 #include "lispbm.h"
 #include "mempools.h"
-#include "stm32f4xx_conf.h"
 #include "lbm_prof.h"
 #include "utils.h"
 
