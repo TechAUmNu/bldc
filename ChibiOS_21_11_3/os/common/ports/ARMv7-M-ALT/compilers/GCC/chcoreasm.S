@@ -1,6 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006,2007,2008,2009,2010,2011,2012,2013,2014,
-              2015,2016,2017,2018,2019,2020,2021 Giovanni Di Sirio.
+     ChibiOS - Copyright (C) 2006..2024 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -77,56 +76,62 @@
                 /* Store integer context through R1.
                    On entry R2=PSP, R3=BASEPRI, R12=CONTROL.*/
                 .macro  PORT_STORE_INTEGER_CONTEXT
-#if PORT_USE_SYSCALL
+#if PORT_SAVE_CONTROL
                 stmia   r1!, {r2-r12,lr}
 #else
                 stmia   r1!, {r2-r11,lr}
 #endif
                 .endm
 
-                /* Load integer context through R0.*/
+                /* Load integer context through R0.
+                   On exit R12=CONTROL.*/
                 .macro  PORT_LOAD_INTEGER_CONTEXT
-#if PORT_USE_SYSCALL
+#if PORT_SAVE_CONTROL
                 ldmia   r0!, {r2-r12, lr}
-                msr     PSP, r2
-                msr     BASEPRI, r3
-                msr     CONTROL, r12
 #else
                 ldmia   r0!, {r2-r11, lr}
+#endif
                 msr     PSP, r2
                 msr     BASEPRI, r3
-#endif
                 .endm
 
-#if CORTEX_USE_FPU
                 /* Store float context through R1.*/
                 .macro  PORT_STORE_FLOAT_CONTEXT
+#if CORTEX_USE_FPU
+#if PORT_USE_FPU_FAST_SWITCHING > 2
+                tst     lr, #16
+                it      eq
+                vstmiaeq r1!, {s16-s31}
+#else
                 vstmia  r1!, {s16-s31}
+#endif
+#endif
                 .endm
 
                 /* Load float context through R0.*/
                 .macro  PORT_LOAD_FLOAT_CONTEXT
-                vldmia  r0!, {s16-s31}
-                .endm
+#if CORTEX_USE_FPU
+#if PORT_USE_FPU_FAST_SWITCHING > 2
+                tst     lr, #16
+                it      eq
+                vldmiaeq r0!, {s16-s31}
 #else
-                .macro  PORT_STORE_FLOAT_CONTEXT
-                .endm
-
-                .macro  PORT_LOAD_FLOAT_CONTEXT
-                .endm
+                vldmia  r0!, {s16-s31}
 #endif
+#endif
+                .endm
 
                 /* Store MPU context through R1.*/
                 .macro  PORT_STORE_MPU_CONTEXT
-#if PORT_SWITCHED_REGIONS_NUMBER == 1
+#if PORT_SWITCHED_REGIONS_NUMBER > 0
                 ldr     r2, =MPU_RBAR
+#if PORT_SWITCHED_REGIONS_NUMBER == 1
                 mov     r3, #0
                 str     r3, [r2, #-4]       /* RNR */
                 ldm     r2, {r4, r5}        /* RBAR0, RASR0 */
                 stmia   r1!, {r4-r5}
 #endif
 #if PORT_SWITCHED_REGIONS_NUMBER == 2
-                ldr     r2, =MPU_RBAR
                 mov     r3, #0
                 str     r3, [r2, #-4]       /* RNR */
                 ldm     r2, {r4, r5}        /* RBAR0, RASR0 */
@@ -136,7 +141,6 @@
                 stmia   r1!, {r4-r7}
 #endif
 #if PORT_SWITCHED_REGIONS_NUMBER == 3
-                ldr     r2, =MPU_RBAR
                 mov     r3, #0
                 str     r3, [r2, #-4]       /* RNR */
                 ldm     r2, {r4, r5}        /* RBAR0, RASR0 */
@@ -149,7 +153,6 @@
                 stmia   r1!, {r4-r9}
 #endif
 #if PORT_SWITCHED_REGIONS_NUMBER == 4
-                ldr     r2, =MPU_RBAR
                 mov     r3, #0
                 str     r3, [r2, #-4]       /* RNR */
                 ldm     r2, {r4, r5}        /* RBAR0, RASR0 */
@@ -164,52 +167,34 @@
                 ldm     r2, {r10, r11}      /* RBAR3, RASR3 */
                 stmia   r1!, {r4-r11}
 #endif
+#endif /* PORT_SWITCHED_REGIONS_NUMBER > 0 */
                 .endm
 
                 /* Load MPU context through R0.*/
                 .macro  PORT_LOAD_MPU_CONTEXT
-#if PORT_SWITCHED_REGIONS_NUMBER == 1
+#if PORT_SWITCHED_REGIONS_NUMBER > 0
                 ldr     r2, =MPU_RNR
                 mov     r1, #0
+#if PORT_SWITCHED_REGIONS_NUMBER >= 1
                 ldmia   r0!, {r3, r12}
                 stm     r2, {r1, r3, r12}   /* RNR, RBAR0, RASR0 */
 #endif
-#if PORT_SWITCHED_REGIONS_NUMBER == 2
-                ldr     r2, =MPU_RNR
-                mov     r1, #0
-                ldmia   r0!, {r3, r12}
-                stm     r2, {r1, r3, r12}   /* RNR, RBAR0, RASR0 */
-                mov     r1, #1
+#if PORT_SWITCHED_REGIONS_NUMBER >= 2
+                add     r1, #1
                 ldmia   r0!, {r3, r12}
                 stm     r2, {r1, r3, r12}   /* RNR, RBAR1, RASR1 */
 #endif
-#if PORT_SWITCHED_REGIONS_NUMBER == 3
-                ldr     r2, =MPU_RNR
-                mov     r3, #0
-                ldmia   r0!, {r3, r12}
-                stm     r2, {r1, r3, r12}   /* RNR, RBAR0, RASR0 */
-                mov     r1, #1
-                ldmia   r0!, {r3, r12}
-                stm     r2, {r1, r3, r12}   /* RNR, RBAR1, RASR1 */
-                mov     r1, #2
+#if PORT_SWITCHED_REGIONS_NUMBER >= 3
+                add     r1, #1
                 ldmia   r0!, {r3, r12}
                 stm     r2, {r1, r3, r12}   /* RNR, RBAR2, RASR2 */
 #endif
-#if PORT_SWITCHED_REGIONS_NUMBER == 4
-                ldr     r2, =MPU_RNR
-                mov     r3, #0
-                ldmia   r0!, {r3, r12}
-                stm     r2, {r1, r3, r12}   /* RNR, RBAR0, RASR0 */
-                mov     r1, #1
-                ldmia   r0!, {r3, r12}
-                stm     r2, {r1, r3, r12}   /* RNR, RBAR1, RASR1 */
-                mov     r1, #2
-                ldmia   r0!, {r3, r12}
-                stm     r2, {r1, r3, r12}   /* RNR, RBAR2, RASR2 */
-                mov     r1, #3
+#if PORT_SWITCHED_REGIONS_NUMBER >= 4
+                add     r1, #1
                 ldmia   r0!, {r3, r12}
                 stm     r2, {r1, r3, r12}   /* RNR, RBAR3, RASR3 */
 #endif
+#endif /* PORT_SWITCHED_REGIONS_NUMBER > 0 */
                 .endm
 
 /*--------------------------------------------------------------------------*
@@ -218,44 +203,53 @@
                 .thumb_func
                 .globl  SVC_Handler
 SVC_Handler:
-                mrs     r2, PSP
 #if PORT_USE_SYSCALL
                 mrs     r12, CONTROL
                 tst     r12, #1
-                beq     frompriv
+                beq     .Lfrompriv
                 /* SVC called from non-privileged mode for a syscall.*/
-                bic     r12, #1
-                msr     CONTROL, r12        /* Switching to privileged. */
                 /* Note, LR already contains the return address.*/
-                ldr     r3, [r2, #24]       /* PC position. */
-                ldrh    r0, [r3, #-2]       /* SVC opcode.  */
-                and     r0, #255
+                mrs     r1, PSP             /* Position of the exc.frame.*/
+                ldr     r3, [r1, #24]       /* PC position.*/
+                ldrb    r0, [r3, #-2]       /* SVC parameter.*/
+                cmp     r0, #0x80
+                blt     __port_do_fastcall_entry
+                bic     r12, #1
+                msr     CONTROL, r12        /* Switching to privileged.*/
                 b       __port_do_syscall_entry
 
-frompriv:
+.Lfrompriv:
                 /* SVC called from privileged mode for unprivileged return.*/
-                ldr     r3, [r2, #24]       /* PC position. */
-                ldrh    r3, [r3, #-2]       /* SVC opcode.  */
+                mrs     r2, PSP             /* Position of the exc.frame.*/
+                ldr     r3, [r2, #24]       /* PC position.*/
+                ldrh    r3, [r3, #-2]       /* SVC opcode.*/
                 ands    r3, #255
-                beq     ctxswitch
+                beq     .Lctxswitch
                 /* Called for non-privileged mode change.*/
                 orr     r12, #1
                 msr     CONTROL, r12        /* Switching to non-privileged. */
                 b       __port_do_syscall_return
 
-ctxswitch:
+.Lctxswitch:
                 /* SVC called from privilege mode for context switch.*/
+#else
+                mrs     r2, PSP             /* Position of the exc.frame.*/
+#if PORT_SAVE_CONTROL
+                mrs     r12, CONTROL
 #endif
-                /* Context store for old thread through R1.*/
+#endif
+                /* Retrieving pointers to old and new context from the
+                   saved stack frame.*/
+                ldr     r1, [r2, #4]        /* R1 on SVC context (otp) */
                 adds    r1, #CONTEXT_OFFSET
+                ldr     r0, [r2, #0]        /* R0 on SVC context (ntp) */
+                adds    r0, #CONTEXT_OFFSET
 
+                /* Context store for old thread through R1.*/
                 mrs     r3, BASEPRI
                 PORT_STORE_INTEGER_CONTEXT
                 PORT_STORE_FLOAT_CONTEXT
                 PORT_STORE_MPU_CONTEXT
-
-                /* Context load for new thread through R0.*/
-                adds    r0, #CONTEXT_OFFSET
 
 #if CH_DBG_SYSTEM_STATE_CHECK || CH_DBG_STATISTICS
                 ldr     r3, [r0, #4]        /* BASEPRI offset */
@@ -274,8 +268,12 @@ ctxswitch:
 1:
 #endif /* CH_DBG_SYSTEM_STATE_CHECK || CH_DBG_STATISTICS */
 
+                /* Context load for new thread through R0.*/
                 PORT_LOAD_INTEGER_CONTEXT
                 PORT_LOAD_FLOAT_CONTEXT
+#if PORT_SAVE_CONTROL
+                msr     CONTROL, r12        /* Note, after touching FPU regs.*/
+#endif
                 PORT_LOAD_MPU_CONTEXT
 
                 bx      lr
@@ -299,7 +297,7 @@ PendSV_Handler:
                 adds    r1, #CONTEXT_OFFSET
 
                 mrs     r2, PSP
-#if PORT_USE_SYSCALL
+#if PORT_SAVE_CONTROL
                 mrs     r12, CONTROL
 #endif
                 PORT_STORE_INTEGER_CONTEXT
@@ -328,6 +326,9 @@ PendSV_Handler:
 
                 PORT_LOAD_INTEGER_CONTEXT
                 PORT_LOAD_FLOAT_CONTEXT
+#if PORT_SAVE_CONTROL
+                msr     CONTROL, r12        /* Note, after touching FPU regs.*/
+#endif
                 PORT_LOAD_MPU_CONTEXT
 
                 bx      lr
@@ -343,6 +344,12 @@ PendSV_Handler:
                 .thumb_func
                 .globl  __port_thread_start
 __port_thread_start:
+#if CORTEX_USE_FPU && (PORT_USE_FPU_FAST_SWITCHING >= 2)
+                /* Clearing FPCA for the new thread, it is initially set
+                   because a long context is used for starting it.*/
+                mov     r0, #2
+                msr     CONTROL, r0
+#endif
 #if PORT_ENABLE_GUARD_PAGES
                 bl      __port_set_region
 #endif
@@ -358,7 +365,7 @@ __port_thread_start:
                 blx     r4
                 movs    r0, #0              /* MSG_OK */
                 bl      chThdExit
-.zombies:       b       .zombies
+1:              b       1b
 
 #endif /* !defined(__DOXYGEN__) */
 

@@ -69,16 +69,16 @@
 #define PORT_NATURAL_ALIGN              sizeof (void *)
 
 /**
- * @brief   Stack alignment constant.
+ * @brief   Stack initial alignment constant.
  * @note    It is the alignment required for the stack pointer.
  */
-#define PORT_STACK_ALIGN                sizeof (stkalign_t)
+#define PORT_STACK_ALIGN                8U
 
 /**
  * @brief   Working Areas alignment constant.
  * @note    It is the alignment to be enforced for thread working areas.
  */
-#define PORT_WORKING_AREA_ALIGN         sizeof (stkalign_t)
+#define PORT_WORKING_AREA_ALIGN         8U
 /** @} */
 
 /**
@@ -294,17 +294,6 @@ struct port_context {
                          ((size_t)(n)) + ((size_t)(PORT_INT_REQUIRED_STACK)))
 
 /**
- * @brief   Static working area allocation.
- * @details This macro is used to allocate a static thread working area
- *          aligned as both position and size.
- *
- * @param[in] s         the name to be assigned to the stack array
- * @param[in] n         the stack size to be assigned to the thread
- */
-#define PORT_WORKING_AREA(s, n)                                             \
-  stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
-
-/**
  * @brief   Priority level verification macro.
  * @todo    Add the required parameters to armparams.h.
  */
@@ -359,9 +348,9 @@ struct port_context {
 #if CH_DBG_ENABLE_STACK_CHECK == TRUE
 #define port_switch(ntp, otp) {                                             \
   register struct port_intctx *r13 asm ("r13");                             \
-  if ((stkalign_t *)(r13 - 1) < otp->wabase)                                \
+  if ((stkline_t *)(r13 - 1) < otp->wabase)                                 \
     chSysHalt("stack overflow");                                            \
-  __port_switch_thumb(ntp, otp);                                             \
+  __port_switch_thumb(ntp, otp);                                            \
 }
 #else
 #define port_switch(ntp, otp) __port_switch_thumb(ntp, otp)
@@ -372,9 +361,9 @@ struct port_context {
 #if CH_DBG_ENABLE_STACK_CHECK == TRUE
 #define port_switch(ntp, otp) {                                             \
   register struct port_intctx *r13 asm ("r13");                             \
-  if ((stkalign_t *)(r13 - 1) < otp->wabase)                                \
+  if ((stkline_t *)(r13 - 1) < otp->wabase)                                 \
   chSysHalt("stack overflow");                                              \
-  __port_switch_arm(ntp, otp);                                               \
+  __port_switch_arm(ntp, otp);                                              \
 }
 #else
 #define port_switch(ntp, otp) __port_switch_arm(ntp, otp)

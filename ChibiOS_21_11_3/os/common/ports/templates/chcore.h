@@ -50,16 +50,16 @@
 #define PORT_NATURAL_ALIGN              sizeof (void *)
 
 /**
- * @brief   Stack alignment constant.
+ * @brief   Stack initial alignment constant.
  * @note    It is the alignment required for the stack pointer.
  */
-#define PORT_STACK_ALIGN                sizeof (stkalign_t)
+#define PORT_STACK_ALIGN                1U
 
 /**
  * @brief   Working Areas alignment constant.
  * @note    It is the alignment to be enforced for thread working areas.
  */
-#define PORT_WORKING_AREA_ALIGN         sizeof (stkalign_t)
+#define PORT_WORKING_AREA_ALIGN         1U
 /** @} */
 
 /**
@@ -124,7 +124,7 @@
  * @brief   Enables a "wait for interrupt" instruction in the idle loop.
  */
 #if !defined(PORT_XXX_WFI_SLEEP_IDLE) || defined(__DOXYGEN__)
-#define PORT_XXX_ENABLE_WFI_IDLE      FALSE
+#define PORT_ENABLE_WFI_IDLE        FALSE
 #endif
 
 /*===========================================================================*/
@@ -198,17 +198,6 @@ struct port_context {
                          ((size_t)(n)) + ((size_t)(PORT_INT_REQUIRED_STACK)))
 
 /**
- * @brief   Static working area allocation.
- * @details This macro is used to allocate a static thread working area
- *          aligned as both position and size.
- *
- * @param[in] s         the name to be assigned to the stack array
- * @param[in] n         the stack size to be assigned to the thread
- */
-#define PORT_WORKING_AREA(s, n)                                             \
-  stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
-
-/**
  * @brief   Priority level verification macro.
  */
 #define PORT_IRQ_IS_VALID_PRIORITY(n) false
@@ -269,11 +258,28 @@ struct port_context {
 #else
 #define port_switch(ntp, otp) {                                             \
   register struct port_intctx *sp asm ("%r1");                              \
-  if ((stkalign_t *)(sp - 1) < otp->wabase)                                 \
+  if ((stkline_t *)(sp - 1) < otp->wabase)                                  \
     chSysHalt("stack overflow");                                            \
   _port_switch(ntp, otp);                                                   \
 }
 #endif
+
+/**
+ * @brief   Returns a word representing a critical section status.
+ *
+ * @return              The critical section status.
+ */
+#define port_get_lock_status() 0U
+
+/**
+ * @brief   Determines if in a critical section.
+ *
+ * @param[in] sts       status word returned by @p port_get_lock_status()
+ * @return              The current status.
+ * @retval false        if running outside a critical section.
+ * @retval true         if running within a critical section.
+ */
+#define port_is_locked(sts) ((sts) != 0U)
 
 /*===========================================================================*/
 /* External declarations.                                                    */
@@ -301,32 +307,6 @@ extern "C" {
 /* The following code is not processed when the file is included from an
    asm module.*/
 #if !defined(_FROM_ASM_)
-
-/**
- * @brief   Returns a word encoding the current interrupts status.
- *
- * @return              The interrupts status.
- */
-static inline syssts_t port_get_irq_status(void) {
-
-  return 0;
-}
-
-/**
- * @brief   Checks the interrupt status.
- *
- * @param[in] sts       the interrupt status word
- *
- * @return              The interrupt status.
- * @retval false        the word specified a disabled interrupts status.
- * @retval true         the word specified an enabled interrupts status.
- */
-static inline bool port_irq_enabled(syssts_t sts) {
-
-  (void)sts;
-
-  return false;
-}
 
 /**
  * @brief   Determines the current execution context.
@@ -410,7 +390,7 @@ static inline void port_enable(void) {
  */
 static inline void port_wait_for_interrupt(void) {
 
-#if PORT_XXX_ENABLE_WFI_IDLE
+#if PORT_ENABLE_WFI_IDLE
 #endif
 }
 

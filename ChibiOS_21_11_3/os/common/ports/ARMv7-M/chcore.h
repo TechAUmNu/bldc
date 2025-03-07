@@ -30,7 +30,7 @@
 
 /* Inclusion of the Cortex-Mx implementation specific parameters.*/
 #include "cmparams.h"
-#include "mpu.h"
+#include "mpu_v7m.h"
 
 /*===========================================================================*/
 /* Module constants.                                                         */
@@ -112,24 +112,6 @@
 /*===========================================================================*/
 
 /**
- * @brief   Implements a syscall interface on SVC.
- */
-#if !defined(PORT_USE_SYSCALL) || defined(__DOXYGEN__)
-#define PORT_USE_SYSCALL                FALSE
-#endif
-
-/**
- * @brief   Number of MPU regions to be saved/restored during context switch.
- * @note    The first region is always region zero.
- * @note    The use of this option has an overhead of 8 bytes for each
- *          region for each thread.
- * @note    Allowed values are 0..4, zero means none.
- */
-#if !defined(PORT_SWITCHED_REGIONS_NUMBER) || defined(__DOXYGEN__)
-#define PORT_SWITCHED_REGIONS_NUMBER    0
-#endif
-
-/**
  * @brief   Enables stack overflow guard pages using MPU.
  * @note    This option can only be enabled if also option
  *          @p CH_DBG_ENABLE_STACK_CHECK is enabled.
@@ -142,8 +124,6 @@
 
 /**
  * @brief   MPU region to be used to stack guards.
- * @note    Make sure this region is not included in the
- *          @p PORT_SWITCHED_REGIONS_NUMBER regions range.
  */
 #if !defined(PORT_USE_GUARD_MPU_REGION) || defined(__DOXYGEN__)
 #define PORT_USE_GUARD_MPU_REGION       MPU_REGION_7
@@ -235,10 +215,6 @@
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
-#if (PORT_SWITCHED_REGIONS_NUMBER < 0) || (PORT_SWITCHED_REGIONS_NUMBER > 4)
-  #error "invalid PORT_SWITCHED_REGIONS_NUMBER value"
-#endif
-
 #if (CORTEX_FAST_PRIORITIES < 0) ||                                         \
     (CORTEX_FAST_PRIORITIES > (CORTEX_PRIORITY_LEVELS / 4))
 #error "invalid CORTEX_FAST_PRIORITIES value specified"
@@ -260,17 +236,22 @@
 #define PORT_NATURAL_ALIGN              sizeof (void *)
 
 /**
- * @brief   Stack alignment constant.
- * @note    It is the alignment required for the stack pointer.
+ * @brief   Stack initial alignment constant.
+ * @note    It is the alignment required for the initial stack pointer,
+ *          must be a multiple of sizeof (port_stkline_t).
+ * @note    It is set to 32 in this architecture in order to have stacks
+ *          initially aligned with cache lines.
  */
-#define PORT_STACK_ALIGN                sizeof (stkalign_t)
+#define PORT_STACK_ALIGN                32U
 
 /**
  * @brief   Working Areas alignment constant.
- * @note    It is the alignment to be enforced for thread working areas.
+ * @note    It is the alignment to be enforced for thread working areas,
+ *          must be a multiple of sizeof (port_stkline_t).
+ * @note    It is set to 32 in this architecture in order to have working
+ *          areas aligned with cache lines and MPU guard pages.
  */
-#define PORT_WORKING_AREA_ALIGN         ((PORT_ENABLE_GUARD_PAGES == TRUE) ?\
-                                         32U : PORT_STACK_ALIGN)
+#define PORT_WORKING_AREA_ALIGN         32U
 /** @} */
 
 /**
@@ -321,7 +302,7 @@
     #error "ChibiOS Cortex-M4 port not licensed"
   #endif
 
-  #define PORT_ARCHITECTURE_ARM_v7ME
+  #define PORT_ARCHITECTURE_ARM_V7ME
   #define PORT_ARCHITECTURE_NAME        "ARMv7E-M"
   #if CORTEX_USE_FPU
     #if PORT_ENABLE_GUARD_PAGES == FALSE
@@ -347,7 +328,7 @@
     #error "ChibiOS Cortex-M7 port not licensed"
   #endif
 
-  #define PORT_ARCHITECTURE_ARM_v7ME
+  #define PORT_ARCHITECTURE_ARM_V7ME
   #define PORT_ARCHITECTURE_NAME        "ARMv7E-M"
   #if CORTEX_USE_FPU
     #if PORT_ENABLE_GUARD_PAGES == FALSE
@@ -459,31 +440,12 @@ struct port_extctx {
 #endif /* CORTEX_USE_FPU */
 };
 
-#if (PORT_USE_SYSCALL == TRUE) || defined(__DOXYGEN__)
-/**
- * @brief   Link context structure.
- * @details This structure is used when there is the need to save extra
- *          context information that is not part of the registers stacked
- *          in HW.
- */
-struct port_linkctx {
-  uint32_t              control;
-  struct port_extctx    *ectxp;
-};
-#endif
-
 /**
  * @brief   System saved context.
  * @details This structure represents the inner stack frame during a context
  *          switch.
  */
 struct port_intctx {
-#if (PORT_SWITCHED_REGIONS_NUMBER > 0) || defined(__DOXYGEN__)
-  struct {
-    uint32_t    rbar;
-    uint32_t    rasr;
-  } regions[PORT_SWITCHED_REGIONS_NUMBER];
-#endif
 #if CORTEX_USE_FPU
   uint32_t      s16;
   uint32_t      s17;
@@ -521,12 +483,6 @@ struct port_intctx {
  */
 struct port_context {
   struct port_intctx    *sp;
-#if (PORT_USE_SYSCALL == TRUE) || defined(__DOXYGEN__)
-  struct {
-    uint32_t            psp;
-    const void          *p;
-  } syscall;
-#endif
 };
 
 #endif /* !defined(_FROM_ASM_) */
@@ -552,55 +508,6 @@ struct port_context {
  */
 #define PORT_THD_FUNCTION(tname, arg) void tname(void *arg)
 
-/* By default threads have no syscall context information.*/
-#if (PORT_USE_SYSCALL == TRUE) || defined(__DOXYGEN__)
-  #define __PORT_SETUP_CONTEXT_SYSCALL(tp, wtop)                            \
-    (tp)->ctx.syscall.psp = (uint32_t)(wtop);                               \
-    (tp)->ctx.syscall.p   = NULL;
-#else
-  #define __PORT_SETUP_CONTEXT_SYSCALL(tp, wtop)
-#endif
-
-/* By default threads have all regions disabled.*/
-#if (PORT_SWITCHED_REGIONS_NUMBER == 0) || defined(__DOXYGEN__)
-  #define __PORT_SETUP_CONTEXT_MPU(tp)
-
-#elif (PORT_SWITCHED_REGIONS_NUMBER == 1) || defined(__DOXYGEN__)
-  #define __PORT_SETUP_CONTEXT_MPU(tp)                                      \
-    (tp)->ctx.sp->regions[0].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[0].rasr  = 0U
-
-#elif (PORT_SWITCHED_REGIONS_NUMBER == 2) || defined(__DOXYGEN__)
-  #define __PORT_SETUP_CONTEXT_MPU(tp)                                      \
-    (tp)->ctx.sp->regions[0].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[0].rasr  = 0U;                                    \
-    (tp)->ctx.sp->regions[1].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[1].rasr  = 0U
-
-#elif (PORT_SWITCHED_REGIONS_NUMBER == 3) || defined(__DOXYGEN__)
-  #define __PORT_SETUP_CONTEXT_MPU(tp)                                      \
-    (tp)->ctx.sp->regions[0].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[0].rasr  = 0U;                                    \
-    (tp)->ctx.sp->regions[1].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[1].rasr  = 0U;                                    \
-    (tp)->ctx.sp->regions[2].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[2].rasr  = 0U
-
-#elif (PORT_SWITCHED_REGIONS_NUMBER == 4) || defined(__DOXYGEN__)
-  #define __PORT_SETUP_CONTEXT_MPU(tp)                                      \
-    (tp)->ctx.sp->regions[0].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[0].rasr  = 0U;                                    \
-    (tp)->ctx.sp->regions[1].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[1].rasr  = 0U;                                    \
-    (tp)->ctx.sp->regions[2].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[2].rasr  = 0U;                                    \
-    (tp)->ctx.sp->regions[3].rbar  = 0U;                                    \
-    (tp)->ctx.sp->regions[3].rasr  = 0U
-
-#else
-  /* Note, checked above.*/
-#endif
-
 /**
  * @brief   Platform dependent part of the @p chThdCreateI() API.
  * @details This code usually setup the context switching frame represented
@@ -612,8 +519,6 @@ struct port_context {
   (tp)->ctx.sp->r4 = (uint32_t)(pf);                                        \
   (tp)->ctx.sp->r5 = (uint32_t)(arg);                                       \
   (tp)->ctx.sp->lr = (uint32_t)__port_thread_start;                         \
-  __PORT_SETUP_CONTEXT_MPU(tp);                                             \
-  __PORT_SETUP_CONTEXT_SYSCALL(tp, wtop);                                   \
 } while (false)
 
 /**
@@ -636,23 +541,6 @@ struct port_context {
                          (size_t)PORT_WA_CTX_SIZE +                         \
                          (size_t)(n) +                                      \
                          (size_t)PORT_INT_REQUIRED_STACK)
-
-/**
- * @brief   Static working area allocation.
- * @details This macro is used to allocate a static thread working area
- *          aligned as both position and size.
- *
- * @param[in] s         the name to be assigned to the stack array
- * @param[in] n         the stack size to be assigned to the thread
- */
-#if (PORT_ENABLE_GUARD_PAGES == FALSE) || defined(__DOXYGEN__)
-  #define PORT_WORKING_AREA(s, n)                                           \
-    stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
-
-#else
-  #define PORT_WORKING_AREA(s, n)                                           \
-    ALIGNED_VAR(32) stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
-#endif
 
 /**
  * @brief   IRQ prologue code.
@@ -709,7 +597,7 @@ struct port_context {
   #if PORT_ENABLE_GUARD_PAGES == FALSE
     #define port_switch(ntp, otp) do {                                      \
       struct port_intctx *r13 = (struct port_intctx *)__get_PSP();          \
-      if ((stkalign_t *)(void *)(r13 - 1) < (otp)->wabase) {                \
+      if ((stkline_t *)(void *)(r13 - 1) < (otp)->wabase) {                 \
         chSysHalt("stack overflow");                                        \
       }                                                                     \
       __port_switch(ntp, otp);                                              \
@@ -726,6 +614,23 @@ struct port_context {
   #endif
 #endif
 
+/**
+ * @brief   Returns a word representing a critical section status.
+ *
+ * @return              The critical section status.
+ */
+#define port_get_lock_status() __port_get_irq_status()
+
+/**
+ * @brief   Determines if in a critical section.
+ *
+ * @param[in] sts       status word returned by @p port_get_lock_status()
+ * @return              The current status.
+ * @retval false        if running outside a critical section.
+ * @retval true         if running within a critical section.
+ */
+#define port_is_locked(sts) !__port_irq_enabled(sts)
+
 /*===========================================================================*/
 /* External declarations.                                                    */
 /*===========================================================================*/
@@ -741,9 +646,6 @@ extern "C" {
   void __port_thread_start(void);
   void __port_switch_from_isr(void);
   void __port_exit_from_isr(void);
-#if PORT_USE_SYSCALL == TRUE
-  void port_unprivileged_jump(uint32_t pc, uint32_t psp);
-#endif
 #ifdef __cplusplus
 }
 #endif
@@ -757,7 +659,7 @@ extern "C" {
  *
  * @return              The interrupts status.
  */
-__STATIC_FORCEINLINE syssts_t port_get_irq_status(void) {
+__STATIC_FORCEINLINE syssts_t __port_get_irq_status(void) {
   syssts_t sts;
 
 #if CORTEX_SIMPLIFIED_PRIORITY == FALSE
@@ -777,7 +679,7 @@ __STATIC_FORCEINLINE syssts_t port_get_irq_status(void) {
  * @retval false        the word specified a disabled interrupts status.
  * @retval true         the word specified an enabled interrupts status.
  */
-__STATIC_FORCEINLINE bool port_irq_enabled(syssts_t sts) {
+__STATIC_FORCEINLINE bool __port_irq_enabled(syssts_t sts) {
 
 #if CORTEX_SIMPLIFIED_PRIORITY == FALSE
   return sts == (syssts_t)CORTEX_BASEPRI_DISABLED;

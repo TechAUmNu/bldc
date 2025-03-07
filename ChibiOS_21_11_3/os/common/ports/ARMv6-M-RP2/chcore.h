@@ -72,16 +72,18 @@
 #define PORT_NATURAL_ALIGN              sizeof (void *)
 
 /**
- * @brief   Stack alignment constant.
- * @note    It is the alignment required for the stack pointer.
+ * @brief   Stack initial alignment constant.
+ * @note    It is the alignment required for the initial stack pointer,
+ *          must be a multiple of sizeof (port_stkline_t).
  */
-#define PORT_STACK_ALIGN                sizeof (stkalign_t)
+#define PORT_STACK_ALIGN                8U
 
 /**
  * @brief   Working Areas alignment constant.
- * @note    It is the alignment to be enforced for thread working areas.
+ * @note    It is the alignment required for the initial stack pointer,
+ *          must be a multiple of sizeof (port_stkline_t).
  */
-#define PORT_WORKING_AREA_ALIGN         PORT_STACK_ALIGN
+#define PORT_WORKING_AREA_ALIGN         8U
 
 /**
  * @brief   Number of cores supported.
@@ -386,17 +388,6 @@ struct port_context {
                          ((size_t)(n)) + ((size_t)(PORT_INT_REQUIRED_STACK)))
 
 /**
- * @brief   Static working area allocation.
- * @details This macro is used to allocate a static thread working area
- *          aligned as both position and size.
- *
- * @param[in] s         the name to be assigned to the stack array
- * @param[in] n         the stack size to be assigned to the thread
- */
-#define PORT_WORKING_AREA(s, n)                                             \
-  stkalign_t s[THD_WORKING_AREA_SIZE(n) / sizeof (stkalign_t)]
-
-/**
  * @brief   IRQ prologue code.
  * @details This macro must be inserted at the start of all IRQ handlers
  *          enabled to invoke system APIs.
@@ -456,12 +447,29 @@ struct port_context {
 #else
   #define port_switch(ntp, otp) do {                                        \
     struct port_intctx *r13 = (struct port_intctx *)__get_PSP();            \
-    if ((stkalign_t *)(void *)(r13 - 1) < (otp)->wabase) {                  \
+    if ((stkline_t *)(void *)(r13 - 1) < (otp)->wabase) {                   \
       chSysHalt("stack overflow");                                          \
     }                                                                       \
     __port_switch(ntp, otp);                                                \
   } while (false)
 #endif
+
+/**
+ * @brief   Returns a word representing a critical section status.
+ *
+ * @return              The critical section status.
+ */
+#define port_get_lock_status() __port_get_irq_status()
+
+/**
+ * @brief   Determines if in a critical section.
+ *
+ * @param[in] sts       status word returned by @p port_get_lock_status()
+ * @return              The current status.
+ * @retval false        if running outside a critical section.
+ * @retval true         if running within a critical section.
+ */
+#define port_is_locked(sts) !__port_irq_enabled(sts)
 
 /**
  * @brief   Panic notification.
@@ -539,7 +547,7 @@ __STATIC_INLINE void port_spinlock_release(void) {
  *
  * @return              The interrupts status.
  */
- __STATIC_INLINE syssts_t port_get_irq_status(void) {
+ __STATIC_INLINE syssts_t __port_get_irq_status(void) {
 
   return (syssts_t)__get_PRIMASK();
 }
@@ -553,7 +561,7 @@ __STATIC_INLINE void port_spinlock_release(void) {
  * @retval false        the word specified a disabled interrupts status.
  * @retval true         the word specified an enabled interrupts status.
  */
-__STATIC_INLINE bool port_irq_enabled(syssts_t sts) {
+__STATIC_INLINE bool __port_irq_enabled(syssts_t sts) {
 
   return (sts & (syssts_t)1) == (syssts_t)0;
 }
