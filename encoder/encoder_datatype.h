@@ -189,7 +189,7 @@ typedef struct {
 	stm32_gpio_t *RX_gpio; uint8_t RX_pin;
 	stm32_gpio_t *EXT_gpio; uint8_t EXT_pin;
 	SerialConfig uart_param;
-	stkalign_t *thread_wa;
+	stkline_t *thread_wa;
 	uint32_t thread_wa_size;
 
 	TS5700N8501_state state;

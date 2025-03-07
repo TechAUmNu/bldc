@@ -2500,37 +2500,45 @@ typedef struct
 #define TIM7                ((TIM_TypeDef *) TIM7_BASE)
 #define TIM13               ((TIM_TypeDef *) TIM13_BASE)
 #define TIM14               ((TIM_TypeDef *) TIM14_BASE)
+
 #define VREFBUF             ((VREFBUF_TypeDef *) VREFBUF_BASE)
 #define RTC                 ((RTC_TypeDef *) RTC_BASE)
 #define WWDG1               ((WWDG_TypeDef *) WWDG1_BASE)
-
-
 #define IWDG1               ((IWDG_TypeDef *) IWDG1_BASE)
+
+#define SPI1                ((SPI_TypeDef *) SPI1_BASE)
 #define SPI2                ((SPI_TypeDef *) SPI2_BASE)
 #define SPI3                ((SPI_TypeDef *) SPI3_BASE)
 #define SPI4                ((SPI_TypeDef *) SPI4_BASE)
 #define SPI5                ((SPI_TypeDef *) SPI5_BASE)
 #define SPI6                ((SPI_TypeDef *) SPI6_BASE)
+
+#define LPUART1             ((USART_TypeDef *) LPUART1_BASE)
+#define USART1              ((USART_TypeDef *) USART1_BASE)
 #define USART2              ((USART_TypeDef *) USART2_BASE)
 #define USART3              ((USART_TypeDef *) USART3_BASE)
+#define UART4               ((USART_TypeDef *) UART4_BASE)
+#define UART5               ((USART_TypeDef *) UART5_BASE)
 #define USART6              ((USART_TypeDef *) USART6_BASE)
 #define UART7               ((USART_TypeDef *) UART7_BASE)
 #define UART8               ((USART_TypeDef *) UART8_BASE)
+
 #define CRS                 ((CRS_TypeDef *) CRS_BASE)
-#define UART4               ((USART_TypeDef *) UART4_BASE)
-#define UART5               ((USART_TypeDef *) UART5_BASE)
+
 #define I2C1                ((I2C_TypeDef *) I2C1_BASE)
 #define I2C2                ((I2C_TypeDef *) I2C2_BASE)
 #define I2C3                ((I2C_TypeDef *) I2C3_BASE)
 #define I2C4                ((I2C_TypeDef *) I2C4_BASE)
+
 #define FDCAN1              ((FDCAN_GlobalTypeDef *) FDCAN1_BASE)
 #define FDCAN2              ((FDCAN_GlobalTypeDef *) FDCAN2_BASE)
 #define FDCAN_CCU           ((FDCAN_ClockCalibrationUnit_TypeDef *) FDCAN_CCU_BASE)
+
 #define CEC                 ((CEC_TypeDef *) CEC_BASE)
 #define LPTIM1              ((LPTIM_TypeDef *) LPTIM1_BASE)
 #define PWR                 ((PWR_TypeDef *) PWR_BASE)
 #define DAC1                ((DAC_TypeDef *) DAC1_BASE)
-#define LPUART1             ((USART_TypeDef *) LPUART1_BASE)
+
 #define SWPMI1              ((SWPMI_TypeDef *) SWPMI1_BASE)
 #define LPTIM2              ((LPTIM_TypeDef *) LPTIM2_BASE)
 #define LPTIM3              ((LPTIM_TypeDef *) LPTIM3_BASE)
@@ -2551,9 +2559,8 @@ typedef struct
 #define EXTI_D1             ((EXTI_Core_TypeDef *) EXTI_D1_BASE)
 #define EXTI_D2             ((EXTI_Core_TypeDef *) EXTI_D2_BASE)
 #define TIM1                ((TIM_TypeDef *) TIM1_BASE)
-#define SPI1                ((SPI_TypeDef *) SPI1_BASE)
+
 #define TIM8                ((TIM_TypeDef *) TIM8_BASE)
-#define USART1              ((USART_TypeDef *) USART1_BASE)
 #define TIM12               ((TIM_TypeDef *) TIM12_BASE)
 #define TIM15               ((TIM_TypeDef *) TIM15_BASE)
 #define TIM16               ((TIM_TypeDef *) TIM16_BASE)
@@ -2565,6 +2572,7 @@ typedef struct
 #define HRTIM1_TIMD         ((HRTIM_Timerx_TypeDef *) HRTIM1_TIMD_BASE)
 #define HRTIM1_TIME         ((HRTIM_Timerx_TypeDef *) HRTIM1_TIME_BASE)
 #define HRTIM1_COMMON       ((HRTIM_Common_TypeDef *) HRTIM1_COMMON_BASE)
+
 #define SAI1                ((SAI_TypeDef *) SAI1_BASE)
 #define SAI1_Block_A        ((SAI_Block_TypeDef *)SAI1_Block_A_BASE)
 #define SAI1_Block_B        ((SAI_Block_TypeDef *)SAI1_Block_B_BASE)

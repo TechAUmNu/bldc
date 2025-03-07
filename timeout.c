@@ -19,7 +19,6 @@
 
 #include "timeout.h"
 #include "mc_interface.h"
-#include "stm32f4xx_conf.h"
 #include "shutdown.h"
 #include "utils.h"
 
@@ -156,10 +155,10 @@ void timeout_configure_IWDT(void) {
 
 bool timeout_had_IWDG_reset(void) {
 	// Check if the system has resumed from IWDG reset
-	if ((RCC->CSR & RCC_CSR_IWDGRSTF) != RESET) {
+	if ((RCC->RSR & RCC_RSR_IWDG1RSTF) != RESET) {
 		/* IWDGRST flag set */
 		/* Clear IWDGRST flag */
-		RCC->CSR &= ~(RCC_CSR_IWDGRSTF);
+		RCC->RSR &= ~(RCC_RSR_IWDG1RSTF);
 		return true;
 	}
 

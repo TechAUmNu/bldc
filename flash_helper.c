@@ -30,50 +30,11 @@
 #include "crc.h"
 #include "buffer.h"
 #include <string.h>
-#include "stm32f4xx_conf.h"
 #ifdef USE_LISPBM
 #include "lispif.h"
 #endif
 
-/*
- * Defines
- */
-#define FLASH_SECTORS							12
-#define BOOTLOADER_BASE							11
-#define APP_BASE								0
-#define NEW_APP_BASE							8
-#define NEW_APP_SECTORS							3
-#define APP_MAX_SIZE							(1024 * 128 * 4 - 8) // Note that the bootloader needs 8 extra bytes
-#define QMLUI_BASE								9
-#define LISP_BASE								10
-#define LISP_CONST_BASE							8
-#define QMLUI_MAX_SIZE							(1024 * 128 - 8)
-#define LISP_MAX_SIZE							(1024 * 128 - 8)
 
-// Base address of the Flash sectors
-#define ADDR_FLASH_SECTOR_0    					((uint32_t)0x08000000) // Base @ of Sector 0, 16 Kbytes
-#define ADDR_FLASH_SECTOR_1    					((uint32_t)0x08004000) // Base @ of Sector 1, 16 Kbytes
-#define ADDR_FLASH_SECTOR_2    					((uint32_t)0x08008000) // Base @ of Sector 2, 16 Kbytes
-#define ADDR_FLASH_SECTOR_3						((uint32_t)0x0800C000) // Base @ of Sector 3, 16 Kbytes
-#define ADDR_FLASH_SECTOR_4    					((uint32_t)0x08010000) // Base @ of Sector 4, 64 Kbytes
-#define ADDR_FLASH_SECTOR_5    					((uint32_t)0x08020000) // Base @ of Sector 5, 128 Kbytes
-#define ADDR_FLASH_SECTOR_6     				((uint32_t)0x08040000) // Base @ of Sector 6, 128 Kbytes
-#define ADDR_FLASH_SECTOR_7     				((uint32_t)0x08060000) // Base @ of Sector 7, 128 Kbytes
-#define ADDR_FLASH_SECTOR_8     				((uint32_t)0x08080000) // Base @ of Sector 8, 128 Kbytes
-#define ADDR_FLASH_SECTOR_9 				    ((uint32_t)0x080A0000) // Base @ of Sector 9, 128 Kbytes
-#define ADDR_FLASH_SECTOR_10				    ((uint32_t)0x080C0000) // Base @ of Sector 10, 128 Kbytes
-#define ADDR_FLASH_SECTOR_11				    ((uint32_t)0x080E0000) // Base @ of Sector 11, 128 Kbytes
-
-#define VECTOR_TABLE_ADDRESS					((uint32_t*)ADDR_FLASH_SECTOR_0)
-#define VECTOR_TABLE_SIZE						((uint32_t)(ADDR_FLASH_SECTOR_1 - ADDR_FLASH_SECTOR_0))
-#define EEPROM_EMULATION_SIZE					((uint32_t)(ADDR_FLASH_SECTOR_4 - ADDR_FLASH_SECTOR_2))
-
-#define APP_START_ADDRESS						((uint32_t*)(ADDR_FLASH_SECTOR_3))
-#define APP_SIZE								((uint32_t)(APP_MAX_SIZE - VECTOR_TABLE_SIZE - EEPROM_EMULATION_SIZE))
-
-#define	APP_CRC_WAS_CALCULATED_FLAG				((uint32_t)0x00000000)
-#define	APP_CRC_WAS_CALCULATED_FLAG_ADDRESS		((uint32_t*)(ADDR_FLASH_SECTOR_0 + APP_MAX_SIZE - 8))
-#define APP_CRC_ADDRESS							((uint32_t*)(ADDR_FLASH_SECTOR_0 + APP_MAX_SIZE - 4))
 
 //#define ERASE_VOLTAGE_RANGE						(uint8_t)((PWR->CSR & PWR_CSR_PVDO) ? VoltageRange_2 : VoltageRange_3)
 
@@ -114,20 +75,6 @@ static const uint32_t flash_addr[FLASH_SECTORS] = {
 		ADDR_FLASH_SECTOR_10,
 		ADDR_FLASH_SECTOR_11
 };
-static const uint16_t flash_sector[FLASH_SECTORS] = {
-		FLASH_Sector_0,
-		FLASH_Sector_1,
-		FLASH_Sector_2,
-		FLASH_Sector_3,
-		FLASH_Sector_4,
-		FLASH_Sector_5,
-		FLASH_Sector_6,
-		FLASH_Sector_7,
-		FLASH_Sector_8,
-		FLASH_Sector_9,
-		FLASH_Sector_10,
-		FLASH_Sector_11
-};
 
 uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 #ifdef USE_LISPBM
@@ -148,21 +95,21 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 
 	utils_sys_lock_cnt();
 	timeout_configure_IWDT_slowest();
-
-	for (int i = 0;i < NEW_APP_SECTORS;i++) {
-		if (new_app_size > flash_addr[NEW_APP_BASE + i]) {
-			uint16_t res = efl_lld_start_erase_sector(&EFLD1, NEW_APP_BASE + i);
-			if (res != FLASH_NO_ERROR) {
-				efl_lld_stop(&EFLD1);
-				timeout_configure_IWDT();
-				mc_interface_ignore_input_both(5000);
-				utils_sys_unlock_cnt();
-				return res;
-			}
-		} else {
-			break;
-		}
-	}
+// TODO EM: FIX THIS
+//	for (int i = 0;i < NEW_APP_SECTORS;i++) {
+//		if (new_app_size > flash_addr[NEW_APP_BASE + i]) {
+//			uint16_t res = efl_lld_start_erase_sector(&EFLD1, NEW_APP_BASE + i);
+//			if (res != FLASH_NO_ERROR) {
+//				efl_lld_stop(&EFLD1);
+//				timeout_configure_IWDT();
+//				mc_interface_ignore_input_both(5000);
+//				utils_sys_unlock_cnt();
+//				return res;
+//			}
+//		} else {
+//			break;
+//		}
+//	}
 
 	eflStop(&EFLD1);
 
@@ -298,16 +245,7 @@ void flash_helper_jump_to_bootloader(void) {
 }
 
 uint8_t* flash_helper_get_sector_address(uint32_t fsector) {
-	uint8_t *res = 0;
-
-	for (int i = 0;i < FLASH_SECTORS;i++) {
-		if (flash_sector[i] == fsector) {
-			res = (uint8_t *)flash_addr[i];
-			break;
-		}
-	}
-
-	return res;
+			return (uint8_t *)flash_addr[fsector];
 }
 
 /**

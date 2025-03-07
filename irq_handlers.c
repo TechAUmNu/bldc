@@ -19,7 +19,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "stm32f4xx_conf.h"
 #include "isr_vector_table.h"
 #include "mc_interface.h"
 #include "mcpwm_foc.h"
@@ -29,7 +28,7 @@
 CH_IRQ_HANDLER(ADC1_2_3_IRQHandler) {
 	CH_IRQ_PROLOGUE();
 	// Clear the IT pending bit
-	ADC1->SR = ~ADC_SR_JEOC;
+	ADC1->ISR = ~ADC_ISR_JEOC;
 	mc_interface_adc_inj_int_handler();
 	CH_IRQ_EPILOGUE();
 }

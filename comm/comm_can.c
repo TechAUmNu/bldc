@@ -48,6 +48,9 @@
 #endif
 
 // Settings
+// If defined CANDx drivers work as CAN, else they work as FDCAN
+#define USE_CAN_PROTOCOL
+
 #define RX_FRAMES_SIZE	50
 #define RX_BUFFER_NUM	3
 #define RX_BUFFER_SIZE	PACKET_MAX_PL_LEN
@@ -107,15 +110,47 @@ static psw_status psw_stat[CAN_STATUS_MSGS_TO_STORE];
 static unsigned int detect_all_foc_res_index = 0;
 static int8_t detect_all_foc_res[50];
 
+///*
+// * 500KBaud, automatic wakeup, automatic recover
+// * from abort mode.
+// * See section 22.7.7 on the STM32 reference manual.
+// */
+//static CANConfig cancfg = {
+//		// op_mode Specifies the FDCAN operation mode.
+//		// NBTP Nominal bit timing and prescaler register.
+//		// DBTP Data bit timing and prescaler register.
+//		// TDCR Data delay compensation register.
+//		// CCCR CC control register.
+//		// TEST Test configuration register.
+//		// RXGFC Global filter configuration register.
+//
+//		CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
+//
+//		CAN_BTR_SJW(3) | CAN_BTR_TS2(2) | CAN_BTR_TS1(9) | CAN_BTR_BRP(5)
+//};
+
+// TODO EM: FIX
+
 /*
- * 500KBaud, automatic wakeup, automatic recover
- * from abort mode.
- * See section 22.7.7 on the STM32 reference manual.
+ * Baud 125kbit/s.
  */
 static CANConfig cancfg = {
-		CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-		CAN_BTR_SJW(3) | CAN_BTR_TS2(2) |
-		CAN_BTR_TS1(9) | CAN_BTR_BRP(5)
+#if defined USE_CAN_PROTOCOL
+  OPMODE_CAN,
+#else
+  OPMODE_FDCAN,                    /* OP MODE */
+#endif
+  FDCAN_CONFIG_NBTP_NTSEG2(51U) |
+  FDCAN_CONFIG_NBTP_NTSEG1(10U) |
+  FDCAN_CONFIG_NBTP_NBRP(7U),      /* NBTP */
+  FDCAN_CONFIG_DBTP_DSJW(3U) |
+  FDCAN_CONFIG_DBTP_DTSEG2(3U) |
+  FDCAN_CONFIG_DBTP_DTSEG1(10U) |
+  FDCAN_CONFIG_DBTP_DBRP(7U),      /* DBTP */
+  0,                               /* TDCR */
+  0,                               /* CCCR */
+  0,                               /* TEST */
+  0                                /* GFC */
 };
 
 // Private functions
@@ -300,9 +335,9 @@ void comm_can_transmit_eid_replace(uint32_t id, const uint8_t *data, uint8_t len
 #endif
 
 	CANTxFrame txmsg;
-	txmsg.IDE = CAN_IDE_EXT;
-	txmsg.EID = id;
-	txmsg.RTR = CAN_RTR_DATA;
+	txmsg.common.IDE = CAN_IDE_EXT;
+	txmsg.ext.EID = id;
+	txmsg.common.RTR = CAN_RTR_DATA;
 	txmsg.DLC = len;
 	memcpy(txmsg.data8, data, len);
 
@@ -355,9 +390,9 @@ void comm_can_transmit_sid(uint32_t id, const uint8_t *data, uint8_t len) {
 	}
 
 	CANTxFrame txmsg;
-	txmsg.IDE = CAN_IDE_STD;
-	txmsg.SID = id;
-	txmsg.RTR = CAN_RTR_DATA;
+	txmsg.common.IDE = CAN_IDE_STD;
+	txmsg.std.SID = id;
+	txmsg.common.RTR = CAN_RTR_DATA;
 	txmsg.DLC = len;
 	memcpy(txmsg.data8, data, len);
 
@@ -1342,14 +1377,14 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 
 				if (app_get_configuration()->can_mode == CAN_MODE_COMM_BRIDGE) {
 					commands_fwd_can_frame(rxmsg.DLC, rxmsg.data8,
-							rxmsg.IDE == CAN_IDE_EXT ? rxmsg.EID : rxmsg.SID,
-									rxmsg.IDE == CAN_IDE_EXT);
+							rxmsg.common.IDE == CAN_IDE_EXT ? rxmsg.ext.EID : rxmsg.std.SID,
+									rxmsg.common.IDE == CAN_IDE_EXT);
 				}
 
-				if (rxmsg.IDE == CAN_IDE_STD) {
+				if (rxmsg.common.IDE == CAN_IDE_STD) {
 					bool sid_cb_used = false;
 					if (sid_callback) {
-						sid_cb_used = sid_callback(rxmsg.SID, rxmsg.data8, rxmsg.DLC);
+						sid_cb_used = sid_callback(rxmsg.std.SID, rxmsg.data8, rxmsg.DLC);
 					}
 #ifdef USE_LISPBM
 					if (!sid_cb_used) {
@@ -1361,7 +1396,7 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 				} else {
 					bool eid_cb_used = false;
 					if (eid_callback) {
-						eid_cb_used = eid_callback(rxmsg.EID, rxmsg.data8, rxmsg.DLC);
+						eid_cb_used = eid_callback(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC);
 					}
 #ifdef USE_LISPBM
 					if (!eid_cb_used) {
@@ -1379,15 +1414,15 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 		while ((rxmsg_tmp = comm_can_get_rx_frame(0)) != 0) {
 			CANRxFrame rxmsg = *rxmsg_tmp;
 
-			if (rxmsg.IDE == CAN_IDE_EXT) {
+			if (rxmsg.common.IDE == CAN_IDE_EXT) {
 				bool eid_cb_used = false;
 				if (eid_callback) {
-					eid_cb_used = eid_callback(rxmsg.EID, rxmsg.data8, rxmsg.DLC);
+					eid_cb_used = eid_callback(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC);
 				}
 
 				if (!eid_cb_used) {
-					if (!bms_process_can_frame(rxmsg.EID, rxmsg.data8, rxmsg.DLC, true)) {
-						decode_msg(rxmsg.EID, rxmsg.data8, rxmsg.DLC, false);
+					if (!bms_process_can_frame(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC, true)) {
+						decode_msg(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC, false);
 #ifdef USE_LISPBM
 						lispif_process_can(rxmsg.EID, rxmsg.data8, rxmsg.DLC, true);
 #endif
@@ -1396,16 +1431,16 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 			} else {
 				bool sid_cb_used = false;
 				if (sid_callback) {
-					sid_cb_used = sid_callback(rxmsg.SID, rxmsg.data8, rxmsg.DLC);
+					sid_cb_used = sid_callback(rxmsg.std.SID, rxmsg.data8, rxmsg.DLC);
 				}
 
 				if (!sid_cb_used) {
-					sid_cb_used = bms_process_can_frame(rxmsg.SID, rxmsg.data8, rxmsg.DLC, false);
+					sid_cb_used = bms_process_can_frame(rxmsg.std.SID, rxmsg.data8, rxmsg.DLC, false);
 				}
 
 #ifdef USE_LISPBM
 				if (!sid_cb_used) {
-					lispif_process_can(rxmsg.SID, rxmsg.data8, rxmsg.DLC, false);
+					lispif_process_can(rxmsg.std.SID, rxmsg.data8, rxmsg.DLC, false);
 				}
 #endif
 			}
@@ -2256,8 +2291,16 @@ static void set_timing(int brp, int ts1, int ts2) {
 	ts1 &= 0b1111;
 	ts2 &= 0b111;
 
-	cancfg.btr = CAN_BTR_SJW(3) | CAN_BTR_TS2(ts2) |
-		CAN_BTR_TS1(ts1) | CAN_BTR_BRP(brp);
+	cancfg.NBTP = FDCAN_CONFIG_NBTP_NTSEG2(51U) |
+			  FDCAN_CONFIG_NBTP_NTSEG1(10U) |
+			  FDCAN_CONFIG_NBTP_NBRP(7U);
+	cancfg.DBTP = FDCAN_CONFIG_DBTP_DSJW(3U) |
+			  FDCAN_CONFIG_DBTP_DTSEG2(3U) |
+			  FDCAN_CONFIG_DBTP_DTSEG1(10U) |
+			  FDCAN_CONFIG_DBTP_DBRP(7U);
+			// TODO EM: Fix this timing
+		// btr = CAN_BTR_SJW(3) | CAN_BTR_TS2(ts2) |
+		///CAN_BTR_TS1(ts1) | CAN_BTR_BRP(brp);
 
 #ifdef HW_CAN2_DEV
 	canStop(&CAND1);

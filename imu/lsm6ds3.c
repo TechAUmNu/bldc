@@ -49,7 +49,7 @@ void lsm6ds3_set_filter(IMU_FILTER f) {
 }
 
 void lsm6ds3_init(i2c_bb_state *i2c_state,
-		stkalign_t *work_area, size_t work_area_size) {
+		stkline_t *work_area, size_t work_area_size) {
 
 	read_callback = 0;
 

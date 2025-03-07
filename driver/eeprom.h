@@ -27,28 +27,29 @@
 /* Includes ------------------------------------------------------------------*/
 #include "datatypes.h"
 #include "hal.h"
+#include "flash_helper.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Define the size of the sectors to be used */
-#define PAGE_SIZE               (uint32_t)0x4000  /* Page size = 16KByte */
+#define PAGE_SIZE               (uint32_t)0x20000  /* Page size = 128KByte */
 
 /* Device voltage range supposed to be [2.7V to 3.6V], the operation will
    be done by word  */
 //#define VOLTAGE_RANGE           (uint8_t)((PWR->CSR & PWR_CSR_PVDO) ? VoltageRange_2 : VoltageRange_3)
 
 /* EEPROM start address in Flash */
-#define EEPROM_START_ADDRESS  ((uint32_t)0x08004000) /* EEPROM emulation start address:
-                                                  from sector1 : after 16KByte of used
+#define EEPROM_START_ADDRESS  ADDR_FLASH_SECTOR_8 /* EEPROM emulation start address:
+                                                  from sector8 : after 16KByte of used
                                                   Flash memory */
 
 /* Pages 0 and 1 base and end addresses */
-#define PAGE0_BASE_ADDRESS    ((uint32_t)(EEPROM_START_ADDRESS + 0x0000))
+#define PAGE0_BASE_ADDRESS    ((uint32_t)(EEPROM_START_ADDRESS + 0x00000))
 #define PAGE0_END_ADDRESS     ((uint32_t)(EEPROM_START_ADDRESS + (PAGE_SIZE - 1)))
-#define PAGE0_ID              FLASH_Sector_1
+#define PAGE0_ID              8 // Sector 8 (bank 2)
 
-#define PAGE1_BASE_ADDRESS    ((uint32_t)(EEPROM_START_ADDRESS + 0x4000))
+#define PAGE1_BASE_ADDRESS    ((uint32_t)(EEPROM_START_ADDRESS + 0x20000))
 #define PAGE1_END_ADDRESS     ((uint32_t)(EEPROM_START_ADDRESS + (2 * PAGE_SIZE - 1)))
-#define PAGE1_ID              FLASH_Sector_2
+#define PAGE1_ID              9 // Sector 9 (bank 2)
 
 /* Used Flash pages for EEPROM emulation */
 #define PAGE0                 ((uint16_t)0x0000)

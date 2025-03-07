@@ -31,7 +31,7 @@
 #define _CHIBIOS_HAL_CONF_
 #define _CHIBIOS_HAL_CONF_VER_8_4_
 
-#include "mcuconf.h"
+#include <hwconf/mcuconf-h7.h>
 
 /**
  * @brief   Enables the PAL subsystem.
@@ -51,7 +51,7 @@
  * @brief   Enables the CAN subsystem.
  */
 #if !defined(HAL_USE_CAN) || defined(__DOXYGEN__)
-#define HAL_USE_CAN                         TRUE
+#define HAL_USE_CAN                          TRUE
 #endif
 
 /**

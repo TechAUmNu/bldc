@@ -237,7 +237,7 @@ typedef struct {
         struct {
           uint32_t          _R1:29;     /**< @brief Reserved for offset.    */
           uint32_t          RTR:1;      /**< @brief Remote transmit request.*/
-          uint32_t          XTD:1;      /**< @brief Extended identifier.    */
+          uint32_t          IDE:1;      /**< @brief Extended identifier.    */
           uint32_t          ESI:1;      /**< @brief Error state indicator.  */
         } common;
       };
@@ -285,7 +285,7 @@ typedef struct {
         struct {
           uint32_t          _R1:29;     /**< @brief Reserved for offset.    */
           uint32_t          RTR:1;      /**< @brief Remote transmit request.*/
-          uint32_t          XTD:1;      /**< @brief Extended identifier.    */
+          uint32_t          IDE:1;      /**< @brief Extended identifier.    */
           uint32_t          ESI:1;      /**< @brief Error state indicator.  */
         } common;
       };
@@ -364,6 +364,11 @@ typedef enum {
   CAN_FILTER_TYPE_EXT = 0x01          /**< Extended filter */
 } filter_type_t;
 
+#define CAN_IDE_STD                 0           /**< @brief Standard id.    */
+#define CAN_IDE_EXT                 1           /**< @brief Extended id.    */
+
+#define CAN_RTR_DATA                0           /**< @brief Data frame.     */
+#define CAN_RTR_REMOTE              1           /**< @brief Remote frame.   */
 /**
  * @brief   Filter mode.
  */

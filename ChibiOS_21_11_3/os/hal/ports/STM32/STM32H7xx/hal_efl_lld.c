@@ -112,7 +112,7 @@ static inline size_t stm32_flash_get_size(void) {
   return *(uint16_t*)((uint32_t) STM32_FLASH_SIZE_REGISTER) * STM32_FLASH_SIZE_SCALE;
 }
 
-static inline bool stm32_flash_dual_bank(EFlashDriver *eflp) {
+static inline bool stm32_flash_dual_bank(void) {
 
 #if STM32_FLASH_NUMBER_OF_BANKS > 1
   return true; // TODO EM: Hack

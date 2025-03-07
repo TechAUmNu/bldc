@@ -25,16 +25,17 @@
 // Stack area for the running encoder
 static THD_WORKING_AREA(encoder_thread_wa, 256);
 
-#define SPI_BaudRatePrescaler_2         ((uint16_t)0x0000) //  42 MHz      21 MHZ
-#define SPI_BaudRatePrescaler_4         ((uint16_t)0x0008) //  21 MHz      10.5 MHz
-#define SPI_BaudRatePrescaler_8         ((uint16_t)0x0010) //  10.5 MHz    5.25 MHz
-#define SPI_BaudRatePrescaler_16        ((uint16_t)0x0018) //  5.25 MHz    2.626 MHz
-#define SPI_BaudRatePrescaler_32        ((uint16_t)0x0020) //  2.626 MHz   1.3125 MHz
-#define SPI_BaudRatePrescaler_64        ((uint16_t)0x0028) //  1.3125 MHz  656.25 KHz
-#define SPI_BaudRatePrescaler_128       ((uint16_t)0x0030) //  656.25 KHz  328.125 KHz
-#define SPI_BaudRatePrescaler_256       ((uint16_t)0x0038) //  328.125 KHz 164.06 KHz
-#define SPI_DATASIZE_8BIT				0
-#define SPI_DATASIZE_16BIT				SPI_CR1_DFF
+
+#define SPI_BaudRatePrescaler_2         (0 << SPI_CFG1_MBR_Pos)
+#define SPI_BaudRatePrescaler_4         (1 << SPI_CFG1_MBR_Pos)
+#define SPI_BaudRatePrescaler_8         (2 << SPI_CFG1_MBR_Pos)
+#define SPI_BaudRatePrescaler_16        (3 << SPI_CFG1_MBR_Pos)
+#define SPI_BaudRatePrescaler_32        (4 << SPI_CFG1_MBR_Pos)
+#define SPI_BaudRatePrescaler_64        (5 << SPI_CFG1_MBR_Pos)
+#define SPI_BaudRatePrescaler_128       (6 << SPI_CFG1_MBR_Pos)
+#define SPI_BaudRatePrescaler_256       (7 << SPI_CFG1_MBR_Pos)
+#define SPI_DATASIZE_8BIT				8
+#define SPI_DATASIZE_16BIT				16
 
 AS504x_config_t encoder_cfg_as504x = {
 		{
@@ -71,12 +72,15 @@ MT6816_config_t encoder_cfg_mt6816 = {
 #ifdef HW_SPI_DEV
 		&HW_SPI_DEV, // spi_dev
 		{//HARDWARE SPI CONFIG
-				false, false, NULL, NULL,
-				HW_SPI_PORT_NSS, HW_SPI_PIN_NSS,
-				SPI_BaudRatePrescaler_4 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_DATASIZE_16BIT,
-				0
+			false, // Circular
+			false, // Slave
+			NULL, // data callback
+			NULL, // error callback
+			HW_SPI_PORT_NSS, // Port
+			HW_SPI_PIN_NSS, // mask
+			SPI_BaudRatePrescaler_4 | SPI_DATASIZE_16BIT, //cfg 1
+			SPI_CFG2_CPOL | SPI_CFG2_CPHA // cfg 2
 		},
-
 		HW_SPI_GPIO_AF,
 		/*NSS*/HW_SPI_PORT_NSS, HW_SPI_PIN_NSS,
 		/*SCK*/HW_SPI_PORT_SCK, HW_SPI_PIN_SCK,
@@ -152,10 +156,15 @@ AS5x47U_config_t encoder_cfg_as5x47u = {
 #ifdef HW_SPI_DEV
 		&HW_SPI_DEV, // spi_dev
 		{//HARDWARE SPI CONFIG
-				enc_as5x47u_spi_callback, HW_SPI_PORT_NSS, HW_SPI_PIN_NSS, SPI_BaudRatePrescaler_8 |
-				SPI_CR1_CPHA | SPI_DATASIZE_8BIT
+			false, // Circular
+			false, // Slave
+			enc_as5x47u_spi_callback, // data callback
+			NULL, // error callback
+			HW_SPI_PORT_NSS, // Port
+			HW_SPI_PIN_NSS, // mask
+			SPI_BaudRatePrescaler_8 | SPI_DATASIZE_8BIT, //cfg 1
+			SPI_CFG2_CPHA // cfg 2
 		},
-
 		HW_SPI_GPIO_AF,
 		/*NSS*/HW_SPI_PORT_NSS, HW_SPI_PIN_NSS,
 		/*SCK*/HW_SPI_PORT_SCK, HW_SPI_PIN_SCK,
@@ -178,10 +187,20 @@ void compute_bissc_callback(SPIDriver *pspi);
 BISSC_config_t encoder_cfg_bissc = {
 #ifdef HW_SPI_DEV
 		&HW_SPI_DEV, // spi_dev
+//		{//HARDWARE SPI CONFIG
+//				//NULL, HW_HALL_ENC_GPIO3, HW_HALL_ENC_PIN3,
+//				compute_bissc_callback, HW_SPI_PORT_NSS, HW_SPI_PIN_NSS,
+//				SPI_BaudRatePrescaler_32 | SPI_CR1_CPOL | SPI_CR1_CPHA
+//		},
 		{//HARDWARE SPI CONFIG
-				//NULL, HW_HALL_ENC_GPIO3, HW_HALL_ENC_PIN3, 
-				&compute_bissc_callback, HW_SPI_PORT_NSS, HW_SPI_PIN_NSS, 
-				SPI_BaudRatePrescaler_32 | SPI_CR1_CPOL | SPI_CR1_CPHA
+			false, // Circular
+			false, // Slave
+			&compute_bissc_callback, // data callback
+			NULL, // error callback
+			HW_SPI_PORT_NSS, // Port
+			HW_SPI_PIN_NSS, // mask
+			SPI_BaudRatePrescaler_32 | SPI_DATASIZE_8BIT, //cfg 1 // TODO EM: wtf is going on here
+			SPI_CFG2_CPOL | SPI_CFG2_CPHA // cfg 2
 		},
 
 		HW_SPI_GPIO_AF,

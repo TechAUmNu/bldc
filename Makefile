@@ -176,7 +176,7 @@ fw_$(1)_vescfw: $$($(1)_HW_SRC_FILE)
 fw_$(1)_vescfw:
 	@echo "********* BUILD: $(1) **********"
 	$(V1) $(MKDIR) $(BUILD_DIR)/$(1)
-	$(V1) $$(MAKE) -f $(MAKE_DIR)/stm32f4.mk \
+	$(V1) $$(MAKE) -f $(MAKE_DIR)/stm32h7.mk \
 		TCHAIN_PREFIX="$(ARM_SDK_PREFIX)" \
 		BUILDDIR="$(2)" \
 		PROJECT="$(3)" \

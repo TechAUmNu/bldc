@@ -19,10 +19,8 @@
  */
 
 #include "enc_as5x47u.h"
-#include "stm32f4xx_conf.h"
 #include "ch.h"
 #include "hal.h"
-#include "stm32f4xx_conf.h"
 #include "hw.h"
 #include "mc_interface.h"
 #include "utils_math.h"
@@ -369,7 +367,7 @@ static void AS5x47U_start_spi_exchange_precalc_crc(AS5x47U_config_t *cfg,
 	// causes the RXNE flag to be set when an exchange starts, causing the first byte of
 	// data received to be from the previous exchange. This is corrected by reading the
 	// SPI data register, clearing the RXNE flag.
-	volatile uint32_t test = cfg->spi_dev->spi->DR;
+	volatile uint32_t test = cfg->spi_dev->spi->RXDR;
 	(void)test; // get rid of unused warning
 
 	spiSelectI(cfg->spi_dev);

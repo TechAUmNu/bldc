@@ -140,7 +140,7 @@ int utils_check_min_stack_left(thread_t *tp) {
  */
 int utils_stack_left_now(void) {
 	struct port_intctx *r13 = (struct port_intctx *)__get_PSP();
-	return ((stkalign_t *)(r13 - 1) - chThdGetSelfX()->wabase) * sizeof(stkalign_t);
+	return ((stkline_t *)(r13 - 1) - chThdGetSelfX()->wabase) * sizeof(stkline_t);
 }
 
 /*

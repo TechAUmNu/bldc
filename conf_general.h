@@ -93,7 +93,7 @@
  * Enable blackmagic probe output on SWD port
  */
 #ifndef HAS_BLACKMAGIC
-#define HAS_BLACKMAGIC				1
+#define HAS_BLACKMAGIC				0
 #endif
 
 /*

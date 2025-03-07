@@ -102,8 +102,10 @@ void terminal_process_string(char *str) {
 		commands_printf("Calculated KV: %.2f rpm/volt\n", (double)mcpwm_get_kv_filtered());
 	} else if (strcmp(argv[0], "mem") == 0) {
 		size_t n, size, blk;
+		memory_area_t map;
 		n = chHeapStatus(NULL, &size, &blk);
-		commands_printf("core free memory : %u bytes", chCoreGetStatusX());
+		chCoreGetStatusX(&map);
+		commands_printf("core free memory : %u bytes", map.size);
 		commands_printf("heap fragments   : %u", n);
 		commands_printf("heap largest free block   : %u", blk);
 		commands_printf("heap free total  : %u bytes\n", size);

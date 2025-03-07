@@ -28,27 +28,41 @@
 /*
  * Board identifier.
  */
-#define BOARD_NAME                  "VESC STM32F4xx"
+#define BOARD_NAME                  "VESC STM32H753 Nucleo"
 
 /*
  * Board oscillators-related settings.
- * NOTE: LSE not fitted.
  */
+
 #if !defined(STM32_LSECLK)
-#define STM32_LSECLK                0U
+#define STM32_LSECLK                32768U
 #endif
- 
+
+#define STM32_LSEDRV                (3U << 3U)
+
+#if !defined(STM32_HSECLK)
+#define STM32_HSECLK                8000000U
+#endif
+
+#define STM32_HSE_BYPASS
+
+
+
 /*
  * Board voltages.
  * Required for performance limits calculation.
  */
 #define STM32_VDD                   300U
 
+
+
+
+
 /*
  * MCU type as defined in the ST header.
  */
 
-#define STM32F407xx
+#define STM32H753xx
 
 #if !defined(_FROM_ASM_)
 #ifdef __cplusplus

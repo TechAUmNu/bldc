@@ -77,7 +77,7 @@ static void(*read_callback)(float *accel, float *gyro, float *mag) = 0;
 
 void mpu9150_init(stm32_gpio_t *sda_gpio, int sda_pin,
 		stm32_gpio_t *scl_gpio, int scl_pin,
-		stkalign_t *work_area, size_t work_area_size) {
+		stkline_t *work_area, size_t work_area_size) {
 
 	failed_reads = 0;
 	failed_mag_reads = 0;

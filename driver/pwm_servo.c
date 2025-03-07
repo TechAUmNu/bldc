@@ -22,7 +22,6 @@
 #include "hal.h"
 #include "conf_general.h"
 #include "utils.h"
-#include "stm32f4xx_conf.h"
 
 #pragma GCC push_options
 #pragma GCC optimize ("Os")

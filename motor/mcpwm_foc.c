@@ -391,7 +391,8 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	rccResetTIM1();
 	rccResetTIM2();
 	rccResetTIM8();
-	rccResetADC();
+	rccResetADC12();
+	rccResetADC3();
 
 	TIM1->CNT = 0;
 	TIM2->CNT = 0;
@@ -400,8 +401,7 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 
 
 	rccEnableDMA2(TRUE);
-	rccEnableADC1(TRUE);
-	rccEnableADC2(TRUE);
+	rccEnableADC12(TRUE);
 	rccEnableADC3(TRUE);
 
 
@@ -428,51 +428,51 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	// Memory base address
 	DMA2_Stream4->M0AR = (uint32_t)&ADC_Value;
 	// Peripheral base address
-	DMA2_Stream4->PAR = (uint32_t)&ADC->CDR;
-	// Buffer Size
-	DMA2_Stream4->NDTR = HW_ADC_CHANNELS;
-	// Note: The half transfer interrupt is used as we already have all current and voltage
-	// samples by then and we can start processing them. Entering the interrupt earlier gives
-	// more cycles to finish it and update the timer before the next zero vector. This helps
-	// at higher f_zv. Only use this if the three first samples are current samples.
-#if ADC_IND_CURR1 < 3 && ADC_IND_CURR2 < 3 && ADC_IND_CURR3 < 3
-	DMA2_Stream4->CR |= DMA_SxCR_HTIE;
-#else
-	DMA2_Stream4->CR |= DMA_SxCR_TCIE;
-#endif
-	// Enable stream
-	DMA2_Stream4->CR |= DMA_SxCR_EN;
-
-
-	// ADC Common Init
-	// Multi ADC mode selection - Triple Regular simultaneous mode 10110
-	// Prescaler divide by 2 (default)
-	// DMA mode 1 enabled, 3 (1 per ADC) half-words one by one - 1 then 2 then 3
-	ADC->CCR = ADC_CCR_MULTI_4 | ADC_CCR_MULTI_2 | ADC_CCR_MULTI_1 | ADC_CCR_DMA_0;
-	// ADC 1, 2, 3 config
-	// Scan Conversion Mode - Enable
-	ADC1->CR1 = ADC_CR1_SCAN;
-	ADC2->CR1 = ADC_CR1_SCAN;
-	ADC3->CR1 = ADC_CR1_SCAN;
-	// External trigger - T2 CC2 (0011)
-	// External trigger Edge - Falling	(10)
-	ADC1->CR2 = ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
-	// Number of conversions (0 = 1 conversion)
-	ADC1->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-	ADC2->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-	ADC3->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-	// Temperature Sensor and VREFINT Enable
-	ADC->CCR |= ADC_CCR_TSVREFE;
-	// Multi Mode DMA Request After Last Transfer Cmd
-	// DMA requests are issued as long as data are converted and DMA = 01, 10 or 11
-	ADC->CCR |= ADC_CCR_DDS;
-
-	hw_setup_adc_channels();
-
-	// Enable ADCs
-	ADC1->CR2 |= ADC_CR2_ADON;
-	ADC2->CR2 |= ADC_CR2_ADON;
-	ADC3->CR2 |= ADC_CR2_ADON;
+//	DMA2_Stream4->PAR = (uint32_t)&ADC->CDR;
+//	// Buffer Size
+//	DMA2_Stream4->NDTR = HW_ADC_CHANNELS;
+//	// Note: The half transfer interrupt is used as we already have all current and voltage
+//	// samples by then and we can start processing them. Entering the interrupt earlier gives
+//	// more cycles to finish it and update the timer before the next zero vector. This helps
+//	// at higher f_zv. Only use this if the three first samples are current samples.
+//#if ADC_IND_CURR1 < 3 && ADC_IND_CURR2 < 3 && ADC_IND_CURR3 < 3
+//	DMA2_Stream4->CR |= DMA_SxCR_HTIE;
+//#else
+//	DMA2_Stream4->CR |= DMA_SxCR_TCIE;
+//#endif
+//	// Enable stream
+//	DMA2_Stream4->CR |= DMA_SxCR_EN;
+//
+//
+//	// ADC Common Init
+//	// Multi ADC mode selection - Triple Regular simultaneous mode 10110
+//	// Prescaler divide by 2 (default)
+//	// DMA mode 1 enabled, 3 (1 per ADC) half-words one by one - 1 then 2 then 3
+//	ADC->CCR = ADC_CCR_MULTI_4 | ADC_CCR_MULTI_2 | ADC_CCR_MULTI_1 | ADC_CCR_DMA_0;
+//	// ADC 1, 2, 3 config
+//	// Scan Conversion Mode - Enable
+//	ADC1->CR1 = ADC_CR1_SCAN;
+//	ADC2->CR1 = ADC_CR1_SCAN;
+//	ADC3->CR1 = ADC_CR1_SCAN;
+//	// External trigger - T2 CC2 (0011)
+//	// External trigger Edge - Falling	(10)
+//	ADC1->CR2 = ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
+//	// Number of conversions (0 = 1 conversion)
+//	ADC1->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+//	ADC2->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+//	ADC3->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+//	// Temperature Sensor and VREFINT Enable
+//	ADC->CCR |= ADC_CCR_TSVREFE;
+//	// Multi Mode DMA Request After Last Transfer Cmd
+//	// DMA requests are issued as long as data are converted and DMA = 01, 10 or 11
+//	ADC->CCR |= ADC_CCR_DDS;
+//
+//	hw_setup_adc_channels();
+//
+//	// Enable ADCs
+//	ADC1->CR2 |= ADC_CR2_ADON;
+//	ADC2->CR2 |= ADC_CR2_ADON;
+//	ADC3->CR2 |= ADC_CR2_ADON;
 
 	timer_reinit((int)m_motor_1.m_conf->foc_f_zv);
 
@@ -619,7 +619,8 @@ void mcpwm_foc_deinit(void) {
 	rccResetTIM2();
 	rccResetTIM8();
 
-	rccResetADC();
+	rccResetADC12();
+	rccResetADC3();
 	dmaStreamFree(STM32_DMA2_STREAM4);
 	nvicDisableVector(ADC_IRQn);
 }

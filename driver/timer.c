@@ -20,7 +20,7 @@
 #include "timer.h"
 #include "ch.h"
 #include "hal.h"
-#include "stm32f4xx_conf.h"
+
 
 // Settings
 #define TIMER_HZ					1.4e7

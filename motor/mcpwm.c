@@ -290,84 +290,84 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 			(stm32_dmaisr_t)mcpwm_adc_int_handler,
 			(void *)0);
 
-	// DMA Channel 0 (default)
-	// Direction - peripheral to memory (default)
-	// Peripheral Increment (default)
-	// Memory Increment
-	DMA2_Stream4->CR |= DMA_SxCR_MINC;
-	// Peripheral Data size - half word
-	DMA2_Stream4->CR |= DMA_SxCR_PSIZE_0;
-	// Memory data size - half word
-	DMA2_Stream4->CR |= DMA_SxCR_MSIZE_0;
-	// Mode - circular
-	DMA2_Stream4->CR |= DMA_SxCR_CIRC;
-	// Priority - high
-	DMA2_Stream4->CR |= DMA_SxCR_PL_1;
-	// Memory Burst - single (default)
-	// Peripheral Burst - single (default)
-	// Memory base address
-	DMA2_Stream4->M0AR = (uint32_t)&ADC_Value;
-	// Peripheral base address
-	DMA2_Stream4->PAR = (uint32_t)&ADC->CDR;
-	// Buffer Size
-	DMA2_Stream4->NDTR = HW_ADC_CHANNELS;
-	// Enable transfer complete interrupt
-	DMA2_Stream4->CR |= DMA_SxCR_TCIE;
-	// Enable stream
-	DMA2_Stream4->CR |= DMA_SxCR_EN;
-
-	// ADC Common Init
-	// Note that the ADC is running at 42MHz, which is higher than the
-	// specified 36MHz in the data sheet, but it works.
-	// Multi ADC mode selection - Triple Regular simultaneous mode 10110
-	// Prescaler divide by 2 (default)
-	// DMA mode 1 enabled, 3 (1 per ADC) half-words one by one - 1 then 2 then 3
-	ADC->CCR = ADC_CCR_MULTI_4 | ADC_CCR_MULTI_2 | ADC_CCR_MULTI_1 | ADC_CCR_DMA_0;
-	// ADC 1, 2, 3 config
-	// Scan Conversion Mode - Enable
-	ADC1->CR1 = ADC_CR1_SCAN;
-	ADC2->CR1 = ADC_CR1_SCAN;
-	ADC3->CR1 = ADC_CR1_SCAN;
-	// External trigger - T8 CC1 (1101)
-	// External trigger Edge - Falling	(10)
-	ADC1->CR2 = ADC_CR2_EXTSEL_3 | ADC_CR2_EXTSEL_2 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
-	// Number of conversions (0 = 1 conversion)
-	ADC1->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-	ADC2->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-	ADC3->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-	// Temperature Sensor and VREFINT Enable
-	ADC->CCR |= ADC_CCR_TSVREFE;
-	// Multi Mode DMA Request After Last Transfer Cmd
-	// DMA requests are issued as long as data are converted and DMA = 01, 10 or 11
-	ADC->CCR |= ADC_CCR_DDS;
-
-	// Injected channels for current measurement at end of cycle
-	// ADC1 Injected channel trigger T1 CC4 - 0 (default), falling edge
-	ADC1->CR2 |= ADC_CR2_JEXTEN_1;
-	// ADC2 Injected channel trigger T8 CC2 - 1100, falling edge
-	ADC2->CR2 |= ADC_CR2_JEXTSEL_3 | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTEN_1;
-#ifdef HW_HAS_3_SHUNTS
-	// ADC3 Injected channel trigger T8 CC3 - 1101, falling edge
-	ADC3->CR2 |= ADC_CR2_JEXTSEL_3 | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTSEL_0 | ADC_CR2_JEXTEN_1;
-#endif
-
-	// Number of injected channels
-	ADC1->JSQR = (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
-	ADC2->JSQR = (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
-#ifdef HW_HAS_3_SHUNTS
-	ADC3->JSQR |= (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
-#endif
-
-	hw_setup_adc_channels();
-
-	// Enable injected channels interrupt
-	ADC1->CR1 |= ADC_CR1_JEOCIE;
-	nvicEnableVector(ADC_IRQn, 6);
-
-	// Enable ADCs
-	ADC1->CR2 |= ADC_CR2_ADON;
-	ADC2->CR2 |= ADC_CR2_ADON;
-	ADC3->CR2 |= ADC_CR2_ADON;
+//	// DMA Channel 0 (default)
+//	// Direction - peripheral to memory (default)
+//	// Peripheral Increment (default)
+//	// Memory Increment
+//	DMA2_Stream4->CR |= DMA_SxCR_MINC;
+//	// Peripheral Data size - half word
+//	DMA2_Stream4->CR |= DMA_SxCR_PSIZE_0;
+//	// Memory data size - half word
+//	DMA2_Stream4->CR |= DMA_SxCR_MSIZE_0;
+//	// Mode - circular
+//	DMA2_Stream4->CR |= DMA_SxCR_CIRC;
+//	// Priority - high
+//	DMA2_Stream4->CR |= DMA_SxCR_PL_1;
+//	// Memory Burst - single (default)
+//	// Peripheral Burst - single (default)
+//	// Memory base address
+//	DMA2_Stream4->M0AR = (uint32_t)&ADC_Value;
+//	// Peripheral base address
+//	DMA2_Stream4->PAR = (uint32_t)&ADC->CDR;
+//	// Buffer Size
+//	DMA2_Stream4->NDTR = HW_ADC_CHANNELS;
+//	// Enable transfer complete interrupt
+//	DMA2_Stream4->CR |= DMA_SxCR_TCIE;
+//	// Enable stream
+//	DMA2_Stream4->CR |= DMA_SxCR_EN;
+//
+//	// ADC Common Init
+//	// Note that the ADC is running at 42MHz, which is higher than the
+//	// specified 36MHz in the data sheet, but it works.
+//	// Multi ADC mode selection - Triple Regular simultaneous mode 10110
+//	// Prescaler divide by 2 (default)
+//	// DMA mode 1 enabled, 3 (1 per ADC) half-words one by one - 1 then 2 then 3
+//	ADC->CCR = ADC_CCR_MULTI_4 | ADC_CCR_MULTI_2 | ADC_CCR_MULTI_1 | ADC_CCR_DMA_0;
+//	// ADC 1, 2, 3 config
+//	// Scan Conversion Mode - Enable
+//	ADC1->CR1 = ADC_CR1_SCAN;
+//	ADC2->CR1 = ADC_CR1_SCAN;
+//	ADC3->CR1 = ADC_CR1_SCAN;
+//	// External trigger - T8 CC1 (1101)
+//	// External trigger Edge - Falling	(10)
+//	ADC1->CR2 = ADC_CR2_EXTSEL_3 | ADC_CR2_EXTSEL_2 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
+//	// Number of conversions (0 = 1 conversion)
+//	ADC1->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+//	ADC2->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+//	ADC3->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+//	// Temperature Sensor and VREFINT Enable
+//	ADC->CCR |= ADC_CCR_TSVREFE;
+//	// Multi Mode DMA Request After Last Transfer Cmd
+//	// DMA requests are issued as long as data are converted and DMA = 01, 10 or 11
+//	ADC->CCR |= ADC_CCR_DDS;
+//
+//	// Injected channels for current measurement at end of cycle
+//	// ADC1 Injected channel trigger T1 CC4 - 0 (default), falling edge
+//	ADC1->CR2 |= ADC_CR2_JEXTEN_1;
+//	// ADC2 Injected channel trigger T8 CC2 - 1100, falling edge
+//	ADC2->CR2 |= ADC_CR2_JEXTSEL_3 | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTEN_1;
+//#ifdef HW_HAS_3_SHUNTS
+//	// ADC3 Injected channel trigger T8 CC3 - 1101, falling edge
+//	ADC3->CR2 |= ADC_CR2_JEXTSEL_3 | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTSEL_0 | ADC_CR2_JEXTEN_1;
+//#endif
+//
+//	// Number of injected channels
+//	ADC1->JSQR = (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
+//	ADC2->JSQR = (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
+//#ifdef HW_HAS_3_SHUNTS
+//	ADC3->JSQR |= (HW_ADC_INJ_CHANNELS - 1) << ADC_SQR1_L_Pos;
+//#endif
+//
+//	hw_setup_adc_channels();
+//
+//	// Enable injected channels interrupt
+//	ADC1->CR1 |= ADC_CR1_JEOCIE;
+//	nvicEnableVector(ADC_IRQn, 6);
+//
+//	// Enable ADCs
+//	ADC1->CR2 |= ADC_CR2_ADON;
+//	ADC2->CR2 |= ADC_CR2_ADON;
+//	ADC3->CR2 |= ADC_CR2_ADON;
 
 	// Timer8 for ADC sampling
 	rccEnableTIM8(TRUE);
@@ -476,7 +476,8 @@ void mcpwm_deinit(void) {
 
 	rccResetTIM1();
 	rccResetTIM8();
-	rccResetADC();
+	rccResetADC12();
+	rccResetADC3();
 	dmaStreamFree(STM32_DMA2_STREAM4);
 	nvicDisableVector(ADC_IRQn);
 

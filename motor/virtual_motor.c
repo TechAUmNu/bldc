@@ -182,7 +182,7 @@ static void connect_virtual_motor(float ml , float J, float Vbus){
 		mcpwm_foc_set_current(0.0);
 
 		//first we disconnect the ADC triggering
-		ADC1->CR2 &= ~(ADC_CR2_EXTSEL | ADC_CR2_EXTEN);
+//		ADC1->CR2 &= ~(ADC_CR2_EXTSEL | ADC_CR2_EXTEN);
 
 		//save current offsets
 		mcpwm_foc_get_current_offsets(&m_curr0_offset_backup,
@@ -254,7 +254,7 @@ static void disconnect_virtual_motor( void ){
 		//then we reconnect the ADC triggering to TIM2_CC2
 		// External trigger - T2 CC2 (0011)
 		// External trigger Edge - Falling	(10)
-		ADC1->CR2 |= ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
+//		ADC1->CR2 |= ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
 
 		if (m_conf->foc_sensor_mode == FOC_SENSOR_MODE_ENCODER) {
 			encoder_deinit();

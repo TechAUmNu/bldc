@@ -26,6 +26,52 @@
 #define CODE_IND_LISP		1
 #define CODE_IND_LISP_CONST 2
 
+/*
+ * Defines
+ */
+#define FLASH_SECTORS							16 // Flash has 2 banks of 8x 128k sectors
+#define BOOTLOADER_BASE							15
+#define APP_BASE								0
+#define NEW_APP_BASE							4
+#define NEW_APP_SECTORS							3
+#define APP_MAX_SIZE							(1024 * 128 * 4 - 8) // Note that the bootloader needs 8 extra bytes
+#define QMLUI_BASE								5
+#define LISP_BASE								6
+#define LISP_CONST_BASE							4
+#define QMLUI_MAX_SIZE							(1024 * 128 - 8)
+#define LISP_MAX_SIZE							(1024 * 128 - 8)
+
+// Base address of the Flash sectors
+#define ADDR_FLASH_SECTOR_0    					((uint32_t)0x08000000) // Base @ of Sector 0, 128 Kbytes
+#define ADDR_FLASH_SECTOR_1    					((uint32_t)0x08020000) // Base @ of Sector 1, 128 Kbytes
+#define ADDR_FLASH_SECTOR_2    					((uint32_t)0x08040000) // Base @ of Sector 2, 128 Kbytes
+#define ADDR_FLASH_SECTOR_3						((uint32_t)0x08060000) // Base @ of Sector 3, 128 Kbytes
+#define ADDR_FLASH_SECTOR_4    					((uint32_t)0x08080000) // Base @ of Sector 4, 128 Kbytes
+#define ADDR_FLASH_SECTOR_5    					((uint32_t)0x080A0000) // Base @ of Sector 5, 128 Kbytes
+#define ADDR_FLASH_SECTOR_6     				((uint32_t)0x080C0000) // Base @ of Sector 6, 128 Kbytes
+#define ADDR_FLASH_SECTOR_7     				((uint32_t)0x080E0000) // Base @ of Sector 7, 128 Kbytes
+#define ADDR_FLASH_SECTOR_8     				((uint32_t)0x08100000) // Base @ of Sector 8, 128 Kbytes
+#define ADDR_FLASH_SECTOR_9 				    ((uint32_t)0x08120000) // Base @ of Sector 9, 128 Kbytes
+#define ADDR_FLASH_SECTOR_10				    ((uint32_t)0x08140000) // Base @ of Sector 10, 128 Kbytes
+#define ADDR_FLASH_SECTOR_11				    ((uint32_t)0x08160000) // Base @ of Sector 12, 128 Kbytes
+#define ADDR_FLASH_SECTOR_12				    ((uint32_t)0x08180000) // Base @ of Sector 13, 128 Kbytes
+#define ADDR_FLASH_SECTOR_13				    ((uint32_t)0x081A0000) // Base @ of Sector 14, 128 Kbytes
+#define ADDR_FLASH_SECTOR_14				    ((uint32_t)0x081C0000) // Base @ of Sector 15, 128 Kbytes
+#define ADDR_FLASH_SECTOR_15				    ((uint32_t)0x081E0000) // Base @ of Sector 16, 128 Kbytes
+
+#define VECTOR_TABLE_ADDRESS					((uint32_t*)ADDR_FLASH_SECTOR_0)
+#define VECTOR_TABLE_SIZE						((uint32_t)(0x1000))
+#define EEPROM_EMULATION_SIZE					((uint32_t)(0x40000))
+
+#define APP_START_ADDRESS						((uint32_t*)(ADDR_FLASH_SECTOR_0))
+#define APP_SIZE								((uint32_t)(APP_MAX_SIZE - VECTOR_TABLE_SIZE - EEPROM_EMULATION_SIZE))
+
+#define	APP_CRC_WAS_CALCULATED_FLAG				((uint32_t)0x00000000)
+#define	APP_CRC_WAS_CALCULATED_FLAG_ADDRESS		((uint32_t*)(ADDR_FLASH_SECTOR_0 + APP_MAX_SIZE - 8))
+#define APP_CRC_ADDRESS							((uint32_t*)(ADDR_FLASH_SECTOR_0 + APP_MAX_SIZE - 4))
+
+
+
 // Functions
 uint16_t flash_helper_erase_new_app(uint32_t new_app_size);
 uint16_t flash_helper_erase_bootloader(void);

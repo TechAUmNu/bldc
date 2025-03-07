@@ -47,7 +47,7 @@
 #define EXTI15_10_IRQHandler    VectorE0    /**< EXTI Line 15..10.          */
 #define RTC_Alarm_IRQHandler    VectorE4    /**< RTC alarms (A and B)
                                                  through EXTI line.         */
-#define OTG_FS_WKUP_IRQHandler  VectorE8    /**< USB OTG FS Wakeup through
+#define OTG_FS_WKUP_IRQHandler  VectorE8    /**< USB OTG FS Wakeup through // TODO EM: Wrong from here
                                                  EXTI line.                 */
 #define TIM8_BRK_IRQHandler     VectorEC    /**< TIM8 Break.                */
 #define TIM8_UP_IRQHandler      VectorF0    /**< TIM8 Update.               */

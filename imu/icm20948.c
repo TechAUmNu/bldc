@@ -38,7 +38,7 @@ static bool write_single_reg(ICM20948_STATE *s, uint8_t reg, uint8_t value);
 static ICM20948_STATE *m_terminal_state = 0;
 
 void icm20948_init(ICM20948_STATE *s, i2c_bb_state *i2c_state, int ad0_val,
-		stkalign_t *work_area, size_t work_area_size) {
+		stkline_t *work_area, size_t work_area_size) {
 
 	s->i2cs = i2c_state;
 	s->i2c_address = ad0_val ? 0x69 : 0x68;

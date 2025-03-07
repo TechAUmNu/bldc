@@ -28,7 +28,6 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
-#include "stm32f4xx_conf.h"
 #include "mc_interface.h"
 #include "mcpwm.h"
 #include "mcpwm_foc.h"

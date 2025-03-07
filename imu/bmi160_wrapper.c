@@ -30,7 +30,7 @@ static THD_FUNCTION(bmi_thread, arg);
 static bool reset_init_bmi(BMI_STATE *s);
 void user_delay_ms(uint32_t ms);
 
-void bmi160_wrapper_init(BMI_STATE *s, stkalign_t *work_area, size_t work_area_size) {
+void bmi160_wrapper_init(BMI_STATE *s, stkline_t *work_area, size_t work_area_size) {
 	s->read_callback = 0;
 
 	if (s->sensor.interface == BMI160_SPI_INTF) {

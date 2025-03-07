@@ -20,7 +20,6 @@
 
 #include "encoder/enc_abi.h"
 #include "encoder/encoder_cfg.h"
-#include "stm32f4xx_conf.h"
 #include "ch.h"
 #include "hal.h"
 #include "hw.h"
@@ -72,7 +71,7 @@ bool enc_abi_init(ABI_config_t *cfg) {
 	HW_ENC_TIM_CLK_EN();
 
 	// Enable SYSCFG clock
-	rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, true);
+	rccEnableAPB4(RCC_APB4ENR_SYSCFGEN, true);
 
 	// Set the encoder Mode - Encoder mode 3 - Counter counts up/down on both TI1FP1 and TI2FP2 edges
 	//depending on the level of the other input
