@@ -69,6 +69,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include "ch.h"
 
 #if (CH_CFG_USE_MUTEXES == TRUE) || defined(__DOXYGEN__)
@@ -94,9 +96,9 @@
 /*===========================================================================*/
 
 /**
- * @brief   Initializes s @p mutex_t structure.
+ * @brief   Initializes s @p mutex_t object.
  *
- * @param[out] mp       pointer to a @p mutex_t structure
+ * @param[out] mp       pointer to a @p mutex_t object
  *
  * @init
  */
@@ -112,11 +114,40 @@ void chMtxObjectInit(mutex_t *mp) {
 }
 
 /**
+ * @brief   Disposes a mutex.
+ * @note    Objects disposing does not involve freeing memory but just
+ *          performing checks that make sure that the object is in a
+ *          state compatible with operations stop.
+ * @note    If the option @p CH_CFG_HARDENING_LEVEL is greater than zero then
+ *          the object is also cleared, attempts to use the object would likely
+ *          result in a clean memory access violation because dereferencing
+ *          of @p NULL pointers rather than dereferencing previously valid
+ *          pointers.
+ *
+ * @param[in] mp       pointer to a @p mutex_t object
+ *
+ * @dispose
+ */
+void chMtxObjectDispose(mutex_t *mp) {
+
+  chDbgCheck(mp != NULL);
+  chDbgAssert(ch_queue_isempty(&mp->queue) && (mp->owner == NULL),
+              "object in use");
+#if CH_CFG_USE_MUTEXES_RECURSIVE == TRUE
+  chDbgAssert(mp->cnt == (cnt_t)0, "object in use");
+#endif
+
+#if CH_CFG_HARDENING_LEVEL > 0
+  memset((void *)mp, 0, sizeof (mutex_t));
+#endif
+}
+
+/**
  * @brief   Locks the specified mutex.
  * @post    The mutex is locked and inserted in the per-thread stack of owned
  *          mutexes.
  *
- * @param[in] mp        pointer to the @p mutex_t structure
+ * @param[in] mp        pointer to a @p mutex_t object
  *
  * @api
  */
@@ -132,7 +163,7 @@ void chMtxLock(mutex_t *mp) {
  * @post    The mutex is locked and inserted in the per-thread stack of owned
  *          mutexes.
  *
- * @param[in] mp        pointer to the @p mutex_t structure
+ * @param[in] mp        pointer to a @p mutex_t object
  *
  * @sclass
  */
@@ -247,7 +278,7 @@ void chMtxLockS(mutex_t *mp) {
  *          priority inheritance mechanism because it does not try to
  *          enter a sleep state.
  *
- * @param[in] mp        pointer to the @p mutex_t structure
+ * @param[in] mp        pointer to a @p mutex_t object
  * @return              The operation status.
  * @retval true         if the mutex has been successfully acquired
  * @retval false        if the lock attempt failed.
@@ -274,7 +305,7 @@ bool chMtxTryLock(mutex_t *mp) {
  *          priority inheritance mechanism because it does not try to
  *          enter a sleep state.
  *
- * @param[in] mp        pointer to the @p mutex_t structure
+ * @param[in] mp        pointer to a @p mutex_t object
  * @return              The operation status.
  * @retval true         if the mutex has been successfully acquired
  * @retval false        if the lock attempt failed.
@@ -319,7 +350,7 @@ bool chMtxTryLockS(mutex_t *mp) {
  * @post    The mutex is unlocked and removed from the per-thread stack of
  *          owned mutexes.
  *
- * @param[in] mp        pointer to the @p mutex_t structure
+ * @param[in] mp        pointer to a @p mutex_t object
  *
  * @api
  */
@@ -406,7 +437,7 @@ void chMtxUnlock(mutex_t *mp) {
  * @post    This function does not reschedule so a call to a rescheduling
  *          function must be performed before unlocking the kernel.
  *
- * @param[in] mp        pointer to the @p mutex_t structure
+ * @param[in] mp        pointer to a @p mutex_t object
  *
  * @sclass
  */

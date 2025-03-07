@@ -57,6 +57,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include "ch.h"
 
 #if (CH_CFG_USE_EVENTS == TRUE) || defined(__DOXYGEN__)
@@ -86,14 +88,55 @@
 /*===========================================================================*/
 
 /**
+ * @brief   Initializes an Event Source.
+ * @note    This function can be invoked before the kernel is initialized
+ *          because it just prepares a @p event_source_t object.
+ *
+ * @param[in] esp       pointer to an @p event_source_t object
+ *
+ * @init
+ */
+void chEvtObjectInit(event_source_t *esp) {
+
+  chDbgCheck(esp != NULL);
+
+  esp->next = (event_listener_t *)esp;
+}
+
+/**
+ * @brief   Disposes an Event Source.
+ * @note    Objects disposing does not involve freeing memory but just
+ *          performing checks that make sure that the object is in a
+ *          state compatible with operations stop.
+ * @note    If the option @p CH_CFG_HARDENING_LEVEL is greater than zero then
+ *          the object is also cleared, attempts to use the object would likely
+ *          result in a clean memory access violation because dereferencing
+ *          of @p NULL pointers rather than dereferencing previously valid
+ *          pointers.
+ *
+ * @param[in] esp       pointer to an @p event_source_t object
+ *
+ * @dispose
+ */
+void chEvtObjectDispose(event_source_t *esp) {
+
+  chDbgCheck(esp != NULL);
+  chDbgAssert(esp->next != (event_listener_t *)esp, "object in use");
+
+#if CH_CFG_HARDENING_LEVEL > 0
+  memset((void *)esp, 0, sizeof (event_source_t));
+#endif
+}
+
+/**
  * @brief   Registers an Event Listener on an Event Source.
  * @details Once a thread has registered as listener on an event source it
  *          will be notified of all events broadcasted there.
  * @note    Multiple Event Listeners can specify the same bits to be ORed to
  *          different threads.
  *
- * @param[in] esp       pointer to the  @p event_source_t structure
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
+ * @param[in] elp       pointer to an @p event_listener_t structure
  * @param[in] events    events to be ORed to the thread when
  *                      the event source is broadcasted
  * @param[in] wflags    mask of flags the listening thread is interested in
@@ -124,8 +167,8 @@ void chEvtRegisterMaskWithFlagsI(event_source_t *esp,
  * @note    Multiple Event Listeners can specify the same bits to be ORed to
  *          different threads.
  *
- * @param[in] esp       pointer to the  @p event_source_t structure
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
+ * @param[in] elp       pointer to an @p event_listener_t structure
  * @param[in] events    events to be ORed to the thread when
  *                      the event source is broadcasted
  * @param[in] wflags    mask of flags the listening thread is interested in
@@ -150,8 +193,8 @@ void chEvtRegisterMaskWithFlags(event_source_t *esp,
  *          operations in inverse order of the register operations (elements
  *          are found on top of the list).
  *
- * @param[in] esp       pointer to the  @p event_source_t structure
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
+ * @param[in] elp       pointer to an @p event_listener_t structure
  *
  * @api
  */
@@ -238,7 +281,7 @@ eventmask_t chEvtAddEvents(eventmask_t events) {
  * @details The flags are returned and the @p event_listener_t flags mask is
  *          cleared.
  *
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] elp       pointer to an @p event_listener_t structure
  * @return              The flags added to the listener by the associated
  *                      event source.
  *
@@ -261,7 +304,7 @@ eventflags_t chEvtGetAndClearFlagsI(event_listener_t *elp) {
  * @details The flags are returned and the @p event_listener_t flags mask is
  *          cleared.
  *
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] elp       pointer to an @p event_listener_t structure
  * @return              The flags added to the listener by the associated
  *                      event source.
  *
@@ -338,7 +381,7 @@ void chEvtSignal(thread_t *tp, eventmask_t events) {
  *          interrupt handlers always reschedule on exit so an explicit
  *          reschedule must not be performed in ISRs.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
  * @param[in] flags     the flags set to be added to the listener flags mask
  *
  * @iclass
@@ -372,7 +415,7 @@ void chEvtBroadcastFlagsI(event_source_t *esp, eventflags_t flags) {
  *          event flags specified by the threads themselves in the
  *          @p event_listener_t objects.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
  * @param[in] flags     the flags set to be added to the listener flags mask
  *
  * @api
@@ -519,7 +562,6 @@ eventmask_t chEvtWaitAll(eventmask_t events) {
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The mask of the lowest event id served and cleared.
  * @retval 0            if the operation has timed out.
  *
@@ -562,7 +604,6 @@ eventmask_t chEvtWaitOneTimeout(eventmask_t events, sysinterval_t timeout) {
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The mask of the served and cleared events.
  * @retval 0            if the operation has timed out.
  *
@@ -603,7 +644,6 @@ eventmask_t chEvtWaitAnyTimeout(eventmask_t events, sysinterval_t timeout) {
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The mask of the served and cleared events.
  * @retval 0            if the operation has timed out.
  *

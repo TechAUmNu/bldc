@@ -448,6 +448,7 @@ void chSysTimerHandlerI(void) {
 #endif
 }
 
+#if (CH_PORT_SUPPORTS_RECURSIVE_LOCKS == TRUE) || defined(__DOXYGEN__)
 /**
  * @brief   Unconditionally enters the kernel lock state.
  * @note    Can be called without previous knowledge of the current lock state.
@@ -457,7 +458,7 @@ void chSysTimerHandlerI(void) {
  */
 void chSysUnconditionalLock(void) {
 
-  if (port_irq_enabled(port_get_irq_status())) {
+  if (!port_is_locked(port_get_lock_status())) {
     chSysLock();
   }
 }
@@ -471,7 +472,7 @@ void chSysUnconditionalLock(void) {
  */
 void chSysUnconditionalUnlock(void) {
 
-  if (!port_irq_enabled(port_get_irq_status())) {
+  if (port_is_locked(port_get_lock_status())) {
     chSysUnlock();
   }
 }
@@ -483,16 +484,18 @@ void chSysUnconditionalUnlock(void) {
  *          than @p chSysLock() which is preferable when the calling context
  *          is known.
  * @post    The system is in a critical zone.
+ * @note    This function is only available if the underlying port supports
+ *          @p port_get_lock_status() and @p port_is_locked().
  *
  * @return              The previous system status, the encoding of this
  *                      status word is architecture-dependent and opaque.
  *
  * @xclass
  */
-syssts_t chSysGetStatusAndLockX(void)  {
+syssts_t chSysGetStatusAndLockX(void) {
 
-  syssts_t sts = port_get_irq_status();
-  if (port_irq_enabled(sts)) {
+  syssts_t sts = port_get_lock_status();
+  if (!port_is_locked(sts)) {
     if (port_is_isr_context()) {
       chSysLockFromISR();
     }
@@ -507,6 +510,8 @@ syssts_t chSysGetStatusAndLockX(void)  {
  * @brief   Restores the specified execution status and leaves a critical zone.
  * @note    A call to @p chSchRescheduleS() is automatically performed
  *          if exiting the critical zone and if not in ISR context.
+ * @note    This function is only available if the underlying port supports
+ *          @p port_get_lock_status() and @p port_is_locked().
  *
  * @param[in] sts       the system status to be restored.
  *
@@ -514,7 +519,7 @@ syssts_t chSysGetStatusAndLockX(void)  {
  */
 void chSysRestoreStatusX(syssts_t sts) {
 
-  if (port_irq_enabled(sts)) {
+  if (!port_is_locked(sts)) {
     if (port_is_isr_context()) {
       chSysUnlockFromISR();
     }
@@ -524,6 +529,7 @@ void chSysRestoreStatusX(syssts_t sts) {
     }
   }
 }
+#endif /* CH_PORT_SUPPORTS_RECURSIVE_LOCKS == TRUE */
 
 #if (PORT_SUPPORTS_RT == TRUE) || defined(__DOXYGEN__)
 /**
@@ -654,7 +660,6 @@ void chSchRescheduleS(void) {
  * @param[in] timeout   the number of ticks before the operation timeouts.
  *                      the following special values are allowed:
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The wakeup message.
  * @retval MSG_TIMEOUT  if a timeout occurred.
  *
@@ -779,7 +784,7 @@ thread_t *chThdCreateI(const thread_descriptor_t *tdp) {
   tp->epmask = (eventmask_t)0;
 #endif
 #if CH_DBG_ENABLE_STACK_CHECK == TRUE
-  tp->wabase = (stkalign_t *)tdp->wbase;
+  tp->wabase = (stkline_t *)tdp->wbase;
 #endif
 
   /* Port dependent thread initialization.*/
@@ -837,7 +842,7 @@ void chThdExit(msg_t msg) {
   chSysLock();
 
   /* Exit handler hook.*/
-  CH_CFG_THREAD_EXIT_HOOK(tp);
+  CH_CFG_THREAD_EXIT_HOOK(nil.current);
 
 #if CH_CFG_USE_WAITEXIT == TRUE
   {
@@ -896,7 +901,6 @@ msg_t chThdWait(thread_t *tp) {
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The wake up message.
  *
  * @sclass
@@ -987,12 +991,11 @@ void chThdSleepUntil(systime_t abstime) {
  * @details The caller thread is enqueued and put to sleep until it is
  *          dequeued or the specified timeouts expires.
  *
- * @param[in] tqp       pointer to the threads queue object
+ * @param[in] tqp       pointer to a @p threads_queue_t structure
  * @param[in] timeout   the timeout in system ticks, the special values are
  *                      handled as follow:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The message from @p osalQueueWakeupOneI() or
  *                      @p osalQueueWakeupAllI() functions.
  * @retval MSG_TIMEOUT  if the thread has not been dequeued within the
@@ -1024,7 +1027,7 @@ msg_t chThdEnqueueTimeoutS(threads_queue_t *tqp, sysinterval_t timeout) {
  *          is empty.
  * @pre     The queue must contain at least an object.
  *
- * @param[in] tqp       pointer to the threads queue object
+ * @param[in] tqp       pointer to a @p threads_queue_t structure
  * @param[in] msg       the message code
  *
  * @iclass
@@ -1046,7 +1049,7 @@ void chThdDoDequeueNextI(threads_queue_t *tqp, msg_t msg) {
  * @brief   Dequeues and wakes up one thread from the threads queue object,
  *          if any.
  *
- * @param[in] tqp       pointer to the threads queue object
+ * @param[in] tqp       pointer to a @p threads_queue_t structure
  * @param[in] msg       the message code
  *
  * @iclass
@@ -1064,7 +1067,7 @@ void chThdDequeueNextI(threads_queue_t *tqp, msg_t msg) {
 /**
  * @brief   Dequeues and wakes up all threads from the threads queue object.
  *
- * @param[in] tqp       pointer to the threads queue object
+ * @param[in] tqp       pointer to a @p threads_queue_t structure
  * @param[in] msg       the message code
  *
  * @iclass

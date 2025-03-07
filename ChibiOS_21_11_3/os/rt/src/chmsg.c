@@ -48,6 +48,10 @@
 #if (CH_CFG_USE_MESSAGES == TRUE) || defined(__DOXYGEN__)
 
 /*===========================================================================*/
+/* Module local definitions.                                                 */
+/*===========================================================================*/
+
+/*===========================================================================*/
 /* Module exported variables.                                                */
 /*===========================================================================*/
 
@@ -143,7 +147,6 @@ thread_t *chMsgWaitS(void) {
  * @param[in] timeout   the number of ticks before the operation timeouts,
  *                      the following special values are allowed:
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              A pointer to the thread carrying the message.
  * @retval NULL         if a timeout occurred.
  *

@@ -463,13 +463,13 @@ namespace chibios_rt {
     /**
      * @brief   Core memory status.
      *
-     * @return              The size, in bytes, of the free core memory.
+     * @param[in] map       Memory area representing available core space.
      *
      * @xclass
      */
-    static size_t getStatusX(void) {
+    static void getStatusX(memory_area_t *map) {
 
-      return chCoreGetStatusX();
+      chCoreGetStatusX(map);
     }
   };
 #endif /* CH_CFG_USE_MEMCORE == TRUE */
@@ -2899,7 +2899,7 @@ namespace chibios_rt {
      * @pre     The added object must be of the right size for the specified
      *          memory pool.
      * @pre     The added object must be memory aligned to the size of
-     *          @p stkalign_t type.
+     *          @p stkline_t type.
      * @note    This function is just an alias for @p chPoolFree() and has been
      *          added for clarity.
      *
@@ -3000,7 +3000,7 @@ namespace chibios_rt {
     /**
      * @brief   Heap constructor.
      * @pre     Both the heap buffer base and the heap size must be aligned to
-     *          the @p stkalign_t type size.
+     *          the @p stkline_t type size.
      *
      * @param[in] buffer    heap buffer base
      * @param[in] size      the size of the memory area located at \e buffer

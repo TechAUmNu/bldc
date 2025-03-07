@@ -47,7 +47,7 @@
 /*===========================================================================*/
 
 /**
- * @brief   Type of a mutex structure.
+ * @brief   Type of a Mutex object.
  */
 typedef struct ch_mutex mutex_t;
 
@@ -100,6 +100,7 @@ struct ch_mutex {
 extern "C" {
 #endif
   void chMtxObjectInit(mutex_t *mp);
+  void chMtxObjectDispose(mutex_t *mp);
   void chMtxLock(mutex_t *mp);
   void chMtxLockS(mutex_t *mp);
   bool chMtxTryLock(mutex_t *mp);
@@ -120,7 +121,7 @@ extern "C" {
  * @brief   Returns @p true if the mutex queue contains at least a waiting
  *          thread.
  *
- * @param[out] mp       pointer to a @p mutex_t structure
+ * @param[out] mp       pointer to a @p mutex_t object
  * @return              The mutex queue status.
  *
  * @sclass
@@ -135,7 +136,7 @@ static inline bool chMtxQueueNotEmptyS(mutex_t *mp) {
 /**
  * @brief   Returns the mutex owner thread.
  *
- * @param[out] mp       pointer to a @p mutex_t structure
+ * @param[out] mp       pointer to a @p mutex_t object
  * @return              The owner thread.
  * @retval NULL         if the mutex is not owned.
  *

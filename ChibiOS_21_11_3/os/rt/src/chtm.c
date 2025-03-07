@@ -26,6 +26,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include "ch.h"
 
 #if (CH_CFG_USE_TM == TRUE) || defined(__DOXYGEN__)
@@ -70,9 +72,9 @@ static inline void tm_stop(time_measurement_t *tmp,
 /*===========================================================================*/
 
 /**
- * @brief   Initializes a @p TimeMeasurement object.
+ * @brief   Initializes a @p time_measurement_t object.
  *
- * @param[out] tmp      pointer to a @p TimeMeasurement structure
+ * @param[out] tmp      pointer to a @p time_measurement_t object
  *
  * @init
  */
@@ -86,10 +88,34 @@ void chTMObjectInit(time_measurement_t *tmp) {
 }
 
 /**
- * @brief   Starts a measurement.
- * @pre     The @p time_measurement_t structure must be initialized.
+ * @brief   Disposes a @p time_measurement_t object.
+ * @note    Objects disposing does not involve freeing memory but just
+ *          performing checks that make sure that the object is in a
+ *          state compatible with operations stop.
+ * @note    If the option @p CH_CFG_HARDENING_LEVEL is greater than zero then
+ *          the object is also cleared, attempts to use the object would likely
+ *          result in a clean memory access violation because dereferencing
+ *          of @p NULL pointers rather than dereferencing previously valid
+ *          pointers.
  *
- * @param[in,out] tmp   pointer to a @p TimeMeasurement structure
+ * @param[in] tmp       pointer to a @p time_measurement_t object
+ *
+ * @dispose
+ */
+void chTMObjectDispose(time_measurement_t *tmp) {
+
+  chDbgCheck(tmp != NULL);
+
+#if CH_CFG_HARDENING_LEVEL > 0
+  memset((void *)tmp, 0, sizeof (time_measurement_t));
+#endif
+}
+
+/**
+ * @brief   Starts a measurement.
+ * @pre     The @p time_measurement_t object must be initialized.
+ *
+ * @param[in,out] tmp   pointer to a @p time_measurement_t object
  *
  * @xclass
  */
@@ -100,9 +126,9 @@ NOINLINE void chTMStartMeasurementX(time_measurement_t *tmp) {
 
 /**
  * @brief   Stops a measurement.
- * @pre     The @p time_measurement_t structure must be initialized.
+ * @pre     The @p time_measurement_t object must be initialized.
  *
- * @param[in,out] tmp   pointer to a @p time_measurement_t structure
+ * @param[in,out] tmp   pointer to a @p time_measurement_t object
  *
  * @xclass
  */
@@ -115,9 +141,9 @@ NOINLINE void chTMStopMeasurementX(time_measurement_t *tmp) {
  * @brief   Stops a measurement and chains to the next one using the same time
  *          stamp.
  *
- * @param[in,out] tmp1  pointer to the @p time_measurement_t structure to be
+ * @param[in,out] tmp1  pointer to the @p time_measurement_t object to be
  *                      stopped
- * @param[in,out] tmp2  pointer to the @p time_measurement_t structure to be
+ * @param[in,out] tmp2  pointer to the @p time_measurement_t object to be
  *                      started
  *
  *
@@ -126,11 +152,13 @@ NOINLINE void chTMStopMeasurementX(time_measurement_t *tmp) {
 NOINLINE void chTMChainMeasurementToX(time_measurement_t *tmp1,
                                       time_measurement_t *tmp2) {
 
-  /* Starts new measurement.*/
-  tmp2->last = chSysGetRealtimeCounterX();
+  /* Get current time for measurement.*/
+  rtcnt_t now = chSysGetRealtimeCounterX();
 
-  /* Stops previous measurement using the same time stamp.*/
-  tm_stop(tmp1, tmp2->last, (rtcnt_t)0);
+  /* Stop previous measurement using current time. Update chained only after
+     stop since the same measurement object may be used.*/
+  tm_stop(tmp1, now, (rtcnt_t)0);
+  tmp2->last = now;
 }
 
 #endif /* CH_CFG_USE_TM == TRUE */

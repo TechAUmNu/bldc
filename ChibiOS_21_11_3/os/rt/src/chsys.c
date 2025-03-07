@@ -53,29 +53,22 @@ CH_SYS_CORE0_MEMORY os_instance_t ch0;
 /**
  * @brief   Working area for core 0 idle thread.
  */
-static CH_SYS_CORE0_MEMORY THD_WORKING_AREA(ch_c0_idle_thread_wa,
-                                            PORT_IDLE_THREAD_STACK_SIZE);
+static CH_SYS_CORE0_MEMORY THD_STACK(ch_c0_idle_thread_wa,
+                                     PORT_IDLE_THREAD_STACK_SIZE);
 #endif
 
-#if CH_DBG_ENABLE_STACK_CHECK == TRUE
-extern stkalign_t __main_thread_stack_base__, __main_thread_stack_end__;
-#endif
+extern stkline_t __main_thread_stack_base__, __main_thread_stack_end__;
 
 /**
  * @brief   Core 0 OS instance configuration.
  */
 const os_instance_config_t ch_core0_cfg = {
   .name             = "c0",
-#if CH_DBG_ENABLE_STACK_CHECK == TRUE
-  .mainthread_base  = &__main_thread_stack_base__,
-  .mainthread_end   = &__main_thread_stack_end__,
-#elif CH_CFG_USE_DYNAMIC == TRUE
-  .mainthread_base  = NULL,
-  .mainthread_end   = NULL,
-#endif
+  .cstack_base      = &__main_thread_stack_base__,
+  .cstack_end       = &__main_thread_stack_end__,
 #if CH_CFG_NO_IDLE_THREAD == FALSE
-  .idlethread_base  = THD_WORKING_AREA_BASE(ch_c0_idle_thread_wa),
-  .idlethread_end   = THD_WORKING_AREA_END(ch_c0_idle_thread_wa)
+  .idlestack_base   = THD_STACK_BASE(ch_c0_idle_thread_wa),
+  .idlestack_end    = THD_STACK_END(ch_c0_idle_thread_wa)
 #endif
 };
 
@@ -89,29 +82,22 @@ CH_SYS_CORE1_MEMORY os_instance_t ch1;
 /**
  * @brief   Working area for core 1 idle thread.
  */
-static CH_SYS_CORE1_MEMORY THD_WORKING_AREA(ch_c1_idle_thread_wa,
-                                            PORT_IDLE_THREAD_STACK_SIZE);
+static CH_SYS_CORE1_MEMORY THD_STACK(ch_c1_idle_thread_wa,
+                                     PORT_IDLE_THREAD_STACK_SIZE);
 #endif
 
-#if CH_DBG_ENABLE_STACK_CHECK == TRUE
-extern stkalign_t __c1_main_thread_stack_base__, __c1_main_thread_stack_end__;
-#endif
+extern stkline_t __c1_main_thread_stack_base__, __c1_main_thread_stack_end__;
 
 /**
  * @brief   Core 1 OS instance configuration.
  */
 const os_instance_config_t ch_core1_cfg = {
   .name             = "c1",
-#if CH_DBG_ENABLE_STACK_CHECK == TRUE
-  .mainthread_base  = &__c1_main_thread_stack_base__,
-  .mainthread_end   = &__c1_main_thread_stack_end__,
-#elif CH_CFG_USE_DYNAMIC == TRUE
-  .mainthread_base  = NULL,
-  .mainthread_end   = NULL,
-#endif
+  .cstack_base      = &__c1_main_thread_stack_base__,
+  .cstack_end       = &__c1_main_thread_stack_end__,
 #if CH_CFG_NO_IDLE_THREAD == FALSE
-  .idlethread_base  = THD_WORKING_AREA_BASE(ch_c1_idle_thread_wa),
-  .idlethread_end   = THD_WORKING_AREA_END(ch_c1_idle_thread_wa)
+  .idlestack_base   = THD_STACK_BASE(ch_c1_idle_thread_wa),
+  .idlestack_end    = THD_STACK_END(ch_c1_idle_thread_wa)
 #endif
 };
 #endif /* PORT_CORES_NUMBER > 1 */
@@ -404,6 +390,7 @@ void chSysTimerHandlerI(void) {
   CH_CFG_SYSTEM_TICK_HOOK();
 }
 
+#if (CH_PORT_SUPPORTS_RECURSIVE_LOCKS == TRUE) || defined(__DOXYGEN__)
 /**
  * @brief   Returns the execution status and enters a critical zone.
  * @details This functions enters into a critical zone and can be called
@@ -411,6 +398,8 @@ void chSysTimerHandlerI(void) {
  *          than @p chSysLock() which is preferable when the calling context
  *          is known.
  * @post    The system is in a critical zone.
+ * @note    This function is only available if the underlying port supports
+ *          @p port_get_lock_status() and @p port_is_locked().
  *
  * @return              The previous system status, the encoding of this
  *                      status word is architecture-dependent and opaque.
@@ -419,8 +408,8 @@ void chSysTimerHandlerI(void) {
  */
 syssts_t chSysGetStatusAndLockX(void) {
 
-  syssts_t sts = port_get_irq_status();
-  if (port_irq_enabled(sts)) {
+  syssts_t sts = port_get_lock_status();
+  if (!port_is_locked(sts)) {
     if (port_is_isr_context()) {
       chSysLockFromISR();
     }
@@ -435,6 +424,8 @@ syssts_t chSysGetStatusAndLockX(void) {
  * @brief   Restores the specified execution status and leaves a critical zone.
  * @note    A call to @p chSchRescheduleS() is automatically performed
  *          if exiting the critical zone and if not in ISR context.
+ * @note    This function is only available if the underlying port supports
+ *          @p port_get_lock_status() and @p port_is_locked().
  *
  * @param[in] sts       the system status to be restored.
  *
@@ -442,7 +433,7 @@ syssts_t chSysGetStatusAndLockX(void) {
  */
 void chSysRestoreStatusX(syssts_t sts) {
 
-  if (port_irq_enabled(sts)) {
+  if (!port_is_locked(sts)) {
     if (port_is_isr_context()) {
       chSysUnlockFromISR();
     }
@@ -452,6 +443,7 @@ void chSysRestoreStatusX(syssts_t sts) {
     }
   }
 }
+#endif /* CH_PORT_SUPPORTS_RECURSIVE_LOCKS == TRUE */
 
 #if (PORT_SUPPORTS_RT == TRUE) || defined(__DOXYGEN__)
 /**

@@ -63,7 +63,7 @@ typedef struct ch_virtual_timer virtual_timer_t;
  * @brief   Type of a Virtual Timer callback function.
  *
  * @param[in] vtp       pointer to the @p virtual_timer_t calling this callback
- * @param[in[ p         optional argument to the callback
+ * @param[in] p         optional argument to the callback
  * @return              The interval to be reloaded into the timer or zero.
  * @retval 0            if the timer must not be reloaded.
  */
@@ -113,6 +113,14 @@ typedef struct ch_virtual_timers_list {
    * @brief   System time of the last tick event.
    */
   systime_t                     lasttime;
+  /**
+   * @brief   Current delta parameter.
+   * @note    This value is initially set to @p CH_CFG_ST_TIMEDELTA and,
+   *          in case of insufficient margins, it is increased at runtime
+   *          in order to compensate. Such a condition is reported in
+   *          RFCU as a warning.
+   */
+  sysinterval_t                 lastdelta;
 #endif
 #if (CH_CFG_USE_TIMESTAMP == TRUE) || defined(__DOXYGEN__)
   /**
@@ -148,6 +156,11 @@ typedef struct ch_threads_queue {
 } threads_queue_t;
 
 /**
+ * @brief   Type of a thread dispose function.
+ */
+typedef void (*thread_dispose_t)(thread_t *tp);
+
+/**
  * @brief   Structure representing a thread.
  * @note    Not all the listed fields are always needed, by switching off some
  *          not needed ChibiOS/RT subsystems it is possible to save RAM space
@@ -175,31 +188,21 @@ struct ch_thread {
    * @brief   Processor context.
    */
   struct port_context           ctx;
-#if (CH_CFG_USE_REGISTRY == TRUE) || defined(__DOXYGEN__)
-  /**
-   * @brief   Registry queue element.
-   */
-  ch_queue_t                    rqueue;
-#endif
   /**
    * @brief   OS instance owner of this thread.
    */
   os_instance_t                 *owner;
-#if (CH_CFG_USE_REGISTRY == TRUE) || defined(__DOXYGEN__)
-  /**
-   * @brief   Thread name or @p NULL.
-   */
-  const char                    *name;
-#endif
-#if (CH_DBG_ENABLE_STACK_CHECK == TRUE) || (CH_CFG_USE_DYNAMIC == TRUE) ||  \
-    defined(__DOXYGEN__)
   /**
    * @brief   Working area base address.
    * @note    This pointer is used for stack overflow checks and for
    *          dynamic threading.
    */
-  stkalign_t                    *wabase;
-#endif
+  stkline_t                     *wabase;
+  /**
+   * @brief   Working area end address.
+   * @note    It is the 1st address after the working area.
+   */
+  stkline_t                    *waend;
   /**
    * @brief   Current thread state.
    */
@@ -213,11 +216,31 @@ struct ch_thread {
    * @brief   References to this thread.
    */
   trefs_t                       refs;
+  /**
+   * @brief   Thread name or @p NULL.
+   */
+  const char                    *name;
+  /**
+   * @brief   Registry queue element.
+   */
+  ch_queue_t                    rqueue;
 #endif
+#if (CH_CFG_USE_DYNAMIC == TRUE) || defined(__DOXYGEN__)
+  /**
+   * @brief   Pointer to a thread dispose function or @p NULL.
+   */
+  thread_dispose_t              dispose;
+  /**
+   * @brief   Thread controller object or @p NULL.
+   * @note    This field can be used to associate an user object to the
+   *          thread.
+   */
+  void                          *object;
+#endif
+#if (CH_CFG_TIME_QUANTUM > 0) || defined(__DOXYGEN__)
   /**
    * @brief   Number of ticks remaining to this thread.
    */
-#if (CH_CFG_TIME_QUANTUM > 0) || defined(__DOXYGEN__)
   tslices_t                     ticks;
 #endif
 #if (CH_DBG_THREADS_PROFILING == TRUE) || defined(__DOXYGEN__)
@@ -323,13 +346,6 @@ struct ch_thread {
    */
   tprio_t                       realprio;
 #endif
-#if ((CH_CFG_USE_DYNAMIC == TRUE) && (CH_CFG_USE_MEMPOOLS == TRUE)) ||      \
-    defined(__DOXYGEN__)
-  /**
-   * @brief   Memory Pool where the thread workspace is returned.
-   */
-  void                          *mpool;
-#endif
 #if (CH_DBG_STATISTICS == TRUE) || defined(__DOXYGEN__)
   /**
    * @brief   Thread statistics.
@@ -365,26 +381,23 @@ typedef struct ch_os_instance_config {
    * @brief   Instance name.
    */
   const char                    *name;
-#if (CH_DBG_ENABLE_STACK_CHECK == TRUE) || (CH_CFG_USE_DYNAMIC == TRUE) ||  \
-    defined(__DOXYGEN__)
   /**
-   * @brief   Lower limit of the main function thread stack.
+   * @brief   Lower limit of the C runtime default stack.
    */
-  stkalign_t                    *mainthread_base;
+  stkline_t                     *cstack_base;
   /**
-   * @brief   Upper limit of the main function thread stack.
+   * @brief   Upper limit of the C runtime default stack.
    */
-  stkalign_t                    *mainthread_end;
-#endif
+  stkline_t                     *cstack_end;
 #if (CH_CFG_NO_IDLE_THREAD == FALSE) || defined(__DOXYGEN__)
   /**
    * @brief   Lower limit of the dedicated idle thread stack.
    */
-  stkalign_t                    *idlethread_base;
+  stkline_t                     *idlestack_base;
   /**
    * @brief   Upper limit of the dedicated idle thread stack.
    */
-  stkalign_t                    *idlethread_end;
+  stkline_t                     *idlestack_end;
 #endif
 } os_instance_config_t;
 
@@ -424,9 +437,15 @@ struct ch_os_instance {
    */
   const os_instance_config_t    *config;
   /**
+   * @brief   Idle thread descriptor.
+   */
+  thread_t                      idlethread;
+#if CH_CFG_NO_IDLE_THREAD == FALSE
+  /**
    * @brief   Main thread descriptor.
    */
   thread_t                      mainthread;
+#endif
   /**
    * @brief   System debug.
    */

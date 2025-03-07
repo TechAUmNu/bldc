@@ -1,7 +1,8 @@
 # Required platform files.
 PLATFORMSRC := $(CHIBIOS)/os/hal/ports/common/ARMCMx/nvic.c \
                $(CHIBIOS)/os/hal/ports/STM32/STM32H7xx/stm32_isr.c \
-               $(CHIBIOS)/os/hal/ports/STM32/STM32H7xx/hal_lld.c
+               $(CHIBIOS)/os/hal/ports/STM32/STM32H7xx/hal_lld.c \
+			   $(CHIBIOS)/os/hal/ports/STM32/STM32H7xx/hal_efl_lld.c
 
 # Required include directories.
 PLATFORMINC := $(CHIBIOS)/os/hal/ports/common/ARMCMx \
@@ -31,7 +32,7 @@ include $(CHIBIOS)/os/hal/ports/STM32/LLD/CRYPv1/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/DACv1/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/DMAv2/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/EXTIv1/driver.mk
-include $(CHIBIOS)/os/hal/ports/STM32/LLD/FDCANv1/driver.mk
+include $(CHIBIOS)/os/hal/ports/STM32/LLD/FDCANv2/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/GPIOv2/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/I2Cv3/driver.mk
 include $(CHIBIOS)/os/hal/ports/STM32/LLD/MACv2/driver.mk

@@ -60,8 +60,8 @@
  * @note    Multiple Event Listeners can specify the same bits to be ORed to
  *          different threads.
  *
- * @param[in] esp       pointer to the  @p event_source_t structure
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] esp       pointer to an @p event_source_t structure
+ * @param[in] elp       pointer to an @p event_listener_t structure
  * @param[in] events    events to be ORed to the thread when
  *                      the event source is broadcasted
  * @param[in] wflags    mask of flags the listening thread is interested in
@@ -93,8 +93,8 @@ void chEvtRegisterMaskWithFlags(event_source_t *esp,
  *          operations in inverse order of the register operations (elements
  *          are found on top of the list).
  *
- * @param[in] esp       pointer to the  @p event_source_t structure
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] esp       pointer to an @p event_source_t structure
+ * @param[in] elp       pointer to an @p event_listener_t structure
  *
  * @api
  */
@@ -185,7 +185,7 @@ eventmask_t chEvtAddEvents(eventmask_t events) {
  *          interrupt handlers always reschedule on exit so an explicit
  *          reschedule must not be performed in ISRs.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
+ * @param[in] esp       pointer to an @p event_source_t structure
  * @param[in] flags     the flags set to be added to the listener flags mask
  *
  * @iclass
@@ -216,7 +216,7 @@ void chEvtBroadcastFlagsI(event_source_t *esp, eventflags_t flags) {
  * @details The flags are returned and the @p event_listener_t flags mask is
  *          cleared.
  *
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] elp       pointer to an @p event_listener_t structure
  * @return              The flags added to the listener by the associated
  *                      event source.
  *
@@ -283,7 +283,7 @@ void chEvtSignalI(thread_t *tp, eventmask_t events) {
  *          event flags specified by the threads themselves in the
  *          @p event_listener_t objects.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
+ * @param[in] esp       pointer to an @p event_source_t structure
  * @param[in] flags     the flags set to be added to the listener flags mask
  *
  * @api
@@ -301,7 +301,7 @@ void chEvtBroadcastFlags(event_source_t *esp, eventflags_t flags) {
  * @details The flags are returned and the @p event_listener_t flags mask is
  *          cleared.
  *
- * @param[in] elp       pointer to the @p event_listener_t structure
+ * @param[in] elp       pointer to an @p event_listener_t structure
  * @return              The flags added to the listener by the associated
  *                      event source.
  *
@@ -357,7 +357,6 @@ void chEvtDispatch(const evhandler_t *handlers, eventmask_t events) {
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The mask of the lowest event id served and cleared.
  * @retval 0            if the operation has timed out.
  *
@@ -402,7 +401,6 @@ eventmask_t chEvtWaitOneTimeout(eventmask_t events, sysinterval_t timeout) {
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The mask of the served and cleared events.
  * @retval 0            if the operation has timed out.
  *
@@ -444,7 +442,6 @@ eventmask_t chEvtWaitAnyTimeout(eventmask_t mask, sysinterval_t timeout) {
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
- *                      .
  * @return              The mask of the served and cleared events.
  * @retval 0            if the operation has timed out.
  *

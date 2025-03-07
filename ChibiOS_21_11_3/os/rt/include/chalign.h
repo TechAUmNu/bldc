@@ -45,20 +45,79 @@
 /* Module data structures and types.                                         */
 /*===========================================================================*/
 
+/**
+ * @brief   Type of a memory area.
+ */
+typedef struct {
+  /**
+   * @brief   Memory area base.
+   * @note    Value -1 is reserved as end-on-array marker.
+   */
+  uint8_t                       *base;
+  /**
+   * @brief   Memory area size.
+   * @note    Value 0 represents the whole address space and is only valid
+   *          when @p base is also zero.
+   */
+  size_t                        size;
+} memory_area_new_t;
+
 /*===========================================================================*/
 /* Module macros.                                                            */
 /*===========================================================================*/
+
+/**
+ * @brief   Data part of a static memory area initializer.
+ * @details This macro should be used when statically initializing a memory area
+ *          that is part of a bigger structure.
+ *
+ * @param[in] name      name of the memory area variable
+ * @param[in] mb        memory area base
+ * @param[in] ms        memory area size
+ */
+#define __MEM_AREA_DATA(name, mb, ms) {                                     \
+  .base         = (void *)(mb),                                             \
+  .size         = (size_t)(ms)                                              \
+}
+
+/**
+ * @brief   Static memory area initializer.
+ *
+ * @param[in] name      the name of the memory area variable
+ * @param[in] mb        memory area base
+ * @param[in] ms        memory area size
+ */
+#define MEM_AREA_DECL(name, mb, ms)                                         \
+  memory_area_new_t name = __MEM_AREA_DATA(name, mb, ms)
 
 /**
  * @name    Memory alignment support macros
  * @{
  */
 /**
+ * @brief   Natural data alignment for the current architecture.
+ * @note    Represents the required alignment for integer and pointer
+ *          data types.
+ */
+#define MEM_NATURAL_ALIGN           PORT_NATURAL_ALIGN
+
+/**
+ * @brief   Port-defined check on function pointers.
+ *
+ * @param[in] p         function pointer to be checked
+ */
+#if defined(PORT_IS_VALID_FUNCTION) || defined(__DOXYGEN__)
+#define MEM_IS_VALID_FUNCTION(p)    PORT_IS_VALID_FUNCTION(p)
+#else
+#define MEM_IS_VALID_FUNCTION(p)    true
+#endif
+
+/**
  * @brief   Alignment mask constant.
  *
  * @param[in] a         alignment, must be a power of two
  */
-#define MEM_ALIGN_MASK(a)       ((size_t)(a) - 1U)
+#define MEM_ALIGN_MASK(a)           ((size_t)(a) - 1U)
 
 /**
  * @brief   Aligns to the previous aligned memory address.
@@ -88,7 +147,7 @@
  * @param[in] p         variable to be aligned
  * @param[in] a         alignment, must be a power of two
  */
-#define MEM_IS_ALIGNED(p, a)    (((size_t)(p) & MEM_ALIGN_MASK(a)) == 0U)
+#define MEM_IS_ALIGNED(p, a)        (((size_t)(p) & MEM_ALIGN_MASK(a)) == 0U)
 
 /**
  * @brief   Returns whatever a constant is a valid alignment.

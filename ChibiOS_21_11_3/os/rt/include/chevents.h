@@ -49,6 +49,9 @@
 /* Module data structures and types.                                         */
 /*===========================================================================*/
 
+/**
+ * @brief   Type of an Event Listener object.
+ */
 typedef struct event_listener event_listener_t;
 
 /**
@@ -69,7 +72,7 @@ struct event_listener {
 };
 
 /**
- * @brief   Event Source structure.
+ * @brief   Type of an Event Source object.
  */
 typedef struct event_source {
   event_listener_t      *next;          /**< @brief First Event Listener
@@ -120,6 +123,8 @@ typedef void (*evhandler_t)(eventid_t id);
 #ifdef __cplusplus
 extern "C" {
 #endif
+  void chEvtObjectInit(event_source_t *esp);
+  void chEvtObjectDispose(event_source_t *esp);
   void chEvtRegisterMaskWithFlagsI(event_source_t *esp,
                                    event_listener_t *elp,
                                    eventmask_t events,
@@ -164,28 +169,14 @@ extern "C" {
 /*===========================================================================*/
 
 /**
- * @brief   Initializes an Event Source.
- * @note    This function can be invoked before the kernel is initialized
- *          because it just prepares a @p event_source_t structure.
- *
- * @param[in] esp       pointer to the @p event_source_t structure
- *
- * @init
- */
-static inline void chEvtObjectInit(event_source_t *esp) {
-
-  esp->next = (event_listener_t *)esp;
-}
-
-/**
  * @brief   Registers an Event Listener on an Event Source.
  * @details Once a thread has registered as listener on an event source it
  *          will be notified of all events broadcasted there.
  * @note    Multiple Event Listeners can specify the same bits to be ORed to
  *          different threads.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
- * @param[out] elp      pointer to the @p event_listener_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
+ * @param[out] elp      pointer to an @p event_listener_t structure
  * @param[in] events    the mask of events to be ORed to the thread when
  *                      the event source is broadcasted
  *
@@ -203,8 +194,8 @@ static inline void chEvtRegisterMask(event_source_t *esp,
  * @note    Multiple Event Listeners can use the same event identifier, the
  *          listener will share the callback function.
  *
- * @param[in] esp       pointer to the  @p event_source_t structure
- * @param[out] elp      pointer to the @p event_listener_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
+ * @param[out] elp      pointer to an @p event_listener_t structure
  * @param[in] event     numeric identifier assigned to the Event Listener.
  *                      The value must range between zero and the size, in bit,
  *                      of the @p eventmask_t type minus one.
@@ -221,7 +212,7 @@ static inline void chEvtRegister(event_source_t *esp,
 /**
  * @brief   Verifies if there is at least one @p event_listener_t registered.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
  * @return              The event source status.
  *
  * @iclass
@@ -235,7 +226,7 @@ static inline bool chEvtIsListeningI(event_source_t *esp) {
  * @brief   Signals all the Event Listeners registered on the specified Event
  *          Source.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
  *
  * @api
  */
@@ -252,7 +243,7 @@ static inline void chEvtBroadcast(event_source_t *esp) {
  *          interrupt handlers always reschedule on exit so an explicit
  *          reschedule must not be performed in ISRs.
  *
- * @param[in] esp       pointer to the @p event_source_t structure
+ * @param[in] esp       pointer to an @p event_source_t object
  *
  * @iclass
  */

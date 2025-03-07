@@ -96,6 +96,7 @@ typedef struct {
 extern "C" {
 #endif
   void chTMObjectInit(time_measurement_t *tmp);
+  void chTMObjectDispose(time_measurement_t *tmp);
   NOINLINE void chTMStartMeasurementX(time_measurement_t *tmp);
   NOINLINE void chTMStopMeasurementX(time_measurement_t *tmp);
   NOINLINE void chTMChainMeasurementToX(time_measurement_t *tmp1,
@@ -112,7 +113,7 @@ extern "C" {
  * @brief   Time measurement initialization.
  * @note    Internal use only.
  *
- * @param[out] tcp      pointer to the @p tm_calibration_t structure
+ * @param[out] tcp      pointer to a @p tm_calibration_t object
  *
  * @notapi
  */
