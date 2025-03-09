@@ -89,22 +89,22 @@ void hw_setup_adc_channel_helper(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t
 	// Sample time
 	if (ADC_Channel > 9)
 	{
-		ADCx->SMPR1 |= (uint32_t)ADC_SampleTime << (3 * (ADC_Channel - 10));
+		ADCx->SMPR2 |= (uint32_t)ADC_SampleTime << (3 * (ADC_Channel - 10));
 	}
 	else /* ADC_Channel include in ADC_Channel_[0..9] */
 	{
-		ADCx->SMPR2 |= (uint32_t)ADC_SampleTime << (3 * ADC_Channel);
+		ADCx->SMPR1 |= (uint32_t)ADC_SampleTime << (3 * ADC_Channel);
 	}
 
 	// Sequence
-	if (Rank < 7)
+	if (Rank < 5)
 	{
-		ADCx->SQR3 |= (uint32_t)ADC_Channel << (5 * (Rank - 1));
+		ADCx->SQR1 |= (uint32_t)ADC_Channel << ((6 * Rank));
 	}
-	// For Rank 7 to 12
+	// For Rank 5 to 9
 	else if (Rank < 13)
 	{
-		ADCx->SQR2 |= (uint32_t)ADC_Channel << (5 * (Rank - 7));
+		ADCx->SQR2 |= (uint32_t)ADC_Channel << (6 * (Rank - 5));
 	}
 }
 

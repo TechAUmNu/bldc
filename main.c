@@ -254,10 +254,10 @@ int main(void) {
 	// to avoid excessive current draw at boot because of
 	// floating pins.
 #ifdef HW_HAS_DRV8313
-	INIT_BR();
+	//INIT_BR();
 #endif
 
-	HW_EARLY_INIT();
+	//HW_EARLY_INIT();
 
 #ifdef BOOT_OK_GPIO
 	palSetPadMode(BOOT_OK_GPIO, BOOT_OK_PIN, PAL_MODE_OUTPUT_PUSHPULL);
@@ -269,9 +269,9 @@ int main(void) {
 	mempools_init();
 	events_init();
 	timer_init(); // Initialize timer here to allow I2C in hw_init
-	hw_init_gpio();
-	LED_RED_OFF();
-	LED_GREEN_OFF();
+	//hw_init_gpio();
+	//LED_RED_OFF();
+	//LED_GREEN_OFF();
 
 	conf_general_init();
 	volatile uint32_t result = flash_helper_verify_flash_memory();
@@ -335,11 +335,11 @@ int main(void) {
 	bm_init();
 #endif
 
-	shutdown_init();
+//	shutdown_init();
 
 	imu_reset_orientation();
 
-	//chThdSleepMilliseconds(500);
+	chThdSleepMilliseconds(500);
 	m_init_done = true;
 
 #ifdef BOOT_OK_GPIO

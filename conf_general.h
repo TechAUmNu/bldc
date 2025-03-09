@@ -141,9 +141,10 @@
 /*
  * MCU
  */
-#define SYSTEM_CORE_CLOCK			168000000
-#define STM32_UUID					((uint32_t*)0x1FFF7A10)
-#define STM32_UUID_8				((uint8_t*)0x1FFF7A10)
+#define SYSTEM_CORE_CLOCK			400000000
+#define STM32_UUID					((uint32_t*)0x1FF1E800)
+#define STM32_UUID_8				((uint8_t*)0x1FF1E800)
+
 
 /*
  *	Run the BLDC speed controller in current mode instead of duty cycle mode. This will

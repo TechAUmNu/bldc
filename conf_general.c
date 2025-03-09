@@ -87,10 +87,9 @@ void conf_general_init(void) {
 		VirtAddVarTab[ind++] = EEPROM_BASE_BACKUP + i;
 	}
 
-	eflStart(&EFLD1, NULL);
-
+	HAL_FLASH_Unlock();
 	EE_Init();
-	eflStop(&EFLD1);
+	HAL_FLASH_Lock();
 
 	// Read backup data
 	bool is_ok = true;
@@ -149,7 +148,7 @@ bool conf_general_store_backup_data(void) {
 	uint8_t *data_addr = (uint8_t*)&g_backup;
 	uint16_t var;
 
-	eflStart(&EFLD1, NULL);
+	HAL_FLASH_Unlock();
 
 
 	for (unsigned int i = 0;i < (sizeof(backup_data) / 2);i++) {
@@ -161,7 +160,7 @@ bool conf_general_store_backup_data(void) {
 			break;
 		}
 	}
-	eflStop(&EFLD1);
+	HAL_FLASH_Lock();
 
 	timeout_configure_IWDT();
 
@@ -268,7 +267,7 @@ static bool store_eeprom_var(eeprom_var *v, int address, uint16_t base) {
 
 	timeout_configure_IWDT_slowest();
 
-	eflStart(&EFLD1, NULL);
+	HAL_FLASH_Unlock();
 
 	if (EE_WriteVariable(base + address * 2, var0) != FLASH_NO_ERROR) {
 		is_ok = false;
@@ -280,7 +279,7 @@ static bool store_eeprom_var(eeprom_var *v, int address, uint16_t base) {
 		}
 	}
 
-	eflStop(&EFLD1);
+	HAL_FLASH_Lock();
 
 	timeout_configure_IWDT();
 
@@ -298,32 +297,32 @@ void conf_general_read_app_configuration(app_configuration *conf) {
 	uint8_t *conf_addr = (uint8_t*)conf;
 	uint16_t var;
 
-	for (unsigned int i = 0;i < (sizeof(app_configuration) / 2);i++) {
-		if (EE_ReadVariable(EEPROM_BASE_APPCONF + i, &var) == 0) {
-			conf_addr[2 * i] = (var >> 8) & 0xFF;
-			conf_addr[2 * i + 1] = var & 0xFF;
-		} else {
-			is_ok = false;
-			break;
-		}
-	}
+//	for (unsigned int i = 0;i < (sizeof(app_configuration) / 2);i++) {
+//		if (EE_ReadVariable(EEPROM_BASE_APPCONF + i, &var) == 0) {
+//			conf_addr[2 * i] = (var >> 8) & 0xFF;
+//			conf_addr[2 * i + 1] = var & 0xFF;
+//		} else {
+//			is_ok = false;
+//			break;
+//		}
+//	}
 
-	// check CRC
-#ifdef TEST_BAD_APP_CRC
-	conf->crc++;
-#endif
-	if(conf->crc != app_calc_crc(conf)) {
-		is_ok = false;
-//		mc_interface_fault_stop(FAULT_CODE_FLASH_CORRUPTION_APP_CFG, false, false);
-		fault_data f;
-		f.fault = FAULT_CODE_FLASH_CORRUPTION_APP_CFG;
-		terminal_add_fault_data(&f);
-	}
+//	// check CRC
+//#ifdef TEST_BAD_APP_CRC
+//	conf->crc++;
+//#endif
+//	if(conf->crc != app_calc_crc(conf)) {
+//		is_ok = false;
+////		mc_interface_fault_stop(FAULT_CODE_FLASH_CORRUPTION_APP_CFG, false, false);
+//		fault_data f;
+//		f.fault = FAULT_CODE_FLASH_CORRUPTION_APP_CFG;
+//		terminal_add_fault_data(&f);
+//	}
 
 	// Set the default configuration
-	if (!is_ok) {
+//	if (!is_ok) {
 		confgenerator_set_defaults_appconf(conf);
-	}
+//	}
 }
 
 /**
@@ -367,7 +366,7 @@ bool conf_general_store_app_configuration(app_configuration *conf) {
 
 	conf->crc = app_calc_crc(conf);
 
-	eflStart(&EFLD1, NULL);
+	HAL_FLASH_Unlock();
 
 
 	for (unsigned int i = 0;i < (sizeof(app_configuration) / 2);i++) {
@@ -379,7 +378,7 @@ bool conf_general_store_app_configuration(app_configuration *conf) {
 			break;
 		}
 	}
-	eflStop(&EFLD1);
+	HAL_FLASH_Lock();
 
 	timeout_configure_IWDT();
 
@@ -477,7 +476,7 @@ bool conf_general_store_mc_configuration(mc_configuration *conf, bool is_motor_2
 
 	conf->crc = mc_interface_calc_crc(conf, is_motor_2);
 
-	eflStart(&EFLD1, NULL);
+	HAL_FLASH_Unlock();
 
 
 	for (unsigned int i = 0;i < (sizeof(mc_configuration) / 2);i++) {
@@ -489,7 +488,7 @@ bool conf_general_store_mc_configuration(mc_configuration *conf, bool is_motor_2
 			break;
 		}
 	}
-	eflStop(&EFLD1);
+	HAL_FLASH_Lock();
 
 	timeout_configure_IWDT();
 

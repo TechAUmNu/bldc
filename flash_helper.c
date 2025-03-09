@@ -62,18 +62,22 @@ static int code_sectors[3] = {QMLUI_BASE, LISP_BASE, LISP_CONST_BASE};
 
 // Private constants
 static const uint32_t flash_addr[FLASH_SECTORS] = {
-		ADDR_FLASH_SECTOR_0,
-		ADDR_FLASH_SECTOR_1,
-		ADDR_FLASH_SECTOR_2,
-		ADDR_FLASH_SECTOR_3,
-		ADDR_FLASH_SECTOR_4,
-		ADDR_FLASH_SECTOR_5,
-		ADDR_FLASH_SECTOR_6,
-		ADDR_FLASH_SECTOR_7,
-		ADDR_FLASH_SECTOR_8,
-		ADDR_FLASH_SECTOR_9,
-		ADDR_FLASH_SECTOR_10,
-		ADDR_FLASH_SECTOR_11
+		ADDR_FLASH_SECTOR_0_BANK1,
+		ADDR_FLASH_SECTOR_1_BANK1,
+		ADDR_FLASH_SECTOR_2_BANK1,
+		ADDR_FLASH_SECTOR_3_BANK1,
+		ADDR_FLASH_SECTOR_4_BANK1,
+		ADDR_FLASH_SECTOR_5_BANK1,
+		ADDR_FLASH_SECTOR_6_BANK1,
+		ADDR_FLASH_SECTOR_7_BANK1,
+		ADDR_FLASH_SECTOR_0_BANK2,
+		ADDR_FLASH_SECTOR_1_BANK2,
+		ADDR_FLASH_SECTOR_2_BANK2,
+		ADDR_FLASH_SECTOR_3_BANK2,
+		ADDR_FLASH_SECTOR_4_BANK2,
+		ADDR_FLASH_SECTOR_5_BANK2,
+		ADDR_FLASH_SECTOR_6_BANK2,
+		ADDR_FLASH_SECTOR_7_BANK2,
 };
 
 uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
@@ -81,7 +85,6 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 	lispif_restart(false, false, false);
 #endif
 
-	eflStart(&EFLD1, NULL);
 
 
 	new_app_size += flash_addr[NEW_APP_BASE];
@@ -95,23 +98,27 @@ uint16_t flash_helper_erase_new_app(uint32_t new_app_size) {
 
 	utils_sys_lock_cnt();
 	timeout_configure_IWDT_slowest();
-// TODO EM: FIX THIS
-//	for (int i = 0;i < NEW_APP_SECTORS;i++) {
-//		if (new_app_size > flash_addr[NEW_APP_BASE + i]) {
-//			uint16_t res = efl_lld_start_erase_sector(&EFLD1, NEW_APP_BASE + i);
-//			if (res != FLASH_NO_ERROR) {
-//				efl_lld_stop(&EFLD1);
-//				timeout_configure_IWDT();
-//				mc_interface_ignore_input_both(5000);
-//				utils_sys_unlock_cnt();
-//				return res;
-//			}
-//		} else {
-//			break;
-//		}
-//	}
 
-	eflStop(&EFLD1);
+	HAL_FLASH_Unlock();
+
+
+	for (int i = 0;i < NEW_APP_SECTORS;i++) {
+		if (new_app_size > flash_addr[NEW_APP_BASE + i]) {
+
+			uint16_t res = erase_sector(NEW_APP_BASE + i);
+			if (res != FLASH_NO_ERROR) {
+				HAL_FLASH_Lock();
+				timeout_configure_IWDT();
+				mc_interface_ignore_input_both(5000);
+				utils_sys_unlock_cnt();
+				return res;
+			}
+		} else {
+			break;
+		}
+	}
+
+	HAL_FLASH_Lock();
 
 	timeout_configure_IWDT();
 	mc_interface_ignore_input_both(100);
@@ -253,15 +260,16 @@ uint8_t* flash_helper_get_sector_address(uint32_t fsector) {
   * @retval FAULT_CODE_NONE or FAULT_CODE_FLASH_CORRUPTION
   */
 uint32_t flash_helper_verify_flash_memory(void) {
-	uint32_t crc;
+	volatile uint32_t crc, crc2, crc3;
 	// Look for a flag indicating that the CRC was previously computed.
 	// If it is blank (0xFFFFFFFF), calculate and store the CRC.
-	if(APP_CRC_WAS_CALCULATED_FLAG_ADDRESS[0] == APP_CRC_WAS_CALCULATED_FLAG) {
+	volatile uint32_t flag = APP_CRC_WAS_CALCULATED_FLAG_ADDRESS[0];
+	if(flag == APP_CRC_WAS_CALCULATED_FLAG) {
 		rccEnableCRC(TRUE);
 		crc32_reset();
 
 		// compute vector table (sector 0)
-		crc32(VECTOR_TABLE_ADDRESS, (VECTOR_TABLE_SIZE) / 4);
+		//crc32(VECTOR_TABLE_ADDRESS, (VECTOR_TABLE_SIZE) / 4);
 
 		// skip emulated EEPROM (sector 1 and 2)
 
@@ -274,14 +282,17 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		return (crc == 0) ? FAULT_CODE_NONE : FAULT_CODE_FLASH_CORRUPTION;
 	} else {
 
-		eflStart(&EFLD1, NULL);
-
+		HAL_FLASH_Unlock();
 
 		// Write the flag to indicate CRC has been computed.
 		uint32_t buffer = APP_CRC_WAS_CALCULATED_FLAG;
-		uint16_t res = efl_lld_program(&EFLD1, (uint32_t)APP_CRC_WAS_CALCULATED_FLAG_ADDRESS - ADDR_FLASH_SECTOR_0, 4, (uint8_t *)&buffer);
+		volatile uint32_t address =  (uint32_t)APP_CRC_WAS_CALCULATED_FLAG_ADDRESS;
+		SCB_DisableICache();
+		uint16_t res = HAL_FLASH_Program(address,(uint8_t *)&buffer, 4);
+		SCB_EnableICache();
+				//efl_lld_program(&EFLD1, address, 4, (uint8_t *)&buffer);
 		if (res != FLASH_NO_ERROR) {
-			efl_lld_stop(&EFLD1);
+			HAL_FLASH_Lock();
 
 			return FAULT_CODE_FLASH_CORRUPTION;
 		}
@@ -291,22 +302,53 @@ uint32_t flash_helper_verify_flash_memory(void) {
 		crc32_reset();
 
 		// compute vector table (sector 0)
-		crc32(VECTOR_TABLE_ADDRESS, (VECTOR_TABLE_SIZE) / 4);
+		//crc32(VECTOR_TABLE_ADDRESS, (VECTOR_TABLE_SIZE) / 4); // divide by 4 as the CRC takes 32bit words
 
 		// skip emulated EEPROM (sector 1 and 2)
 
 		// compute application code
-		crc = crc32(APP_START_ADDRESS, (APP_SIZE - 4) / 4);
+		crc = crc32(APP_START_ADDRESS, (APP_SIZE - 4) / 4); // divide by 4 as the CRC takes 32bit words
+
+		rccDisableCRC();
+		rccEnableCRC(TRUE);
+		crc32_reset();
+
+		// compute vector table (sector 0)
+		//crc32(VECTOR_TABLE_ADDRESS, (VECTOR_TABLE_SIZE) / 4); // divide by 4 as the CRC takes 32bit words
+
+		// skip emulated EEPROM (sector 1 and 2)
+
+		// compute application code
+		crc2 = crc32(APP_START_ADDRESS, (APP_SIZE - 4) / 4); // divide by 4 as the CRC takes 32bit words
 
 		rccDisableCRC();
 
+
 		//Store CRC
-		res = efl_lld_program(&EFLD1, (uint32_t)APP_CRC_ADDRESS - ADDR_FLASH_SECTOR_0, 4, (uint8_t *)&crc);
+		address = (uint32_t)APP_CRC_ADDRESS;
+		SCB_DisableICache();
+		res = HAL_FLASH_Program(address,(uint8_t *)&crc, 4);
+		SCB_EnableICache();
+				//efl_lld_program(&EFLD1, address, 4, (uint8_t *)&crc);
 		if (res != FLASH_NO_ERROR) {
-			efl_lld_stop(&EFLD1);
+			HAL_FLASH_Lock();
 			return FAULT_CODE_FLASH_CORRUPTION;
 		}
-		eflStop(&EFLD1);
+		HAL_FLASH_Lock();
+
+
+		rccEnableCRC(TRUE);
+		crc32_reset();
+
+		// compute vector table (sector 0)
+		//crc32(VECTOR_TABLE_ADDRESS, (VECTOR_TABLE_SIZE) / 4);
+
+		// skip emulated EEPROM (sector 1 and 2)
+
+		// compute application code
+		crc3 = crc32(APP_START_ADDRESS, (APP_SIZE) / 4);
+
+		rccDisableCRC();
 
 
 		// reboot
@@ -320,7 +362,7 @@ uint32_t flash_helper_verify_flash_memory_chunk(void) {
 	uint32_t chunk_size = 1024;
 	uint32_t res = FAULT_CODE_NONE;
 	uint32_t crc = 0;
-	uint32_t tot_bytes = VECTOR_TABLE_SIZE + APP_SIZE;
+	uint32_t tot_bytes = APP_SIZE;
 
 	// Make sure RCC_AHB1Periph_CRC is enabled
 	if (index == 0) {
@@ -331,11 +373,8 @@ uint32_t flash_helper_verify_flash_memory_chunk(void) {
 		chunk_size = tot_bytes - index;
 	}
 
-	if (index < VECTOR_TABLE_SIZE) {
-		crc32(VECTOR_TABLE_ADDRESS + index / 4, chunk_size / 4);
-	} else {
-		crc = crc32(APP_START_ADDRESS + (index - VECTOR_TABLE_SIZE) / 4, chunk_size / 4);
-	}
+	crc = crc32(APP_START_ADDRESS + (index) / 4, chunk_size / 4);
+
 
 	index += chunk_size;
 	if (index >= tot_bytes) {
@@ -349,7 +388,8 @@ uint32_t flash_helper_verify_flash_memory_chunk(void) {
 }
 
 static uint16_t erase_sector(uint32_t sector) {
-	eflStart(&EFLD1, NULL);
+	uint16_t res = FLASH_NO_ERROR;
+
 	mc_interface_ignore_input_both(5000);
 	mc_interface_release_motor_override_both();
 
@@ -360,9 +400,16 @@ static uint16_t erase_sector(uint32_t sector) {
 	utils_sys_lock_cnt();
 	timeout_configure_IWDT_slowest();
 
-	uint16_t res = efl_lld_start_erase_sector(&EFLD1, sector);
+	HAL_FLASH_Unlock();
 
-	eflStop(&EFLD1);
+	if(sector > 7){
+		res = HAL_FLASH_Erase(2, sector-8, 1);
+	} else {
+		res = HAL_FLASH_Erase(1, sector, 1);
+	}
+
+
+	HAL_FLASH_Lock();
 
 	timeout_configure_IWDT();
 	mc_interface_ignore_input_both(100);
@@ -371,7 +418,13 @@ static uint16_t erase_sector(uint32_t sector) {
 }
 
 static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
-	eflStart(&EFLD1, NULL);
+
+	// Len must be multiple of 4 bytes for now
+	if(len % 4 != 0)
+	{
+		return FLASH_ERROR_UNIMPLEMENTED;
+	}
+
 
 	mc_interface_ignore_input_both(5000);
 	mc_interface_release_motor_override_both();
@@ -383,12 +436,12 @@ static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
 	utils_sys_lock_cnt();
 	timeout_configure_IWDT_slowest();
 
-	base = base - ADDR_FLASH_SECTOR_0; // TODO fix addresses so they are offsets from the start of flash
+	HAL_FLASH_Unlock();
 
 	for (uint32_t i = 0;i < len;i++) {
-		uint16_t res = efl_lld_program(&EFLD1, (uint32_t)base + i, 1, (uint8_t *)&data[i]);
+		uint16_t res = HAL_FLASH_Program((uint32_t)base + i,((uint8_t)&data[i]), 1);
 		if (res != FLASH_NO_ERROR) {
-			efl_lld_stop(&EFLD1);
+			HAL_FLASH_Lock();
 			timeout_configure_IWDT();
 			mc_interface_ignore_input_both(5000);
 			utils_sys_unlock_cnt();
@@ -396,7 +449,7 @@ static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
 		}
 	}
 
-	eflStop(&EFLD1);
+	HAL_FLASH_Lock();
 	timeout_configure_IWDT();
 	mc_interface_ignore_input_both(100);
 	utils_sys_unlock_cnt();
@@ -424,7 +477,7 @@ static void qmlui_check(int ind) {
 	code_checks[ind].check_done = true;
 }
 
-#define VESC_IF_NVM_REGION_SIZE	(ADDR_FLASH_SECTOR_9 - ADDR_FLASH_SECTOR_8)
+#define VESC_IF_NVM_REGION_SIZE	(ADDR_FLASH_SECTOR_7_BANK1 - ADDR_FLASH_SECTOR_6_BANK1)
 
 /**
   * @brief  Reads len bytes to v from nvm at address
@@ -438,7 +491,7 @@ bool flash_helper_read_nvm(uint8_t *v, unsigned int len, unsigned int address) {
 		return false;
 	}
 
-	memcpy(v, (uint8_t*)(ADDR_FLASH_SECTOR_8 + address), len);
+	memcpy(v, (uint8_t*)(ADDR_FLASH_SECTOR_6_BANK1 + address), len);
 
 	return true;
 }
@@ -455,7 +508,7 @@ bool flash_helper_write_nvm(uint8_t *v, unsigned int len, unsigned int address) 
 		return false;
 	}
 
-	uint16_t res = write_data(ADDR_FLASH_SECTOR_8 + address, v, len);
+	uint16_t res = write_data(ADDR_FLASH_SECTOR_6_BANK1 + address, v, len);
 
 	return (res == FLASH_NO_ERROR);
 }

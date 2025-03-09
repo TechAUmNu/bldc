@@ -32,7 +32,7 @@
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
-#define STM32_FLASH_LINE_SIZE               2U
+#define STM32_FLASH_LINE_SIZE               (32) // bytes
 #define STM32_FLASH_LINE_MASK               (STM32_FLASH_LINE_SIZE - 1U)
 
 #define FLASH_PDKEY1                        0x04152637U
@@ -75,25 +75,38 @@ static const flash_descriptor_t efl_lld_desc = {
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
-static inline void stm32_flash_lock(EFlashDriver *eflp) {
-
+static inline void stm32_flash_lock_bank1(EFlashDriver *eflp) {
   eflp->flash->CR1 |= FLASH_CR_LOCK;
 }
 
-static inline void stm32_flash_unlock(EFlashDriver *eflp) {
+static inline void stm32_flash_lock_bank2(EFlashDriver *eflp) {
+  eflp->flash->CR2 |= FLASH_CR_LOCK;
+}
 
+static inline void stm32_flash_unlock_bank1(EFlashDriver *eflp) {
   eflp->flash->KEYR1 |= FLASH_KEY1;
   eflp->flash->KEYR1 |= FLASH_KEY2;
 }
 
-static inline void stm32_flash_enable_pgm(EFlashDriver *eflp) {
+static inline void stm32_flash_unlock_bank2(EFlashDriver *eflp) {
+  eflp->flash->KEYR2 |= FLASH_KEY1;
+  eflp->flash->KEYR2 |= FLASH_KEY2;
+}
 
+static inline void stm32_flash_enable_pgm_bank1(EFlashDriver *eflp) {
   eflp->flash->CR1 |= FLASH_CR_PG;
 }
 
-static inline void stm32_flash_disable_pgm(EFlashDriver *eflp) {
+static inline void stm32_flash_enable_pgm_bank2(EFlashDriver *eflp) {
+  eflp->flash->CR2 |= FLASH_CR_PG;
+}
 
+static inline void stm32_flash_disable_pgm_bank1(EFlashDriver *eflp) {
   eflp->flash->CR1 &= ~FLASH_CR_PG;
+}
+
+static inline void stm32_flash_disable_pgm_bank2(EFlashDriver *eflp) {
+  eflp->flash->CR2 &= ~FLASH_CR_PG;
 }
 
 static inline void stm32_flash_clear_status(EFlashDriver *eflp) {
@@ -110,14 +123,6 @@ static inline void stm32_flash_wait_busy(EFlashDriver *eflp) {
 
 static inline size_t stm32_flash_get_size(void) {
   return *(uint16_t*)((uint32_t) STM32_FLASH_SIZE_REGISTER) * STM32_FLASH_SIZE_SCALE;
-}
-
-static inline bool stm32_flash_dual_bank(void) {
-
-#if STM32_FLASH_NUMBER_OF_BANKS > 1
-  return true; // TODO EM: Hack
-#endif
-  return false;
 }
 
 static inline flash_error_t stm32_flash_check_errors(EFlashDriver *eflp) {
@@ -144,6 +149,7 @@ static inline flash_error_t stm32_flash_check_errors(EFlashDriver *eflp) {
   return FLASH_NO_ERROR;
 }
 
+
 /*===========================================================================*/
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
@@ -151,6 +157,283 @@ static inline flash_error_t stm32_flash_check_errors(EFlashDriver *eflp) {
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
+
+// Converted ST Code
+flash_error_t HAL_FLASH_Unlock(void)
+{
+  if(READ_BIT(FLASH->CR1, FLASH_CR_LOCK) != 0U)
+  {
+    /* Authorize the FLASH Bank1 Registers access */
+    WRITE_REG(FLASH->KEYR1, FLASH_KEY1);
+    WRITE_REG(FLASH->KEYR1, FLASH_KEY2);
+
+    /* Verify Flash Bank1 is unlocked */
+    if (READ_BIT(FLASH->CR1, FLASH_CR_LOCK) != 0U)
+    {
+      return FLASH_ERROR_HW_FAILURE;
+    }
+  }
+  if(READ_BIT(FLASH->CR2, FLASH_CR_LOCK) != 0U)
+  {
+    /* Authorize the FLASH Bank2 Registers access */
+    WRITE_REG(FLASH->KEYR2, FLASH_KEY1);
+    WRITE_REG(FLASH->KEYR2, FLASH_KEY2);
+
+    /* Verify Flash Bank2 is unlocked */
+    if (READ_BIT(FLASH->CR2, FLASH_CR_LOCK) != 0U)
+    {
+      return FLASH_ERROR_HW_FAILURE;
+    }
+  }
+  return FLASH_NO_ERROR;
+}
+
+/**
+  * @brief  Locks the FLASH control registers access
+  * @retval HAL Status
+  */
+flash_error_t HAL_FLASH_Lock(void)
+{
+  /* Set the LOCK Bit to lock the FLASH Bank1 Control Register access */
+  SET_BIT(FLASH->CR1, FLASH_CR_LOCK);
+  /* Verify Flash Bank1 is locked */
+  if (READ_BIT(FLASH->CR1, FLASH_CR_LOCK) == 0U)
+  {
+    return FLASH_ERROR_HW_FAILURE;
+  }
+  /* Set the LOCK Bit to lock the FLASH Bank2 Control Register access */
+  SET_BIT(FLASH->CR2, FLASH_CR_LOCK);
+
+  /* Verify Flash Bank2 is locked */
+  if (READ_BIT(FLASH->CR2, FLASH_CR_LOCK) == 0U)
+  {
+    return FLASH_ERROR_HW_FAILURE;
+  }
+  return FLASH_NO_ERROR;
+}
+
+
+flash_error_t FLASH_WaitForLastOperation(uint8_t Bank) {
+	/* Wait for the FLASH operation to complete by polling on QW flag to be reset.
+	 Even if the FLASH operation fails, the QW flag will be reset and an error
+	 flag will be set */
+
+	uint32_t bsyflag = FLASH_FLAG_QW_BANK1;
+	uint32_t errorflag = 0;
+	systime_t tickstart = chVTGetSystemTimeX();
+
+	if (Bank == FLASH_BANK_2) {
+		/* Select bsyflag depending on Bank */
+		bsyflag = FLASH_FLAG_QW_BANK2;
+	}
+	while (__HAL_FLASH_GET_FLAG(bsyflag)) {
+		if (chVTTimeElapsedSinceX(tickstart) > STM32_FLASH_WAIT_TIME_MS * 10) {
+			return FLASH_ERROR_TIMEOUT;
+		}
+	}
+
+	/* Get Error Flags */
+	if (Bank == FLASH_BANK_1) {
+		errorflag = FLASH->SR1 & FLASH_FLAG_ALL_ERRORS_BANK1;
+	} else {
+		errorflag = (FLASH->SR2 & FLASH_FLAG_ALL_ERRORS_BANK2) | 0x80000000U;
+	}
+
+	/* In case of error reported in Flash SR1 or SR2 register */
+	if ((errorflag & 0x7FFFFFFFU) != 0U) {
+		//pFlash.ErrorCode |= errorflag;  /*Save the error code*/
+		__HAL_FLASH_CLEAR_FLAG(errorflag); /* Clear error programming flags */
+		return FLASH_ERROR_HW_FAILURE;
+	}
+
+	/* Check FLASH End of Operation flag  */
+	if (Bank == FLASH_BANK_1) {
+		if (__HAL_FLASH_GET_FLAG_BANK1(FLASH_FLAG_EOP_BANK1)) {
+			__HAL_FLASH_CLEAR_FLAG_BANK1(FLASH_FLAG_EOP_BANK1); /* Clear FLASH End of Operation pending bit */
+		}
+	} else {
+		if (__HAL_FLASH_GET_FLAG_BANK2(FLASH_FLAG_EOP_BANK2)) {
+			__HAL_FLASH_CLEAR_FLAG_BANK2(FLASH_FLAG_EOP_BANK2); /* Clear FLASH End of Operation pending bit */
+		}
+	}
+
+	return FLASH_NO_ERROR;
+}
+
+
+
+void FLASH_Erase_Sector(uint32_t Sector, uint32_t Bank) {
+	if (Bank == FLASH_BANK_1) {
+		/* Reset Program/erase VoltageRange and Sector Number for Bank1 */
+		FLASH->CR1 &= ~(FLASH_CR_PSIZE | FLASH_CR_SNB);
+
+		FLASH->CR1 |= (FLASH_CR_SER | FLASH_VOLTAGE_RANGE_3
+				| (Sector << FLASH_CR_SNB_Pos) | FLASH_CR_START);
+	} else {
+		/* Reset Program/erase VoltageRange and Sector Number for Bank2 */
+		FLASH->CR2 &= ~(FLASH_CR_PSIZE | FLASH_CR_SNB);
+
+		FLASH->CR2 |= (FLASH_CR_SER | FLASH_VOLTAGE_RANGE_3
+				| (Sector << FLASH_CR_SNB_Pos) | FLASH_CR_START);
+	}
+}
+
+
+
+flash_error_t HAL_FLASH_Erase(uint8_t bank, uint8_t start_sector,
+		uint8_t num_sectors) {
+	flash_error_t status = FLASH_NO_ERROR;
+
+	if (bank == FLASH_BANK_1) {
+		if (FLASH_WaitForLastOperation(FLASH_BANK_1) != FLASH_NO_ERROR) {
+			return FLASH_ERROR_ERASE;
+		}
+	} else {
+		if (FLASH_WaitForLastOperation(FLASH_BANK_2) != FLASH_NO_ERROR) {
+			return FLASH_ERROR_ERASE;
+		}
+	}
+	for (uint8_t i = start_sector; i < (num_sectors + start_sector); i++) {
+		FLASH_Erase_Sector(i, bank);
+
+		if (bank == FLASH_BANK_1) {
+			/* Wait for last operation to be completed */
+			status = FLASH_WaitForLastOperation(FLASH_BANK_1);
+
+			/* If the erase operation is completed, disable the SER Bit */
+			FLASH->CR1 &= (~(FLASH_CR_SER | FLASH_CR_SNB));
+		} else {
+			/* Wait for last operation to be completed */
+			status = FLASH_WaitForLastOperation(FLASH_BANK_2);
+
+			/* If the erase operation is completed, disable the SER Bit */
+			FLASH->CR2 &= (~(FLASH_CR_SER | FLASH_CR_SNB));
+		}
+		if (status != FLASH_NO_ERROR) {
+			break;
+		}
+	}
+	return status;
+}
+
+// Programs 8 bit
+flash_error_t HAL_FLASH_Program(uint32_t FlashAddress,
+		const uint8_t *DataPointer, uint32_t bytes) {
+	flash_error_t status;
+	uint32_t bank;
+
+	if (IS_FLASH_PROGRAM_ADDRESS_BANK1(FlashAddress)) {
+		bank = FLASH_BANK_1;
+	} else if (IS_FLASH_PROGRAM_ADDRESS_BANK2(FlashAddress)) {
+		bank = FLASH_BANK_2;
+	}
+
+	/* Wait for last operation to be completed */
+	status = FLASH_WaitForLastOperation(bank);
+
+	if (status == FLASH_NO_ERROR) {
+		if (bank == FLASH_BANK_1) {
+			SET_BIT(FLASH->CR1, FLASH_CR_PG);
+		} else {
+			SET_BIT(FLASH->CR2, FLASH_CR_PG);
+		}
+		__ISB();
+		__DSB();
+
+		/* Actual program implementation.*/
+		volatile uint32_t offset = FlashAddress-FLASH_BASE;
+		while (bytes > 0U) {
+			volatile uint32_t *address;
+
+			union {
+				uint32_t w[STM32_FLASH_LINE_SIZE / sizeof(uint32_t)];
+				uint8_t b[STM32_FLASH_LINE_SIZE / sizeof(uint8_t)];
+			} line;
+
+			/* Unwritten bytes are initialized to all ones.*/
+			line.w[0] = 0xFFFFFFFFU;
+			line.w[1] = 0xFFFFFFFFU;
+			line.w[2] = 0xFFFFFFFFU;
+			line.w[3] = 0xFFFFFFFFU;
+			line.w[4] = 0xFFFFFFFFU;
+			line.w[5] = 0xFFFFFFFFU;
+			line.w[6] = 0xFFFFFFFFU;
+			line.w[7] = 0xFFFFFFFFU;
+
+			/* Programming address aligned to flash lines.*/
+			address = (volatile uint32_t*) (FLASH_BASE
+					+ (offset & ~STM32_FLASH_LINE_MASK));
+
+			/* Copying data inside the prepared line.*/
+			do {
+				line.b[offset & STM32_FLASH_LINE_MASK] = *DataPointer;
+				offset++;
+				bytes--;
+				DataPointer++;
+			} while ((bytes > 0U) & ((offset & STM32_FLASH_LINE_MASK) != 0U));
+
+			/* Programming line.*/
+			address[0] = line.w[0];
+			address[1] = line.w[1];
+			address[2] = line.w[2];
+			address[3] = line.w[3];
+			address[4] = line.w[4];
+			address[5] = line.w[5];
+			address[6] = line.w[6];
+			address[7] = line.w[7];
+			status = FLASH_WaitForLastOperation(bank);
+			if (status != FLASH_NO_ERROR) {
+				break;
+			}
+		}
+
+		__ISB();
+		__DSB();
+
+		/* Wait for last operation to be completed */
+		status = FLASH_WaitForLastOperation(bank);
+		{
+			if (bank == FLASH_BANK_1) {
+				/* If the program operation is completed, disable the PG */
+				CLEAR_BIT(FLASH->CR1, FLASH_CR_PG);
+			} else {
+				/* If the program operation is completed, disable the PG */
+				CLEAR_BIT(FLASH->CR2, FLASH_CR_PG);
+			}
+		}
+	}
+	return status;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * @brief   Low level Embedded Flash driver initialization.
@@ -173,7 +456,7 @@ void efl_lld_init(void) {
  * @notapi
  */
 void efl_lld_start(EFlashDriver *eflp) {
-  stm32_flash_unlock(eflp);
+  //stm32_flash_unlock(eflp);
   FLASH->CR1 = 0x00000000U;
 }
 
@@ -186,7 +469,7 @@ void efl_lld_start(EFlashDriver *eflp) {
  */
 void efl_lld_stop(EFlashDriver *eflp) {
 
-  stm32_flash_lock(eflp);
+  //stm32_flash_lock(eflp);
 }
 
 /**
@@ -299,7 +582,7 @@ flash_error_t efl_lld_program(void *instance, flash_offset_t offset,
   stm32_flash_clear_status(devp);
 
   /* Enabling PGM mode in the controller.*/
-  stm32_flash_enable_pgm(devp);
+  //stm32_flash_enable_pgm(devp);
 
   /* Actual program implementation.*/
   while (n > 0U) {
@@ -313,6 +596,12 @@ flash_error_t efl_lld_program(void *instance, flash_offset_t offset,
     /* Unwritten bytes are initialized to all ones.*/
     line.w[0] = 0xFFFFFFFFU;
     line.w[1] = 0xFFFFFFFFU;
+    line.w[2] = 0xFFFFFFFFU;
+	line.w[3] = 0xFFFFFFFFU;
+	line.w[4] = 0xFFFFFFFFU;
+	line.w[5] = 0xFFFFFFFFU;
+	line.w[6] = 0xFFFFFFFFU;
+	line.w[7] = 0xFFFFFFFFU;
 
     /* Programming address aligned to flash lines.*/
     address = (volatile uint32_t *)(bank->address +
@@ -330,6 +619,13 @@ flash_error_t efl_lld_program(void *instance, flash_offset_t offset,
     /* Programming line.*/
     address[0] = line.w[0];
     address[1] = line.w[1];
+    address[2] = line.w[2];
+	address[3] = line.w[3];
+	address[4] = line.w[4];
+	address[5] = line.w[5];
+	address[6] = line.w[6];
+	address[7] = line.w[7];
+
     stm32_flash_wait_busy(devp);
     err = stm32_flash_check_errors(devp);
     if (err != FLASH_NO_ERROR) {
@@ -338,7 +634,7 @@ flash_error_t efl_lld_program(void *instance, flash_offset_t offset,
   }
 
   /* Disabling PGM mode in the controller.*/
-  stm32_flash_disable_pgm(devp);
+  //stm32_flash_disable_pgm(devp);
 
   /* Ready state again.*/
   devp->state = FLASH_READY;
@@ -361,33 +657,6 @@ flash_error_t efl_lld_program(void *instance, flash_offset_t offset,
  * @notapi
  */
 flash_error_t efl_lld_start_erase_all(void *instance) {
-  EFlashDriver *devp = (EFlashDriver *)instance;
-
-  osalDbgCheck(instance != NULL);
-  osalDbgAssert((devp->state == FLASH_READY) || (devp->state == FLASH_ERASE),
-                "invalid state");
-
-  /* No erasing while erasing.*/
-  if (devp->state == FLASH_ERASE) {
-    return FLASH_BUSY_ERASING;
-  }
-
-#if defined(FLASH_CR_MER2)
-  /* If dual bank is active then mass erase bank2. */
-  if (stm32_flash_dual_bank(devp)) {
-
-    /* FLASH_ERASE state while the operation is performed.*/
-    devp->state = FLASH_ERASE;
-
-    /* Clearing error status bits.*/
-    stm32_flash_clear_status(devp);
-
-    devp->flash->CR |= FLASH_CR_MER2;
-    devp->flash->CR |= FLASH_CR_STRT;
-    return FLASH_NO_ERROR;
-  }
-#endif
-
   /* Mass erase not allowed. */
   return FLASH_ERROR_UNIMPLEMENTED;
 }

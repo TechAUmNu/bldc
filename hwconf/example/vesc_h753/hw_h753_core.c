@@ -1,14 +1,12 @@
 /*
-	Copyright 2023 Benjamin Vedder	benjamin@vedder.se
+	Copyright 2022 Benjamin Vedder	benjamin@vedder.se
 
-	This file is part of the VESC firmware.
-
-	The VESC firmware is free software: you can redistribute it and/or modify
+	This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    The VESC firmware is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
@@ -22,28 +20,42 @@
 #include "ch.h"
 #include "hal.h"
 #include "utils_math.h"
-#include "drv8301.h"
+#include "mc_interface.h"
 #include "terminal.h"
 #include "commands.h"
-#include "mc_interface.h"
+
+#include <math.h>
 
 // Variables
 static volatile bool i2c_running = false;
+static mutex_t shutdown_mutex;
+static float bt_diff = 0.0;
 
 // I2C configuration
+//static const I2CConfig i2cfg = {
+//		OPMODE_I2C,
+//		100000,
+//		STD_DUTY_CYCLE
+//};
+
 static const I2CConfig i2cfg = {
-		OPMODE_I2C,
-		100000,
-		STD_DUTY_CYCLE
+  .timingr          = STM32_TIMINGR_PRESC(15U) | STM32_TIMINGR_SCLDEL(4U) |
+                      STM32_TIMINGR_SDADEL(2U) | STM32_TIMINGR_SCLH(15U) |
+                      STM32_TIMINGR_SCLL(21U),
+  .cr1              = 0,
+  .cr2              = 0
 };
 
+// Private functions
+static void terminal_shutdown_now(int argc, const char **argv);
+static void terminal_button_test(int argc, const char **argv);
 
 void hw_init_gpio(void) {
+	chMtxObjectInit(&shutdown_mutex);
+
 	// GPIO clock enable
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	rccResetAHB1(STM32_GPIO_EN_MASK);
+	rccEnableAHB1(STM32_GPIO_EN_MASK, TRUE);
 
 	// LEDs
 	palSetPadMode(LED_GREEN_GPIO, LED_GREEN_PIN,
@@ -52,25 +64,6 @@ void hw_init_gpio(void) {
 	palSetPadMode(LED_RED_GPIO, LED_RED_PIN,
 			PAL_MODE_OUTPUT_PUSHPULL |
 			PAL_STM32_OSPEED_HIGHEST);
-
-	// ENABLE_GATE
-	palSetPadMode(GPIOB, 5,
-			PAL_MODE_OUTPUT_PUSHPULL |
-			PAL_STM32_OSPEED_HIGHEST);
-
-	ENABLE_GATE();
-	
-	// Current filter
-	palSetPadMode(GPIOD, 2,
-			PAL_MODE_OUTPUT_PUSHPULL |
-			PAL_STM32_OSPEED_HIGHEST);
-	CURRENT_FILTER_OFF();
-
-	// Phase filters
-	palSetPadMode(PHASE_FILTER_GPIO, PHASE_FILTER_PIN,
-			PAL_MODE_OUTPUT_PUSHPULL |
-			PAL_STM32_OSPEED_HIGHEST);
-	PHASE_FILTER_OFF();
 
 	// GPIOA Configuration: Channel 1 to 3 as alternate function push-pull
 	palSetPadMode(GPIOA, 8, PAL_MODE_ALTERNATE(GPIO_AF_TIM1) |
@@ -83,23 +76,38 @@ void hw_init_gpio(void) {
 			PAL_STM32_OSPEED_HIGHEST |
 			PAL_STM32_PUPDR_FLOATING);
 
-	palSetPadMode(GPIOB, 13, PAL_MODE_ALTERNATE(GPIO_AF_TIM1) |
-			PAL_STM32_OSPEED_HIGHEST |
-			PAL_STM32_PUPDR_FLOATING);
-	palSetPadMode(GPIOB, 14, PAL_MODE_ALTERNATE(GPIO_AF_TIM1) |
-			PAL_STM32_OSPEED_HIGHEST |
-			PAL_STM32_PUPDR_FLOATING);
-	palSetPadMode(GPIOB, 15, PAL_MODE_ALTERNATE(GPIO_AF_TIM1) |
-			PAL_STM32_OSPEED_HIGHEST |
-			PAL_STM32_PUPDR_FLOATING);
+	INIT_BR();
 
 	// Hall sensors
 	palSetPadMode(HW_HALL_ENC_GPIO1, HW_HALL_ENC_PIN1, PAL_MODE_INPUT_PULLUP);
 	palSetPadMode(HW_HALL_ENC_GPIO2, HW_HALL_ENC_PIN2, PAL_MODE_INPUT_PULLUP);
 	palSetPadMode(HW_HALL_ENC_GPIO3, HW_HALL_ENC_PIN3, PAL_MODE_INPUT_PULLUP);
 
-	// Fault pin
-	palSetPadMode(GPIOB, 7, PAL_MODE_INPUT_PULLUP);
+	// Phase filters
+	palSetPadMode(PHASE_FILTER_GPIO, PHASE_FILTER_PIN,
+			PAL_MODE_OUTPUT_PUSHPULL |
+			PAL_STM32_OSPEED_HIGHEST);
+	PHASE_FILTER_OFF();
+
+	// Current filter
+	palSetPadMode(CURRENT_FILTER_GPIO, CURRENT_FILTER_PIN,
+			PAL_MODE_OUTPUT_PUSHPULL |
+			PAL_STM32_OSPEED_HIGHEST);
+
+	CURRENT_FILTER_OFF();
+
+	// Sensor port voltage
+	SENSOR_PORT_3V3();
+	palSetPadMode(SENSOR_VOLTAGE_GPIO, SENSOR_VOLTAGE_PIN,
+			PAL_MODE_OUTPUT_PUSHPULL | PAL_STM32_OSPEED_HIGHEST);
+
+	// ZCD-pin
+	palSetPadMode(ZCD_GPIO, ZCD_PIN, PAL_MODE_OUTPUT_PUSHPULL | PAL_STM32_OSPEED_HIGHEST);
+	palClearPad(ZCD_GPIO, ZCD_PIN);
+
+	// CAN_EN-pin
+	palSetPadMode(CAN_EN_GPIO, CAN_EN_PIN, PAL_MODE_OUTPUT_PUSHPULL | PAL_STM32_OSPEED_HIGHEST);
+	palClearPad(CAN_EN_GPIO, CAN_EN_PIN);
 
 	// ADC Pins
 	palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG);
@@ -109,49 +117,66 @@ void hw_init_gpio(void) {
 	palSetPadMode(GPIOA, 5, PAL_MODE_INPUT_ANALOG);
 	palSetPadMode(GPIOA, 6, PAL_MODE_INPUT_ANALOG);
 
+	palSetPadMode(GPIOB, 0, PAL_MODE_INPUT_ANALOG);
+	palSetPadMode(GPIOB, 1, PAL_MODE_INPUT_ANALOG);
+
 	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG);
 	palSetPadMode(GPIOC, 1, PAL_MODE_INPUT_ANALOG);
 	palSetPadMode(GPIOC, 2, PAL_MODE_INPUT_ANALOG);
 	palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG);
 	palSetPadMode(GPIOC, 4, PAL_MODE_INPUT_ANALOG);
 
-	drv8301_init();
+	// DAC as voltage reference for shunt amps
+	palSetPadMode(GPIOA, 4, PAL_MODE_INPUT_ANALOG);
+	rccEnableDAC1(TRUE);
+	DAC1->CR |= DAC_CR_EN1;
+	DAC1->DHR12R1 = 2047;
+
+	terminal_register_command_callback(
+			"shutdown",
+			"Shutdown VESC now.",
+			0,
+			terminal_shutdown_now);
+
+	terminal_register_command_callback(
+			"test_button",
+			"Try sampling the shutdown button",
+			0,
+			terminal_button_test);
 }
-
+// TODO EM: need to work out the correct sample times
 void hw_setup_adc_channels(void) {
-	uint8_t t_samp = ADC_SampleTime_15Cycles;
-
 	// ADC1 regular channels
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, t_samp);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 2, t_samp);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 3, t_samp);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_14, 4, t_samp);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint, 5, t_samp);
+	hw_setup_adc_channel_helper(ADC1, 10, 1, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC1, 0, 2, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC1, 5, 3, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC1, 14, 4, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC1, 4, 5, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC1, 8, 6, ADC_SMPR_SMP_8P5);
 
 	// ADC2 regular channels
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 1, t_samp);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_1, 2, t_samp);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_6, 3, t_samp);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_15, 4, t_samp);
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_0, 5, t_samp);
+	hw_setup_adc_channel_helper(ADC2, 11, 1, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC2, 1, 2, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC2, 6, 3, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC2, 15, 4, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC2, 0, 5, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC2, 9, 6, ADC_SMPR_SMP_8P5);
 
 	// ADC3 regular channels
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 1, t_samp);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_2, 2, t_samp);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_3, 3, t_samp);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 4, t_samp);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_1, 5, t_samp);
+	hw_setup_adc_channel_helper(ADC3, 12, 1, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC3, 2, 2, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC3, 3, 3, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC3, 13, 4, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC3, 1, 5, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC3, 2, 6, ADC_SMPR_SMP_8P5);
 
 	// Injected channels
-	ADC_InjectedChannelConfig(ADC1, ADC_Channel_10, 1, t_samp);
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 1, t_samp);
-	ADC_InjectedChannelConfig(ADC3, ADC_Channel_12, 1, t_samp);
-	ADC_InjectedChannelConfig(ADC1, ADC_Channel_10, 2, t_samp);
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 2, t_samp);
-	ADC_InjectedChannelConfig(ADC3, ADC_Channel_12, 2, t_samp);
-	ADC_InjectedChannelConfig(ADC1, ADC_Channel_10, 3, t_samp);
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 3, t_samp);
-	ADC_InjectedChannelConfig(ADC3, ADC_Channel_12, 3, t_samp);
+	hw_setup_inj_adc_channel_helper(ADC1, 10, 1, ADC_SMPR_SMP_8P5);
+	hw_setup_inj_adc_channel_helper(ADC2, 11, 1, ADC_SMPR_SMP_8P5);
+	hw_setup_inj_adc_channel_helper(ADC3, 12, 1, ADC_SMPR_SMP_8P5);
+	hw_setup_inj_adc_channel_helper(ADC1, 10, 2, ADC_SMPR_SMP_8P5);
+	hw_setup_inj_adc_channel_helper(ADC2, 11, 2, ADC_SMPR_SMP_8P5);
+	hw_setup_inj_adc_channel_helper(ADC3, 12, 2, ADC_SMPR_SMP_8P5);
 }
 
 void hw_start_i2c(void) {
@@ -245,5 +270,44 @@ void hw_try_restore_i2c(void) {
 		i2cStart(&HW_I2C_DEV, &i2cfg);
 
 		i2cReleaseBus(&HW_I2C_DEV);
+	}
+}
+
+bool hw_sample_shutdown_button(void) {
+	chMtxLock(&shutdown_mutex);
+
+	bt_diff = 0.0;
+
+	for (int i = 0;i < 3;i++) {
+		palSetPadMode(HW_SHUTDOWN_GPIO, HW_SHUTDOWN_PIN, PAL_MODE_INPUT_ANALOG);
+		chThdSleep(5);
+		float val1 = ADC_VOLTS(ADC_IND_SHUTDOWN);
+		chThdSleepMilliseconds(1);
+		float val2 = ADC_VOLTS(ADC_IND_SHUTDOWN);
+		palSetPadMode(HW_SHUTDOWN_GPIO, HW_SHUTDOWN_PIN, PAL_MODE_OUTPUT_PUSHPULL);
+		chThdSleepMilliseconds(1);
+
+		bt_diff += (val1 - val2);
+	}
+
+	chMtxUnlock(&shutdown_mutex);
+
+	return (bt_diff > 0.12);
+}
+
+static void terminal_shutdown_now(int argc, const char **argv) {
+	(void)argc;
+	(void)argv;
+	DISABLE_GATE();
+	HW_SHUTDOWN_HOLD_OFF();
+}
+
+static void terminal_button_test(int argc, const char **argv) {
+	(void)argc;
+	(void)argv;
+
+	for (int i = 0;i < 40;i++) {
+		commands_printf("BT: %d %.2f", HW_SAMPLE_SHUTDOWN(), (double)bt_diff);
+		chThdSleepMilliseconds(100);
 	}
 }

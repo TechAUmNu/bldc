@@ -51,6 +51,7 @@
 
 // Global variables
 volatile uint16_t ADC_Value[HW_ADC_CHANNELS + HW_ADC_CHANNELS_EXTRA];
+
 volatile float ADC_curr_norm_value[6];
 volatile float ADC_curr_raw[6];
 

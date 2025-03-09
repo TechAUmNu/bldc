@@ -400,13 +400,13 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 
 
 
-	rccEnableDMA2(TRUE);
+	rccEnableDMA1(TRUE);
 	rccEnableADC12(TRUE);
 	rccEnableADC3(TRUE);
 
 
 	// Configure DMA Stream to pull data from ADC
-	dmaStreamAlloc(STM32_DMA_STREAM_ID(2, 4),
+	dmaStreamAlloc(STM32_DMA_STREAM_ID(1, 1),
 					  5,
 					  (stm32_dmaisr_t)mcpwm_foc_adc_int_handler,
 					  (void *)0);
@@ -414,65 +414,137 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	// Direction - peripheral to memory (default)
 	// Peripheral Increment (default)
 	// Memory Increment
-	DMA2_Stream4->CR |= DMA_SxCR_MINC;
+	DMA1_Stream1->CR |= DMA_SxCR_MINC;
+	DMA1_Stream2->CR |= DMA_SxCR_MINC;
+	DMA1_Stream3->CR |= DMA_SxCR_MINC;
 	// Peripheral Data size - half word
-	DMA2_Stream4->CR |= DMA_SxCR_PSIZE_0;
+	DMA1_Stream1->CR |= DMA_SxCR_PSIZE_0;
+	DMA1_Stream2->CR |= DMA_SxCR_PSIZE_0;
+	DMA1_Stream3->CR |= DMA_SxCR_PSIZE_0;
 	// Memory data size - half word
-	DMA2_Stream4->CR |= DMA_SxCR_MSIZE_0;
+	DMA1_Stream1->CR |= DMA_SxCR_MSIZE_0;
+	DMA1_Stream2->CR |= DMA_SxCR_MSIZE_0;
+	DMA1_Stream3->CR |= DMA_SxCR_MSIZE_0;
 	// Mode - circular
-	DMA2_Stream4->CR |= DMA_SxCR_CIRC;
+	DMA1_Stream1->CR |= DMA_SxCR_CIRC;
+	DMA1_Stream2->CR |= DMA_SxCR_CIRC;
+	DMA1_Stream3->CR |= DMA_SxCR_CIRC;
 	// Priority - high
-	DMA2_Stream4->CR |= DMA_SxCR_PL_1;
+	DMA1_Stream1->CR |= DMA_SxCR_PL_1;
+	DMA1_Stream2->CR |= DMA_SxCR_PL_1;
+	DMA1_Stream3->CR |= DMA_SxCR_PL_1;
 	// Memory Burst - single (default)
 	// Peripheral Burst - single (default)
 	// Memory base address
-	DMA2_Stream4->M0AR = (uint32_t)&ADC_Value;
+	DMA1_Stream1->M0AR = (uint32_t)&ADC_Value[HW_ADC_IND_DMA_1];
+	DMA1_Stream2->M0AR = (uint32_t)&ADC_Value[HW_ADC_IND_DMA_2];
+	DMA1_Stream3->M0AR = (uint32_t)&ADC_Value[HW_ADC_IND_DMA_3];
 	// Peripheral base address
-//	DMA2_Stream4->PAR = (uint32_t)&ADC->CDR;
-//	// Buffer Size
-//	DMA2_Stream4->NDTR = HW_ADC_CHANNELS;
-//	// Note: The half transfer interrupt is used as we already have all current and voltage
-//	// samples by then and we can start processing them. Entering the interrupt earlier gives
-//	// more cycles to finish it and update the timer before the next zero vector. This helps
-//	// at higher f_zv. Only use this if the three first samples are current samples.
-//#if ADC_IND_CURR1 < 3 && ADC_IND_CURR2 < 3 && ADC_IND_CURR3 < 3
-//	DMA2_Stream4->CR |= DMA_SxCR_HTIE;
-//#else
-//	DMA2_Stream4->CR |= DMA_SxCR_TCIE;
-//#endif
-//	// Enable stream
-//	DMA2_Stream4->CR |= DMA_SxCR_EN;
+	DMA1_Stream1->PAR = (uint32_t)&ADC1->DR;
+	DMA1_Stream2->PAR = (uint32_t)&ADC2->DR;
+	DMA1_Stream3->PAR = (uint32_t)&ADC3->DR;
+	// Buffer Size
+	DMA1_Stream1->NDTR = HW_ADC_NBR_CONV;
+	DMA1_Stream2->NDTR = HW_ADC_NBR_CONV;
+	DMA1_Stream3->NDTR = HW_ADC_NBR_CONV;
+	// Note: The half transfer interrupt is used as we already have all current and voltage
+	// samples by then and we can start processing them. Entering the interrupt earlier gives
+	// more cycles to finish it and update the timer before the next zero vector. This helps
+	// at higher f_zv. Only use this if the three first samples are current samples.
+#if ADC_IND_CURR1 < 3 && ADC_IND_CURR2 < 3 && ADC_IND_CURR3 < 3
+	DMA1_Stream1->CR |= DMA_SxCR_HTIE;
+	DMA1_Stream2->CR |= DMA_SxCR_HTIE;
+	DMA1_Stream3->CR |= DMA_SxCR_HTIE;
+#else
+	DMA1_Stream1->CR |= DMA_SxCR_TCIE;
+	DMA1_Stream2->CR |= DMA_SxCR_TCIE;
+	DMA1_Stream3->CR |= DMA_SxCR_TCIE;
+#endif
+
+	// Connect ADCs to the DMAs using the DMAMUX
+	// Inputs
+	// 9 = adc1_dma
+	// 10 = adc2_dma
+	// 115 =  adc3_dma
+	DMAMUX1_Channel1->CCR = 9;
+	DMAMUX1_Channel2->CCR = 10;
+	DMAMUX1_Channel3->CCR = 115;
+
+	// Enable stream
+	DMA1_Stream1->CR |= DMA_SxCR_EN;
+	DMA1_Stream2->CR |= DMA_SxCR_EN;
+	DMA1_Stream3->CR |= DMA_SxCR_EN;
+
+
+	// ADC Common Init
+	// First calibrate
+	// TODO EM: add this?
+	/*  Calibrating the ADC */
+//	    ADC3->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
+//	    ADC3->CR |= ADC_CR_ADCAL;                           // start calibration
+//	    while(ADC3->CR & ADC_CR_ADCAL){}                    // wait until ADCAL is 0 and cal is complete
 //
-//
-//	// ADC Common Init
-//	// Multi ADC mode selection - Triple Regular simultaneous mode 10110
-//	// Prescaler divide by 2 (default)
-//	// DMA mode 1 enabled, 3 (1 per ADC) half-words one by one - 1 then 2 then 3
-//	ADC->CCR = ADC_CCR_MULTI_4 | ADC_CCR_MULTI_2 | ADC_CCR_MULTI_1 | ADC_CCR_DMA_0;
-//	// ADC 1, 2, 3 config
-//	// Scan Conversion Mode - Enable
-//	ADC1->CR1 = ADC_CR1_SCAN;
-//	ADC2->CR1 = ADC_CR1_SCAN;
-//	ADC3->CR1 = ADC_CR1_SCAN;
-//	// External trigger - T2 CC2 (0011)
-//	// External trigger Edge - Falling	(10)
-//	ADC1->CR2 = ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0 | ADC_CR2_EXTEN_1;
-//	// Number of conversions (0 = 1 conversion)
-//	ADC1->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-//	ADC2->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-//	ADC3->SQR1 = (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
-//	// Temperature Sensor and VREFINT Enable
-//	ADC->CCR |= ADC_CCR_TSVREFE;
-//	// Multi Mode DMA Request After Last Transfer Cmd
-//	// DMA requests are issued as long as data are converted and DMA = 01, 10 or 11
-//	ADC->CCR |= ADC_CCR_DDS;
-//
-//	hw_setup_adc_channels();
-//
-//	// Enable ADCs
-//	ADC1->CR2 |= ADC_CR2_ADON;
-//	ADC2->CR2 |= ADC_CR2_ADON;
-//	ADC3->CR2 |= ADC_CR2_ADON;
+//	    printf("\nCalibration is complete");
+//	    return (int)ADC3->CALFACT;
+
+
+
+	// Enable ADC Voltage regulator?
+	ADC1->CR = ADC_CR_ADVREGEN;
+	ADC2->CR = ADC_CR_ADVREGEN;
+	ADC3->CR = ADC_CR_ADVREGEN;
+
+	// Enable boost (>20MHZ)
+	ADC1->CR |= ADC_CR_BOOST;
+	ADC2->CR |= ADC_CR_BOOST;
+	ADC3->CR |= ADC_CR_BOOST;
+
+	// Enable DMA access 11: DMA Circular Mode selected
+	ADC1->CFGR = ADC_CFGR_DMNGT_1 | ADC_CFGR_DMNGT_0;
+	ADC2->CFGR = ADC_CFGR_DMNGT_1 | ADC_CFGR_DMNGT_0;
+	ADC3->CFGR = ADC_CFGR_DMNGT_1 | ADC_CFGR_DMNGT_0;
+
+	// Resolution 12 bit
+	// 000: 16 bits
+	// 001: 14 bits (for devices revision Y), 14 bits in legacy mode (for devices revision V, not optimized power consumption)
+	// 101: 14 bits (for devices revision V)
+	// 010: 12 bits (for devices revision Y), 12 bits in legacy mode (for devices revision V, not optimized power consumption)
+	// 110: 12 bits (for devices revision V)
+	// 011: 10 bits
+	// 100: 8 bits (for devices revision Y)
+	// 111: 8 bits (for devices revision V
+	ADC1->CFGR |= ADC_CFGR_RES_2 | ADC_CFGR_RES_1;
+	ADC2->CFGR |= ADC_CFGR_RES_2 | ADC_CFGR_RES_1;
+	ADC3->CFGR |= ADC_CFGR_RES_2 | ADC_CFGR_RES_1;
+
+	// External trigger - T2 CC2 (0011)
+	// External trigger Edge - Falling	(10)
+	ADC1->CFGR |= ADC_CFGR_EXTSEL_1 | ADC_CFGR_EXTSEL_0 | ADC_CFGR_EXTEN_1;
+	ADC2->CFGR |= ADC_CFGR_EXTSEL_1 | ADC_CFGR_EXTSEL_0 | ADC_CFGR_EXTEN_1;
+	ADC3->CFGR |= ADC_CFGR_EXTSEL_1 | ADC_CFGR_EXTSEL_0 | ADC_CFGR_EXTEN_1;
+
+	// Number of conversions (0 = 1 conversion)
+	ADC1->SQR1 |= (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	ADC2->SQR1 |= (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+	ADC3->SQR1 |= (HW_ADC_NBR_CONV - 1) << ADC_SQR1_L_Pos;
+
+	// VREFINT Enable
+	ADC12_COMMON->CCR |= ADC_CCR_VREFEN;
+	ADC3_COMMON->CCR |= ADC_CCR_VREFEN;
+
+	hw_setup_adc_channels();
+
+	// Enable ADCs
+	ADC1->CR |= ADC_CR_ADEN;
+	ADC2->CR |= ADC_CR_ADEN;
+	ADC3->CR |= ADC_CR_ADEN;
+
+	// Start conversion
+	ADC1->CR |= ADC_CR_ADSTART;
+	ADC2->CR |= ADC_CR_ADSTART;
+	ADC3->CR |= ADC_CR_ADSTART;
+
+
 
 	timer_reinit((int)m_motor_1.m_conf->foc_f_zv);
 
@@ -621,7 +693,7 @@ void mcpwm_foc_deinit(void) {
 
 	rccResetADC12();
 	rccResetADC3();
-	dmaStreamFree(STM32_DMA2_STREAM4);
+	dmaStreamFree(STM32_DMA1_STREAM1);
 	nvicDisableVector(ADC_IRQn);
 }
 
@@ -3134,7 +3206,7 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 		motor_now->m_phase_now_encoder = DEG2RAD_f(phase_tmp);
 	}
 
-	if (motor_now->m_state == MC_STATE_RUNNING) {
+	if (true){//motor_now->m_state == MC_STATE_RUNNING) {
 		if (conf_now->foc_current_sample_mode == FOC_CURRENT_SAMPLE_MODE_ALL_SENSORS) {
 			// Full Clarke Transform
 			motor_now->m_motor_state.i_alpha = (2.0 / 3.0) * ia - (1.0 / 3.0) * ib - (1.0 / 3.0) * ic;

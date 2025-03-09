@@ -96,8 +96,8 @@
 #define STM32_PLL1_DIVN_VALUE               400
 #define STM32_PLL1_FRACN_VALUE              0
 #define STM32_PLL1_DIVP_VALUE               2
-#define STM32_PLL1_DIVQ_VALUE               16
-#define STM32_PLL1_DIVR_VALUE               8
+#define STM32_PLL1_DIVQ_VALUE               4
+#define STM32_PLL1_DIVR_VALUE               2
 #define STM32_PLL2_ENABLED                  TRUE
 #define STM32_PLL2_P_ENABLED                TRUE
 #define STM32_PLL2_Q_ENABLED                TRUE
@@ -105,19 +105,19 @@
 #define STM32_PLL2_DIVM_VALUE               4
 #define STM32_PLL2_DIVN_VALUE               400
 #define STM32_PLL2_FRACN_VALUE              0
-#define STM32_PLL2_DIVP_VALUE               40
+#define STM32_PLL2_DIVP_VALUE               16
 #define STM32_PLL2_DIVQ_VALUE               8
 #define STM32_PLL2_DIVR_VALUE               8
 #define STM32_PLL3_ENABLED                  TRUE
 #define STM32_PLL3_P_ENABLED                TRUE
 #define STM32_PLL3_Q_ENABLED                TRUE
 #define STM32_PLL3_R_ENABLED                TRUE
-#define STM32_PLL3_DIVM_VALUE               4
-#define STM32_PLL3_DIVN_VALUE               400
+#define STM32_PLL3_DIVM_VALUE               8
+#define STM32_PLL3_DIVN_VALUE               336
 #define STM32_PLL3_FRACN_VALUE              0
-#define STM32_PLL3_DIVP_VALUE               8
-#define STM32_PLL3_DIVQ_VALUE               8
-#define STM32_PLL3_DIVR_VALUE               8
+#define STM32_PLL3_DIVP_VALUE               2
+#define STM32_PLL3_DIVQ_VALUE               7
+#define STM32_PLL3_DIVR_VALUE               2
 
 /*
  * Core clocks dynamic settings (can be changed at runtime).
@@ -159,7 +159,7 @@
 #define STM32_SAI1SEL                       STM32_SAI1SEL_PLL1_Q_CK
 #define STM32_LPTIM1SEL                     STM32_LPTIM1SEL_PCLK1
 #define STM32_CECSEL                        STM32_CECSEL_LSE_CK
-#define STM32_USBSEL                        STM32_USBSEL_HSI48_CK
+#define STM32_USBSEL                        STM32_USBSEL_PLL3_Q_CK
 #define STM32_I2C123SEL                     STM32_I2C123SEL_PCLK1
 #define STM32_RNGSEL                        STM32_RNGSEL_HSI48_CK
 #define STM32_USART16SEL                    STM32_USART16SEL_PCLK2
@@ -183,13 +183,13 @@
 #define STM32_IRQ_EXTI2_PRIORITY            6
 #define STM32_IRQ_EXTI3_PRIORITY            6
 #define STM32_IRQ_EXTI4_PRIORITY            6
-#define STM32_IRQ_EXTI5_9_PRIORITY          0
+#define STM32_IRQ_EXTI5_9_PRIORITY          6
 #define STM32_IRQ_EXTI10_15_PRIORITY        6
-#define STM32_IRQ_EXTI16_PRIORITY           0
+#define STM32_IRQ_EXTI16_PRIORITY           6
 #define STM32_IRQ_EXTI17_PRIORITY           15
 #define STM32_IRQ_EXTI18_PRIORITY           6
 #define STM32_IRQ_EXTI19_PRIORITY           6
-#define STM32_IRQ_EXTI20_21_PRIORITY        15
+#define STM32_IRQ_EXTI20_21_PRIORITY        6
 
 #define STM32_IRQ_FDCAN1_PRIORITY           10
 #define STM32_IRQ_FDCAN2_PRIORITY           10
@@ -434,7 +434,7 @@
 /*
  * ST driver system settings.
  */
-#define STM32_ST_IRQ_PRIORITY               3
+#define STM32_ST_IRQ_PRIORITY               8
 #define STM32_ST_USE_TIMER                  2
 
 /*
@@ -490,7 +490,7 @@
 //#define STM32_USB_OTG2_RX_FIFO_SIZE         1024
 //#define STM32_USB_HOST_WAKEUP_DURATION      2
 #define STM32_USB_USE_OTG1                  TRUE
-#define STM32_USB_USE_OTG2                  FALSE
+#define STM32_USB_USE_OTG2                  TRUE
 #define STM32_USB_OTG1_IRQ_PRIORITY         14
 #define STM32_USB_OTG2_IRQ_PRIORITY         14
 #define STM32_USB_OTG1_RX_FIFO_SIZE         1024
@@ -498,6 +498,7 @@
 #define STM32_USB_OTG_THREAD_PRIO           (HIGHPRIO - 1)
 #define STM32_USB_OTG_THREAD_STACK_SIZE     128
 #define STM32_USB_OTGFIFO_FILL_BASEPRI      0
+#define STM32_USB_HOST_WAKEUP_DURATION      2
 
 /*
  * WDG driver system settings.
