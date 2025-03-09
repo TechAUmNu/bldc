@@ -53,10 +53,6 @@ static void terminal_button_test(int argc, const char **argv);
 void hw_init_gpio(void) {
 	chMtxObjectInit(&shutdown_mutex);
 
-	// GPIO clock enable
-	rccResetAHB1(STM32_GPIO_EN_MASK);
-	rccEnableAHB1(STM32_GPIO_EN_MASK, TRUE);
-
 	// LEDs
 	palSetPadMode(LED_GREEN_GPIO, LED_GREEN_PIN,
 			PAL_MODE_OUTPUT_PUSHPULL |
@@ -64,6 +60,13 @@ void hw_init_gpio(void) {
 	palSetPadMode(LED_RED_GPIO, LED_RED_PIN,
 			PAL_MODE_OUTPUT_PUSHPULL |
 			PAL_STM32_OSPEED_HIGHEST);
+
+
+	//
+	palSetPadMode(PIN_TEST_GPIO, PIN_TEST_PIN,
+				PAL_MODE_OUTPUT_PUSHPULL |
+				PAL_STM32_OSPEED_HIGHEST);
+	PIN_TEST_ON();
 
 	// GPIOA Configuration: Channel 1 to 3 as alternate function push-pull
 	palSetPadMode(GPIOA, 8, PAL_MODE_ALTERNATE(GPIO_AF_TIM1) |
@@ -147,28 +150,28 @@ void hw_init_gpio(void) {
 // TODO EM: need to work out the correct sample times
 void hw_setup_adc_channels(void) {
 	// ADC1 regular channels
-	hw_setup_adc_channel_helper(ADC1, 10, 1, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC1, 0, 2, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC1, 5, 3, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC1, 14, 4, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC1, 4, 5, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC1, 8, 6, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC1, 10, 1, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC1, 0, 2, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC1, 5, 3, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC1, 14, 4, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC1, 4, 5, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC1, 8, 6, ADC_SMPR_SMP_16P5);
 
 	// ADC2 regular channels
-	hw_setup_adc_channel_helper(ADC2, 11, 1, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC2, 1, 2, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC2, 6, 3, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC2, 15, 4, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC2, 0, 5, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC2, 9, 6, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC2, 11, 1, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC2, 1, 2, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC2, 6, 3, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC2, 15, 4, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC2, 0, 5, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC2, 9, 6, ADC_SMPR_SMP_16P5);
 
 	// ADC3 regular channels
-	hw_setup_adc_channel_helper(ADC3, 12, 1, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC3, 2, 2, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC3, 3, 3, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC3, 13, 4, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC3, 1, 5, ADC_SMPR_SMP_8P5);
-	hw_setup_adc_channel_helper(ADC3, 2, 6, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC3, 12, 1, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC3, 2, 2, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC3, 3, 3, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC3, 13, 4, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC3, 1, 5, ADC_SMPR_SMP_16P5);
+	hw_setup_adc_channel_helper(ADC3, 2, 6, ADC_SMPR_SMP_16P5);
 
 	// Injected channels
 	hw_setup_inj_adc_channel_helper(ADC1, 10, 1, ADC_SMPR_SMP_8P5);

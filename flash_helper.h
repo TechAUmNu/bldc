@@ -39,6 +39,7 @@
 #define LISP_CONST_BASE							4
 #define QMLUI_BASE								5
 #define LISP_BASE								6
+#define PACKAGE_BASE							7
 
 #define QMLUI_MAX_SIZE							(1024 * 128 - 8)
 #define LISP_MAX_SIZE							(1024 * 128 - 8)

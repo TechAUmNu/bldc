@@ -19,7 +19,7 @@
  */
 
 #pragma GCC push_options
-#pragma GCC optimize ("Os")
+#pragma GCC optimize ("O3")
 
 #include "lispif.h"
 #include "commands.h"
@@ -805,7 +805,8 @@ static bool const_heap_write(lbm_uint ix, lbm_uint w) {
 	}
 
 	HAL_FLASH_Unlock();
-	FlashStatus = HAL_FLASH_Program_Word((uint32_t)(const_heap_ptr + ix),((uint32_t)&w));
+	HAL_FLASH_Program((uint32_t)(const_heap_ptr + ix), (uint8_t *)&w, 4);
+
 	//efl_lld_program(&EFLD1, (uint32_t)(const_heap_ptr + ix) - (uint32_t)0x08000000, 4, (uint8_t *)&w);
 	HAL_FLASH_Lock();
 

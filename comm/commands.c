@@ -18,7 +18,7 @@
  */
 
 #pragma GCC push_options
-#pragma GCC optimize ("Os")
+#pragma GCC optimize ("O3")
 
 #include "commands.h"
 #include "ch.h"

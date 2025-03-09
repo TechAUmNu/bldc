@@ -19,7 +19,7 @@
     */
 
 #pragma GCC push_options
-#pragma GCC optimize ("Os")
+#pragma GCC optimize ("O3")
 
 #include "rf.h"
 #include "spi_sw.h"

@@ -27,6 +27,10 @@
  *          and before any other initialization.
  */
 void __early_init(void) {  
+ /* Enabling GPIO-related clocks, the mask comes from the
+	 registry header file.*/
+  __rccResetAHB4(STM32_GPIO_EN_MASK);
+  rccEnableAHB4(STM32_GPIO_EN_MASK, true);
   stm32_clock_init();
 }
 
@@ -79,5 +83,4 @@ bool mmc_lld_is_write_protected(MMCDriver *mmcp) {
  * @note    You can add your board-specific code here.
  */
 void boardInit(void) {
-
 }

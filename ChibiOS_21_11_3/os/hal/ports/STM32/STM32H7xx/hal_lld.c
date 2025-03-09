@@ -116,6 +116,7 @@ static inline void init_pwr(void) {
 #else
   PWR->D3CR  = STM32_VOS;
 #endif
+  while ((PWR->D3CR & PWR_D3CR_VOSRDY) == 0);
 #if defined(HAL_LLD_TYPE1_H)
 #if !defined(STM32_ENFORCE_H7_REV_XY)
   SYSCFG->PWRCR = STM32_ODEN;

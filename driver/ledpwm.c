@@ -77,6 +77,7 @@ void ledpwm_led_off(int led) {
 /*
  * Call this function as fast as possible, with a deterministic rate.
  */
+__attribute__((section(".itcm_text")))
 void ledpwm_update_pwm(void) {
 	static int cnt = 0;
 	cnt++;

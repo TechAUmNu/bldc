@@ -18,7 +18,7 @@
     */
 
 #pragma GCC push_options
-#pragma GCC optimize ("Os")
+#pragma GCC optimize ("O3")
 
 #include <string.h>
 #include <math.h>
@@ -1388,7 +1388,7 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 					}
 #ifdef USE_LISPBM
 					if (!sid_cb_used) {
-						lispif_process_can(rxmsg.SID, rxmsg.data8, rxmsg.DLC, false);
+						lispif_process_can(rxmsg.std.SID, rxmsg.data8, rxmsg.DLC, false);
 					}
 #else
 					(void)sid_cb_used;
@@ -1400,7 +1400,7 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 					}
 #ifdef USE_LISPBM
 					if (!eid_cb_used) {
-						lispif_process_can(rxmsg.EID, rxmsg.data8, rxmsg.DLC, true);
+						lispif_process_can(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC, true);
 					}
 #else
 					(void)eid_cb_used;
@@ -1424,7 +1424,7 @@ static THD_FUNCTION(cancom_process_thread, arg) {
 					if (!bms_process_can_frame(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC, true)) {
 						decode_msg(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC, false);
 #ifdef USE_LISPBM
-						lispif_process_can(rxmsg.EID, rxmsg.data8, rxmsg.DLC, true);
+						lispif_process_can(rxmsg.ext.EID, rxmsg.data8, rxmsg.DLC, true);
 #endif
 					}
 				}

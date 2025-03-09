@@ -387,6 +387,7 @@ float encoder_read_deg(void) {
 	return 0.0;
 }
 
+__attribute__((section(".itcm_text")))
 float encoder_read_deg_multiturn(void) {
 	if (m_encoder_type_now == ENCODER_TYPE_TS5700N8501) {
 		float ts_mt = (float)enc_ts5700n8501_get_abm(&encoder_cfg_TS5700N8501);

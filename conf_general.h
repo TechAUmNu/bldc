@@ -141,7 +141,7 @@
 /*
  * MCU
  */
-#define SYSTEM_CORE_CLOCK			400000000
+#define SYSTEM_CORE_CLOCK			STM32_SYS_CK
 #define STM32_UUID					((uint32_t*)0x1FF1E800)
 #define STM32_UUID_8				((uint8_t*)0x1FF1E800)
 

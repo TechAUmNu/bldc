@@ -92,6 +92,7 @@ float utils_angle_difference(float angle1, float angle2) {
  * @return
  * The difference between the angles in radians
  */
+__attribute__((section(".itcm_text")))
 float utils_angle_difference_rad(float angle1, float angle2) {
 	float difference = angle1 - angle2;
 	while (difference < -M_PI) difference += 2.0 * M_PI;
@@ -222,6 +223,7 @@ int utils_middle_of_3_int(int a, int b, int c) {
  * @return
  * The angle in radians
  */
+__attribute__((section(".itcm_text")))
 float utils_fast_atan2(float y, float x) {
 	float abs_y = fabsf(y) + 1e-20; // kludge to prevent 0/0 condition
 	float angle;
@@ -306,6 +308,7 @@ void utils_fast_sincos(float angle, float *sin, float *cos) {
  * @param cos
  * A pointer to store the cosine value.
  */
+__attribute__((section(".itcm_text")))
 void utils_fast_sincos_better(float angle, float *sin, float *cos) {
 	//always wrap input angle to -PI..PI
 	while (angle < -M_PI) {
@@ -372,6 +375,7 @@ void utils_fast_sincos_better(float angle, float *sin, float *cos) {
  * @return
  * The value with the lowest magnitude.
  */
+__attribute__((section(".itcm_text")))
 float utils_min_abs(float va, float vb) {
 	float res;
 	if (fabsf(va) < fabsf(vb)) {
@@ -395,6 +399,7 @@ float utils_min_abs(float va, float vb) {
  * @return
  * The value with the highest magnitude.
  */
+__attribute__((section(".itcm_text")))
 float utils_max_abs(float va, float vb) {
 	float res;
 	if (fabsf(va) > fabsf(vb)) {

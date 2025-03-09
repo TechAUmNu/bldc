@@ -33,11 +33,16 @@
 #define LED_GREEN_PIN			5
 #define LED_RED_GPIO			GPIOB
 #define LED_RED_PIN				7
+#define PIN_TEST_GPIO			GPIOG
+#define PIN_TEST_PIN			0
 
 #define LED_GREEN_ON()			palSetPad(LED_GREEN_GPIO, LED_GREEN_PIN)
 #define LED_GREEN_OFF()			palClearPad(LED_GREEN_GPIO, LED_GREEN_PIN)
 #define LED_RED_ON()			palSetPad(LED_RED_GPIO, LED_RED_PIN)
 #define LED_RED_OFF()			palClearPad(LED_RED_GPIO, LED_RED_PIN)
+
+#define PIN_TEST_ON()			palSetPad(PIN_TEST_GPIO, PIN_TEST_PIN)
+#define PIN_TEST_OFF()			palClearPad(PIN_TEST_GPIO, PIN_TEST_PIN)
 
 // For power stages with enable pins (e.g. DRV8313)
 #define ENABLE_BR1()			palSetPad(GPIOB, 13)

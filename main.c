@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma GCC push_options
-#pragma GCC optimize ("Os")
+//#pragma GCC push_options
+//#pragma GCC optimize ("O3")
 
 #include "ch.h"
 #include "hal.h"
@@ -247,6 +247,14 @@ uint32_t main_calc_hw_crc(void) {
 }
 
 int main(void) {
+	// Load functions into ITCM RAM
+	extern const unsigned char itcm_text_start;
+	extern const unsigned char itcm_text_end;
+	extern const unsigned char itcm_data;
+	memcpy(&itcm_text_start, &itcm_data, (int) (&itcm_text_end - &itcm_text_start));
+
+
+
 	halInit();
 	chSysInit();
 
@@ -269,21 +277,21 @@ int main(void) {
 	mempools_init();
 	events_init();
 	timer_init(); // Initialize timer here to allow I2C in hw_init
-	//hw_init_gpio();
+	hw_init_gpio();
 	//LED_RED_OFF();
 	//LED_GREEN_OFF();
-
+	PIN_TEST_ON();
 	conf_general_init();
-	volatile uint32_t result = flash_helper_verify_flash_memory();
-	if (result == FAULT_CODE_FLASH_CORRUPTION)	{
-		// Loop here, it is not safe to run any code
-		while (1) {
-			chThdSleepMilliseconds(100);
-			LED_RED_ON();
-			chThdSleepMilliseconds(75);
-			LED_RED_OFF();
-		}
-	}
+//	volatile uint32_t result = flash_helper_verify_flash_memory();
+//	if (result == FAULT_CODE_FLASH_CORRUPTION)	{
+//		// Loop here, it is not safe to run any code
+//		while (1) {
+//			chThdSleepMilliseconds(100);
+//			LED_RED_ON();
+//			chThdSleepMilliseconds(75);
+//			LED_RED_OFF();
+//		}
+//	}
 
 	ledpwm_init();
 	mc_interface_init();
@@ -326,7 +334,7 @@ int main(void) {
 	// Threads
 	chThdCreateStatic(led_thread_wa, sizeof(led_thread_wa), NORMALPRIO, led_thread, NULL);
 	chThdCreateStatic(periodic_thread_wa, sizeof(periodic_thread_wa), NORMALPRIO, periodic_thread, NULL);
-	chThdCreateStatic(flash_integrity_check_thread_wa, sizeof(flash_integrity_check_thread_wa), LOWPRIO, flash_integrity_check_thread, NULL);
+	//chThdCreateStatic(flash_integrity_check_thread_wa, sizeof(flash_integrity_check_thread_wa), LOWPRIO, flash_integrity_check_thread, NULL);
 
 	timeout_init();
 	timeout_configure(appconf->timeout_msec, appconf->timeout_brake_current, appconf->kill_sw_mode);
@@ -363,4 +371,4 @@ int main(void) {
 	}
 }
 
-#pragma GCC pop_options
+//#pragma GCC pop_options

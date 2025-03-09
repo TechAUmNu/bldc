@@ -22,13 +22,13 @@
  * SRAM3        - NOCACHE, ETH.
  * SRAM4        - None.
  * DTCM-RAM     - Main Stack, Process Stack.
- * ITCM-RAM     - None.
+ * ITCM-RAM     - FOC interrupt handler.
  * BCKP SRAM    - None.
  */
 MEMORY
 {
-    flash0 (rx) : org = 0x08000000, len = 128k * 4 - 8 /* NEW_APP_MAX_SIZE - CRC_INFO */
-    crcinfo (r) : org = 0x0807FFF0, len = 8		/* CRC info */    
+    flash0 (rx) : org = 0x08000000, len = 2M 		/* Flash total */
+    flash1 (rx) : org = 0x08000000, len = 1M		/* Flash bank 1 */
     flash2 (rx) : org = 0x08100000, len = 1M        /* Flash bank 2 */
     flash3 (rx) : org = 0x00000000, len = 0
     flash4 (rx) : org = 0x00000000, len = 0
@@ -41,12 +41,15 @@ MEMORY
     ram3   (wx) : org = 0x30040000, len = 32k       /* AHB SRAM3 */
     ram4   (wx) : org = 0x38000000, len = 64k       /* AHB SRAM4 */
     ram5   (wx) : org = 0x20000000, len = 128k      /* DTCM-RAM */
-    ram6   (wx) : org = 0x00000000, len = 64k       /* ITCM-RAM */
-    ram7   (wx) : org = 0x38800000, len = 4k        /* BCKP SRAM */
+    ram6   (rx) : org = 0x00000000, len = 1K		/* ITCM-ISR */
+	ram7   (rx) : org = 0x00000400, len = 63K		/* ITCM-RAM */
+    ram8   (wx) : org = 0x38800000, len = 4k        /* BCKP SRAM */
 }
 
 /* For each data/text section two region are defined, a virtual region
    and a load region (_LMA suffix).*/
+
+
 
 /* Flash region to be used for exception vectors.*/
 REGION_ALIAS("VECTORS_FLASH", flash0);
@@ -89,6 +92,9 @@ REGION_ALIAS("BSS_RAM", ram0);
 /* RAM region to be used for the default heap.*/
 REGION_ALIAS("HEAP_RAM", ram0);
 
+/* RAM region to be used for fast code.*/
+REGION_ALIAS("ITCM_RAM", ram7);
+
 /* Stack rules inclusion.*/
 INCLUDE rules_stacks.ld
 
@@ -125,7 +131,21 @@ SECTIONS
         *(.bss.__eth_*)
         . = ALIGN(4);
         __eth_end__ = .;
-    } > ETH_RAM
+    } > ETH_RAM  
+    
+    /* Special section for Fast execution code.*/
+    /* Copy specific fast-executing code to ITCM RAM */
+	itcm_data = LOADADDR(.itcm_text);
+    .itcm_text :
+	{
+		. = ALIGN(4);
+		itcm_text_start = .;
+		*(.itcm_text)
+		*(.itcm_text*)
+		. = ALIGN(4);
+		itcm_text_end = .;
+	} >ITCM_RAM AT> RAM_INIT_FLASH_LMA
+    
 }
 
 /* Code rules inclusion.*/

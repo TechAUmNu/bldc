@@ -86,6 +86,7 @@ uint8_t utils_second_motor_id(void) {
  * @return
  * The state of the three hall sensors.
  */
+__attribute__((section(".itcm_text")))
 int utils_read_hall(bool is_second_motor, int samples) {
 	samples = 1 + 2 * samples;
 

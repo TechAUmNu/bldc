@@ -22,6 +22,7 @@
 #include <math.h>
 
 // See http://cas.ensmp.fr/~praly/Telechargement/Journaux/2010-IEEE_TPEL-Lee-Hong-Nam-Ortega-Praly-Astolfi.pdf
+__attribute__((section(".itcm_text")))
 void foc_observer_update(float v_alpha, float v_beta, float i_alpha, float i_beta,
 		float dt, observer_state *state, float *phase, motor_all_state_t *motor) {
 
@@ -221,6 +222,7 @@ void foc_observer_update(float v_alpha, float v_beta, float i_alpha, float i_bet
 	// The d flux each time would have a residual after transform from ab to dq. This can be used as an input to the flux estimator
 }
 
+__attribute__((section(".itcm_text")))
 void foc_pll_run(float phase, float dt, float *phase_var,
 					float *speed_var, mc_configuration *conf) {
 	UTILS_NAN_ZERO(*phase_var);
@@ -242,6 +244,7 @@ void foc_pll_run(float phase, float dt, float *phase_var,
  * @param tBout PWM duty cycle phase B
  * @param tCout PWM duty cycle phase C
  */
+__attribute__((section(".itcm_text")))
 void foc_svm(float alpha, float beta, float max_mod, uint32_t PWMFullDutyCycle,
 				uint32_t* tAout, uint32_t* tBout, uint32_t* tCout, uint32_t *svm_sector) {
 	uint32_t sector;
@@ -569,6 +572,7 @@ void foc_run_pid_control_speed(bool index_found, float dt, motor_all_state_t *mo
 	motor->m_iq_set = output * conf_now->lo_current_max * conf_now->l_current_max_scale;
 }
 
+__attribute__((section(".itcm_text")))
 float foc_correct_encoder(float obs_angle, float enc_angle, float speed,
 							 float sl_erpm, motor_all_state_t *motor) {
 	float rpm_abs = fabsf(RADPS2RPM_f(speed));
@@ -588,6 +592,7 @@ float foc_correct_encoder(float obs_angle, float enc_angle, float speed,
 	return motor->m_using_encoder ? enc_angle : obs_angle;
 }
 
+__attribute__((section(".itcm_text")))
 float foc_correct_hall(float angle, float dt, motor_all_state_t *motor, int hall_val) {
 	mc_configuration *conf_now = motor->m_conf;
 	motor->m_hall_dt_diff_now += dt;
@@ -741,6 +746,7 @@ void foc_run_fw(motor_all_state_t *motor, float dt) {
 	}
 }
 
+__attribute__((section(".itcm_text")))
 void foc_hfi_adjust_angle(float ang_err, motor_all_state_t *motor, float dt) {
 	mc_configuration *conf = motor->m_conf;
 	utils_truncate_number_abs(&ang_err, conf->foc_hfi_max_err);

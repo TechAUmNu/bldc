@@ -165,8 +165,8 @@ static void update_hfi_samples(foc_hfi_samples samples, volatile motor_all_state
 	utils_sys_unlock_cnt();
 }
 
-#pragma GCC push_options
-#pragma GCC optimize ("Os")
+//#pragma GCC push_options
+//#pragma GCC optimize ("O3")
 
 static void timer_reinit(int f_zv) {
 	utils_sys_lock_cnt();
@@ -475,29 +475,32 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	DMA1_Stream2->CR |= DMA_SxCR_EN;
 	DMA1_Stream3->CR |= DMA_SxCR_EN;
 
-
 	// ADC Common Init
-	// First calibrate
-	// TODO EM: add this?
-	/*  Calibrating the ADC */
-//	    ADC3->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
-//	    ADC3->CR |= ADC_CR_ADCAL;                           // start calibration
-//	    while(ADC3->CR & ADC_CR_ADCAL){}                    // wait until ADCAL is 0 and cal is complete
-//
-//	    printf("\nCalibration is complete");
-//	    return (int)ADC3->CALFACT;
-
-
-
 	// Enable ADC Voltage regulator?
 	ADC1->CR = ADC_CR_ADVREGEN;
 	ADC2->CR = ADC_CR_ADVREGEN;
 	ADC3->CR = ADC_CR_ADVREGEN;
 
+	// Wait for LDO to sabilise
+	while((ADC1->ISR & ADC_ISR_LDORDY) == 0);
+	while((ADC2->ISR & ADC_ISR_LDORDY) == 0);
+	while((ADC3->ISR & ADC_ISR_LDORDY) == 0);
+
 	// Enable boost (>20MHZ)
 	ADC1->CR |= ADC_CR_BOOST;
 	ADC2->CR |= ADC_CR_BOOST;
 	ADC3->CR |= ADC_CR_BOOST;
+
+	// First calibrate
+	ADC1->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
+	ADC1->CR |= ADC_CR_ADCAL;                           // start calibration
+	while(ADC1->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
+	ADC2->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
+	ADC2->CR |= ADC_CR_ADCAL;                           // start calibration
+	while(ADC2->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
+	ADC3->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
+	ADC3->CR |= ADC_CR_ADCAL;                           // start calibration
+	while(ADC3->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
 
 	// Enable DMA access 11: DMA Circular Mode selected
 	ADC1->CFGR = ADC_CFGR_DMNGT_1 | ADC_CFGR_DMNGT_0;
@@ -564,7 +567,7 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 #else
 	if (m_motor_1.m_conf->foc_offsets_cal_mode & (1 << 0)) {
 		systime_t cal_start_time = chVTGetSystemTimeX();
-		float cal_start_timeout = 10.0;
+		float cal_start_timeout = 0.0; // TODO EM: Put back to 10
 
 		// Wait for input voltage to rise above minimum voltage
 		while (mc_interface_get_input_voltage_filtered() < m_motor_1.m_conf->l_min_vin) {
@@ -2881,8 +2884,9 @@ float mcpwm_foc_get_last_adc_isr_duration(void) {
 	return m_last_adc_isr_duration;
 }
 
-#pragma GCC pop_options
+//#pragma GCC pop_options
 
+__attribute__((section(".itcm_text")))
 void mcpwm_foc_tim_sample_int_handler(void) {
 	if (m_init_done) {
 		// Generate COM event here for synchronization
@@ -2897,11 +2901,15 @@ void mcpwm_foc_tim_sample_int_handler(void) {
 	}
 }
 
+
+
+__attribute__((section(".itcm_text")))
 void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 	(void)p;
 	(void)flags;
 
-	uint32_t t_start = timer_time_now();
+
+
 
 	bool is_v7 = !(TIM1->CR1 & TIM_CR1_DIR);
 	bool is_second_motor = false;
@@ -3023,6 +3031,9 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 	if (do_return) {
 		return;
 	}
+
+	uint32_t t_start = timer_time_now();
+	PIN_TEST_ON();
 
 #if FOC_CONTROL_LOOP_FREQ_DIVIDER > 1
 	static int skip = 0;
@@ -3765,6 +3776,7 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 #endif
 
 	m_isr_motor = 0;
+	PIN_TEST_OFF();
 	m_last_adc_isr_duration = timer_seconds_elapsed_since(t_start);
 }
 
@@ -4411,6 +4423,7 @@ static THD_FUNCTION(pid_thread, arg) {
  * @param dt
  * The time step in seconds.
  */
+__attribute__((section(".itcm_text")))
 static void control_current(motor_all_state_t *motor, float dt) {
 	volatile motor_state_t *state_m = &motor->m_motor_state;
 	volatile mc_configuration *conf_now = motor->m_conf;
@@ -4888,6 +4901,7 @@ static void control_current(motor_all_state_t *motor, float dt) {
 	}
 }
 
+__attribute__((section(".itcm_text")))
 static void update_valpha_vbeta(motor_all_state_t *motor, float mod_alpha, float mod_beta) {
 	motor_state_t *state_m = &motor->m_motor_state;
 	mc_configuration *conf_now = motor->m_conf;
@@ -5119,6 +5133,7 @@ static void start_pwm_hw(motor_all_state_t *motor) {
 	motor->m_pwm_mode = FOC_PWM_ENABLED;
 }
 
+__attribute__((section(".itcm_text")))
 static void full_brake_hw(motor_all_state_t *motor) {
 	if (motor == &m_motor_1) {
 		TIMER_UPDATE_CH1_NEG();
