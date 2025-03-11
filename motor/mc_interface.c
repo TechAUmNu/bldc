@@ -50,7 +50,8 @@
 #define DIR_MULT		(motor_now()->m_conf.m_invert_direction ? -1.0 : 1.0)
 
 // Global variables
-volatile uint16_t ADC_Value[HW_ADC_CHANNELS + HW_ADC_CHANNELS_EXTRA];
+__attribute__((section(".nocache")))
+volatile uint16_t ADC_Value[HW_ADC_CHANNELS + HW_ADC_CHANNELS_EXTRA] = {0};
 
 volatile float ADC_curr_norm_value[6];
 volatile float ADC_curr_raw[6];

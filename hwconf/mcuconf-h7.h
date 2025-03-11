@@ -53,10 +53,11 @@
 /*
  * Memory attributes settings.
  */
-#define STM32_NOCACHE_ENABLE                FALSE
+// Don't cache anything in this the ram3 section
+#define STM32_NOCACHE_ENABLE                TRUE
 #define STM32_NOCACHE_MPU_REGION            MPU_REGION_6
-#define STM32_NOCACHE_RBAR                  0x24000000U
-#define STM32_NOCACHE_RASR                  MPU_RASR_SIZE_16K
+#define STM32_NOCACHE_RBAR                  0x30040000U
+#define STM32_NOCACHE_RASR                  MPU_RASR_SIZE_32K
 
 /*
  * PWR system settings.
