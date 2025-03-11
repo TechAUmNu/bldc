@@ -238,7 +238,7 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	// Select the Counter Mode, UP (default)
 
 	// Set the Autoreload value
-	TIM1->ARR = (SYSTEM_CORE_CLOCK / (int)switching_frequency_now);
+	TIM1->ARR = (SYSTEM_TIMER_CLOCK / (int)switching_frequency_now);
 
 	// Update
 	TIM1->EGR = TIM_EGR_UG;
@@ -264,7 +264,7 @@ void mcpwm_init(volatile mc_configuration *configuration) {
 	TIM1->CCMR2 |= TIM_CCMR2_OC3PE | TIM_CCMR2_OC4PE;
 
 	// Dead-time and off state
-	uint8_t deadtime = conf_general_calculate_deadtime(HW_DEAD_TIME_NSEC, SYSTEM_CORE_CLOCK);
+	uint8_t deadtime = conf_general_calculate_deadtime(HW_DEAD_TIME_NSEC, SYSTEM_TIMER_CLOCK);
 	TIM1->BDTR =  deadtime | TIM_BDTR_OSSI | TIM_BDTR_OSSR;
 
 #ifdef HW_USE_BRK
@@ -1116,7 +1116,7 @@ static void set_duty_cycle_hw(float dutyCycle) {
 		}
 	}
 
-	timer_tmp.top = SYSTEM_CORE_CLOCK / (int)switching_frequency_now;
+	timer_tmp.top = SYSTEM_TIMER_CLOCK / (int)switching_frequency_now;
 
 	if (conf->motor_type == MOTOR_TYPE_BLDC && conf->pwm_mode == PWM_MODE_BIPOLAR && !IS_DETECTING()) {
 		timer_tmp.duty = (uint16_t) (((float) timer_tmp.top / 2.0) * dutyCycle
@@ -2675,7 +2675,7 @@ static void set_switching_frequency(float frequency) {
 	timer_tmp = timer_struct;
 	utils_sys_unlock_cnt();
 
-	timer_tmp.top = SYSTEM_CORE_CLOCK / (int)switching_frequency_now;
+	timer_tmp.top = SYSTEM_TIMER_CLOCK / (int)switching_frequency_now;
 	update_adc_sample_pos(&timer_tmp);
 	set_next_timer_settings(&timer_tmp);
 }

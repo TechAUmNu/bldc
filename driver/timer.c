@@ -33,7 +33,7 @@ void timer_init(void) {
 	// Select the Counter Mode, UP (default)
 	// Set the Autoreload value
 	TIM5->ARR = 0xFFFFFFFF;
-	TIM5->PSC = ((SYSTEM_CORE_CLOCK / 2) / TIMER_HZ) - 1;
+	TIM5->PSC = ((SYSTEM_TIMER_CLOCK / 2) / TIMER_HZ) - 1;
 	TIM5->CNT = 0;
 	// Update
 	TIM5->EGR = TIM_EGR_UG;
