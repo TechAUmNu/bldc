@@ -44,6 +44,9 @@
 #define PIN_TEST_ON()			palSetPad(PIN_TEST_GPIO, PIN_TEST_PIN)
 #define PIN_TEST_OFF()			palClearPad(PIN_TEST_GPIO, PIN_TEST_PIN)
 
+#define PIN_ADCTEST_ON()			palSetPad(GPIOA, 3)
+#define PIN_ADCTEST_OFF()			palClearPad(GPIOA, 3)
+
 // For power stages with enable pins (e.g. DRV8313)
 #define ENABLE_BR1()			palSetPad(GPIOB, 13)
 #define ENABLE_BR2()			palSetPad(GPIOB, 14)
@@ -137,19 +140,30 @@
 #define HW_ADC_IND_DMA_3 12
 
 // ADC Indexes
-#define ADC_IND_SENS1			3
-#define ADC_IND_SENS2			4
-#define ADC_IND_SENS3			5
+
+
+// ADC1
 #define ADC_IND_CURR1			0
-#define ADC_IND_CURR2			1
-#define ADC_IND_CURR3			2
-#define ADC_IND_VIN_SENS		11
-#define ADC_IND_EXT				6
-#define ADC_IND_EXT2			7
-#define ADC_IND_SHUTDOWN		10
+#define ADC_IND_SENS1			1
+#define ADC_IND_VIN_SENS		2
+#define ADC_IND_EXT				3
+#define ADC_IND_EXT2			4
+#define ADC_IND_SHUTDOWN		5
+
+// ADC2
+#define ADC_IND_CURR2			6
+#define ADC_IND_SENS2			7
 #define ADC_IND_TEMP_MOS		8
 #define ADC_IND_TEMP_MOTOR		9
-#define ADC_IND_VREFINT			12
+#define ADC_IND_VREFINT			10
+
+
+// ADC3
+#define ADC_IND_CURR3			12
+#define ADC_IND_SENS3			13
+
+
+
 
 // ADC macros and settings
 
