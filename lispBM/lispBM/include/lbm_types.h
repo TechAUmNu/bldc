@@ -28,6 +28,9 @@
 extern "C" {
 #endif
 
+#define LISP_MEM_IN_DTMC
+#define LISP_IN_ITCM
+
 /* Addresses that are put into lbm_values or into
  * lbm_memory must have this alignment.           */
 #ifndef LBM64

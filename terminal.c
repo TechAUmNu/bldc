@@ -103,7 +103,7 @@ void terminal_process_string(char *str) {
 	} else if (strcmp(argv[0], "mem") == 0) {
 		size_t n, size, blk;
 		memory_area_t map;
-		n = chHeapStatus(NULL, &size, &blk);
+		//n = chHeapStatus(NULL, &size, &blk);
 		chCoreGetStatusX(&map);
 		commands_printf("core free memory : %u bytes", map.size);
 		commands_printf("heap fragments   : %u", n);

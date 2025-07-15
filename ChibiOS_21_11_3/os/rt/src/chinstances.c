@@ -59,6 +59,8 @@
  *
  * @param[in] p         the thread parameter, unused in this scenario
  */
+
+__attribute__((section(".itcm_text")))
 static void __idle_thread(void *p) {
 
   (void)p;

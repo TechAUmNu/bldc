@@ -20,9 +20,9 @@
  * AXI SRAM     - BSS, Data, Heap.
  * SRAM1+SRAM2  - None.
  * SRAM3        - NOCACHE, ETH.
- * SRAM4        - None.
- * DTCM-RAM     - Main Stack, Process Stack.
- * ITCM-RAM     - FOC interrupt handler.
+ * SRAM4        - Slow data.
+ * DTCM-RAM     - Main Stack, Process Stack, lisp data.
+ * ITCM-RAM     - FOC interrupt handler, lisp eval.
  * BCKP SRAM    - None.
  */
 MEMORY
@@ -83,11 +83,11 @@ REGION_ALIAS("MAIN_STACK_RAM", ram5);
 REGION_ALIAS("PROCESS_STACK_RAM", ram5);
 
 /* RAM region to be used for data segment.*/
-REGION_ALIAS("DATA_RAM", ram0);
+REGION_ALIAS("DATA_RAM", ram5);
 REGION_ALIAS("DATA_RAM_LMA", flash0);
 
 /* RAM region to be used for BSS segment.*/
-REGION_ALIAS("BSS_RAM", ram0);
+REGION_ALIAS("BSS_RAM", ram5);
 
 /* RAM region to be used for the default heap.*/
 REGION_ALIAS("HEAP_RAM", ram0);
@@ -111,6 +111,20 @@ REGION_ALIAS("ETH_RAM", ram3);
 
 SECTIONS
 {
+    .text : ALIGN_WITH_INPUT
+    {
+        __text_base__ = .;
+        *(.text)
+        *(EXCLUDE_FILE(*libm.a*) .text)
+        *(EXCLUDE_FILE(*libm.a*) .text*)
+
+        *(.text.*)
+        *(.glue_7t)
+        *(.glue_7)
+        *(.gcc*)
+        __text_end__ = .;
+    } > TEXT_FLASH AT > TEXT_FLASH_LMA
+
     /* Special section for non cache-able areas.*/
     .nocache (NOLOAD) : ALIGN(4)
     {
@@ -142,6 +156,7 @@ SECTIONS
 		itcm_text_start = .;
 		*(.itcm_text)
 		*(.itcm_text*)
+		*(*libm.a*)	
 		. = ALIGN(4);
 		itcm_text_end = .;
 	} >ITCM_RAM AT> RAM_INIT_FLASH_LMA

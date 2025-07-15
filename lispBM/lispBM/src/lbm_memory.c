@@ -306,6 +306,9 @@ static lbm_uint *lbm_memory_allocate_internal(lbm_uint num_words) {
   return NULL;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 lbm_uint *lbm_memory_allocate(lbm_uint num_words) {
   if (memory_num_free - num_words < memory_reserve_level) {
     lbm_request_gc();

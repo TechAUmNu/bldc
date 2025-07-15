@@ -145,22 +145,24 @@
 // ADC1
 #define ADC_IND_CURR1			0
 #define ADC_IND_SENS1			1
+#define ADC_IND_TEMP_MOS_1		7
 #define ADC_IND_VIN_SENS		2
-#define ADC_IND_EXT				3
-#define ADC_IND_EXT2			4
-#define ADC_IND_SHUTDOWN		5
+
+
 
 // ADC2
-#define ADC_IND_CURR2			6
-#define ADC_IND_SENS2			7
-#define ADC_IND_TEMP_MOS		8
-#define ADC_IND_TEMP_MOTOR		9
-#define ADC_IND_VREFINT			10
+#define ADC_IND_CURR2			4
+#define ADC_IND_SENS2			5
+#define ADC_IND_TEMP_MOS_2		6
+
+//#define ADC_IND_VREFINT			10
 
 
 // ADC3
-#define ADC_IND_CURR3			12
-#define ADC_IND_SENS3			13
+#define ADC_IND_CURR3			8
+#define ADC_IND_SENS3			9
+#define ADC_IND_TEMP_MOS_3		10
+//#define ADC_IND_TEMP_MOS_3		11
 
 
 

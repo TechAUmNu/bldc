@@ -18,7 +18,7 @@
     */
 
 #pragma GCC push_options
-#pragma GCC optimize ("Os")
+#pragma GCC optimize ("O3")
 
 #include "flash_helper.h"
 #include "ch.h"
@@ -142,7 +142,7 @@ uint16_t flash_helper_erase_code(int ind) {
 	}
 #endif
 
-	uint8_t *ptr = flash_helper_code_data_raw(ind);
+	volatile uint8_t *ptr = flash_helper_code_data_raw(ind);
 
 	bool has_data = false;
 	for (int i = 0;i < (1024 * 128); i++) {
@@ -161,11 +161,6 @@ uint16_t flash_helper_erase_code(int ind) {
 	return erase_sector(code_sectors[ind]);
 }
 
-uint16_t flash_helper_write_code(int ind, uint32_t offset, uint8_t *data, uint32_t len) {
-	code_checks[ind].check_done = false;
-	code_checks[ind].ok = false;
-	return write_data(flash_addr[code_sectors[ind]] + offset, data, len);
-}
 
 uint8_t* flash_helper_code_data(int ind) {
 	qmlui_check(ind);
@@ -402,12 +397,15 @@ static uint16_t erase_sector(uint32_t sector) {
 
 	HAL_FLASH_Unlock();
 
+	SCB_DisableICache();
+	SCB_DisableDCache();
 	if(sector > 7){
 		res = HAL_FLASH_Erase(2, sector-8, 1);
 	} else {
 		res = HAL_FLASH_Erase(1, sector, 1);
 	}
-
+	SCB_EnableICache();
+	SCB_EnableDCache();
 
 	HAL_FLASH_Lock();
 
@@ -417,15 +415,13 @@ static uint16_t erase_sector(uint32_t sector) {
 	return res;
 }
 
+uint16_t flash_helper_write_code(int ind, uint32_t offset, uint8_t *data, uint32_t len) {
+	code_checks[ind].check_done = false;
+	code_checks[ind].ok = false;
+	return write_data(flash_addr[code_sectors[ind]] + offset, data, len);
+}
+
 static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
-
-	// Len must be multiple of 4 bytes for now
-	if(len % 4 != 0)
-	{
-		return FLASH_ERROR_UNIMPLEMENTED;
-	}
-
-
 	mc_interface_ignore_input_both(5000);
 	mc_interface_release_motor_override_both();
 
@@ -438,16 +434,16 @@ static uint16_t write_data(uint32_t base, uint8_t *data, uint32_t len) {
 
 	HAL_FLASH_Unlock();
 
-	for (uint32_t i = 0;i < len;i++) {
-		uint16_t res = HAL_FLASH_Program((uint32_t)base + i,((uint8_t)&data[i]), 1);
-		if (res != FLASH_NO_ERROR) {
-			HAL_FLASH_Lock();
-			timeout_configure_IWDT();
-			mc_interface_ignore_input_both(5000);
-			utils_sys_unlock_cnt();
-			return res;
-		}
+	uint16_t res = HAL_FLASH_Program((uint32_t)base, data, len);
+
+	if (res != FLASH_NO_ERROR) {
+		HAL_FLASH_Lock();
+		timeout_configure_IWDT();
+		mc_interface_ignore_input_both(5000);
+		utils_sys_unlock_cnt();
+		return res;
 	}
+
 
 	HAL_FLASH_Lock();
 	timeout_configure_IWDT();
@@ -518,7 +514,7 @@ bool flash_helper_write_nvm(uint8_t *v, unsigned int len, unsigned int address) 
   * @retval Boolean indicating success or failure
   */
 bool flash_helper_wipe_nvm(void) {
-	return (erase_sector(8) == FLASH_NO_ERROR);
+	return (erase_sector(PACKAGE_BASE) == FLASH_NO_ERROR);
 }
 
 #pragma GCC pop_options

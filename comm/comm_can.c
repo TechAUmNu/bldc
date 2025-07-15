@@ -80,7 +80,7 @@ static THD_WORKING_AREA(cancom_status_internal_thread_wa, 512);
 
 static mutex_t can_mtx;
 static mutex_t can_rx_mtx;
-static uint8_t rx_buffer[RX_BUFFER_NUM][RX_BUFFER_SIZE];
+__attribute__((section(".ram4"))) static uint8_t rx_buffer[RX_BUFFER_NUM][RX_BUFFER_SIZE];
 static int rx_buffer_offset[RX_BUFFER_NUM];
 static volatile unsigned int rx_buffer_last_id;
 static volatile unsigned int rx_buffer_response_type = 1;

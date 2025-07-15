@@ -75,10 +75,12 @@
  *
  * TIM1: mcpwm
  * TIM2: mcpwm_foc
- * TIM5: timer
- * TIM8: mcpwm
  * TIM3: servo_dec/Encoder (HW_R2)/pwm_servo
  * TIM4: WS2811/WS2812 LEDs/Encoder (other HW)
+ * TIM5: timer
+ * TIM8: mcpwm
+
+
  *
  * DMA/stream	Device		Function
  * 1, 2			I2C1		Nunchuk, temp on rev 4.5
@@ -252,8 +254,6 @@ int main(void) {
 	extern const unsigned char itcm_text_end;
 	extern const unsigned char itcm_data;
 	memcpy(&itcm_text_start, &itcm_data, (int) (&itcm_text_end - &itcm_text_start));
-
-
 
 	halInit();
 	chSysInit();

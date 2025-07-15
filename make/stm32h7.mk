@@ -12,12 +12,12 @@ ifeq ($(USE_OPT),)
   USE_OPT += -DLBM_USE_DYN_FUNS -DLBM_USE_DYN_MACROS -DLBM_USE_DYN_LOOPS -DLBM_USE_TIME_QUOTA
   USE_OPT += -DLBM_USE_ERROR_LINENO
 #  USE_OPT += -DUSE_GC_PTR_REV
-  USE_OPT += -fsingle-precision-constant -Wdouble-promotion -specs=nosys.specs
+  USE_OPT += -fsingle-precision-constant -Wdouble-promotion -specs=nosys.specs 
 endif
 
 # C specific options here (added to USE_OPT).
 ifeq ($(USE_COPT),)
-  USE_COPT =
+  USE_COPT = 
 endif
 
 # C++ specific options here (added to USE_OPT).
@@ -37,7 +37,7 @@ endif
 
 # Enable this if you want link time optimizations (LTO).
 ifeq ($(USE_LTO),)
-  USE_LTO = no
+  USE_LTO = yes
 endif
 
 # Enable this if you want to see the full log while compiling.

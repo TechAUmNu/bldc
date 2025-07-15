@@ -212,8 +212,9 @@ void lsm6ds3_init(i2c_bb_state *i2c_state,
 
 void lsm6ds3_stop(void) {
 	if (lsm6ds3_thread_ref != NULL){
+		// TODO EM: FIX
 		chThdTerminate(lsm6ds3_thread_ref);
-		chThdWait(lsm6ds3_thread_ref);
+		//chThdWait(lsm6ds3_thread_ref);
 	}
 	lsm6ds3_thread_ref = NULL;
 	terminal_unregister_callback(terminal_read_reg);

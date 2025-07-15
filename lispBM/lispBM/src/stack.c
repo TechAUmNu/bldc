@@ -29,6 +29,9 @@
 #define STACK_UNUSED_WORD 0x5555555555555555
 #endif
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 int lbm_stack_allocate(lbm_stack_t *s, lbm_uint stack_size) {
   int r = 0;
   s->data = lbm_memory_allocate(stack_size);
@@ -41,6 +44,9 @@ int lbm_stack_allocate(lbm_stack_t *s, lbm_uint stack_size) {
   return r;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 int lbm_stack_create(lbm_stack_t *s, lbm_uint* data, lbm_uint stack_size) {
   s->data = data;
   memset(s->data, STACK_UNUSED_BYTE, stack_size * sizeof(lbm_uint));
@@ -49,6 +55,9 @@ int lbm_stack_create(lbm_stack_t *s, lbm_uint* data, lbm_uint stack_size) {
   return 1;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 lbm_uint lbm_get_max_stack(lbm_stack_t *s) {
   lbm_uint unused = 0;
   for (int i = (int)s->size-1 ; i >= 0; i --) {
@@ -61,16 +70,25 @@ lbm_uint lbm_get_max_stack(lbm_stack_t *s) {
   return s->size - unused;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 void lbm_stack_free(lbm_stack_t *s) {
   if (s->data) {
     lbm_memory_free(s->data);
   }
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 void lbm_stack_clear(lbm_stack_t *s) {
   s->sp = 0;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 int lbm_stack_drop(lbm_stack_t *s, lbm_uint n) {
 
   if (n > s->sp) return 0;
@@ -79,6 +97,9 @@ int lbm_stack_drop(lbm_stack_t *s, lbm_uint n) {
   return 1;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 int lbm_push(lbm_stack_t *s, lbm_uint val) {
   int res = 1;
   if (s->sp == s->size) {
@@ -88,12 +109,18 @@ int lbm_push(lbm_stack_t *s, lbm_uint val) {
   return res;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 int lbm_pop(lbm_stack_t *s, lbm_uint *val) {
   s->sp--;
   *val = s->data[s->sp];
   return 1;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 int lbm_pop_2(lbm_stack_t *s, lbm_uint *r0, lbm_uint *r1) {
   s->sp--;
   *r0 = s->data[s->sp--];
@@ -101,6 +128,9 @@ int lbm_pop_2(lbm_stack_t *s, lbm_uint *r0, lbm_uint *r1) {
   return 1;
 }
 
+#ifdef LISP_IN_ITCM
+__attribute__((section(".itcm_text")))
+#endif
 int lbm_pop_3(lbm_stack_t *s, lbm_uint *r0, lbm_uint *r1, lbm_uint *r2) {
   s->sp--;
   *r0 = s->data[s->sp--];

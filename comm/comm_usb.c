@@ -29,11 +29,11 @@
 
 // Private variables
 #define SERIAL_RX_BUFFER_SIZE		2048
-static uint8_t serial_rx_buffer[SERIAL_RX_BUFFER_SIZE];
+__attribute__((section(".ram4"))) static uint8_t serial_rx_buffer[SERIAL_RX_BUFFER_SIZE];
 static int serial_rx_read_pos = 0;
 static int serial_rx_write_pos = 0;
 __attribute__((section(".ram4"))) static THD_WORKING_AREA(serial_read_thread_wa, 256);
-static THD_WORKING_AREA(serial_process_thread_wa, 2048);
+__attribute__((section(".ram4"))) static THD_WORKING_AREA(serial_process_thread_wa, 2048);
 static mutex_t send_mutex;
 static thread_t *process_tp;
 static volatile unsigned int write_timeout_cnt = 0;

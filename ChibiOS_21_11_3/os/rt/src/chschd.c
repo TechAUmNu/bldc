@@ -277,6 +277,7 @@ void ch_sch_prio_insert(ch_queue_t *qp, ch_queue_t *tp) {
  *
  * @iclass
  */
+__attribute__((section(".itcm_text")))
 thread_t *chSchReadyI(thread_t *tp) {
 
   chDbgCheckClassI();
@@ -302,6 +303,7 @@ thread_t *chSchReadyI(thread_t *tp) {
  *
  * @sclass
  */
+__attribute__((section(".itcm_text")))
 void chSchGoSleepS(tstate_t newstate) {
   os_instance_t *oip = currcore;
   thread_t *otp = __instance_get_currthread(oip);
@@ -513,6 +515,7 @@ bool chSchIsPreemptionRequired(void) {
  *
  * @special
  */
+__attribute__((section(".itcm_text")))
 void chSchDoPreemption(void) {
   os_instance_t *oip = currcore;
   thread_t *otp = __instance_get_currthread(oip);

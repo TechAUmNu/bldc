@@ -38,16 +38,7 @@ SECTIONS
         __fini_array_end__ = .;
     } > XTORS_FLASH AT > XTORS_FLASH_LMA
 
-    .text : ALIGN_WITH_INPUT
-    {
-        __text_base__ = .;
-        *(.text)
-        *(.text.*)
-        *(.glue_7t)
-        *(.glue_7)
-        *(.gcc*)
-        __text_end__ = .;
-    } > TEXT_FLASH AT > TEXT_FLASH_LMA
+
 
     .rodata : ALIGN(4)
     {

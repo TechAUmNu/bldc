@@ -36,9 +36,11 @@
 #define NEW_APP_SECTORS							4
 #define APP_MAX_SIZE							(1024 * 128 * 4 - 8) // Note that the bootloader needs 8 extra bytes
 
-#define LISP_CONST_BASE							4
-#define QMLUI_BASE								5
-#define LISP_BASE								6
+#define QMLUI_BASE								4
+#define LISP_BASE								5
+#define LISP_CONST_BASE							6
+
+
 #define PACKAGE_BASE							7
 
 #define QMLUI_MAX_SIZE							(1024 * 128 - 8)

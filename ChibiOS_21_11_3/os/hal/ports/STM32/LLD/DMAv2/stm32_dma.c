@@ -177,6 +177,7 @@ OSAL_IRQ_HANDLER(STM32_DMA1_CH0_HANDLER) {
  *
  * @isr
  */
+__attribute__((section(".itcm_text")))
 OSAL_IRQ_HANDLER(STM32_DMA1_CH1_HANDLER) {
   uint32_t flags;
 
@@ -195,6 +196,7 @@ OSAL_IRQ_HANDLER(STM32_DMA1_CH1_HANDLER) {
  *
  * @isr
  */
+__attribute__((section(".itcm_text")))
 OSAL_IRQ_HANDLER(STM32_DMA1_CH2_HANDLER) {
   uint32_t flags;
 
@@ -213,6 +215,7 @@ OSAL_IRQ_HANDLER(STM32_DMA1_CH2_HANDLER) {
  *
  * @isr
  */
+__attribute__((section(".itcm_text")))
 OSAL_IRQ_HANDLER(STM32_DMA1_CH3_HANDLER) {
   uint32_t flags;
 

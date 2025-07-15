@@ -44,14 +44,14 @@
 #include "foc_math.h"
 
 // Private variables
-static volatile bool m_dccal_done = false;
-static volatile float m_last_adc_isr_duration;
-static volatile bool m_init_done = false;
-static volatile motor_all_state_t m_motor_1;
+static bool m_dccal_done = false;
+static float m_last_adc_isr_duration;
+static bool m_init_done = false;
+static motor_all_state_t m_motor_1;
 #ifdef HW_HAS_DUAL_MOTORS
-static volatile motor_all_state_t m_motor_2;
+static motor_all_state_t m_motor_2;
 #endif
-static volatile int m_isr_motor = 0;
+static int m_isr_motor = 0;
 
 // Private functions
 static void control_current(motor_all_state_t *motor, float dt);
@@ -61,16 +61,19 @@ static void start_pwm_hw(motor_all_state_t *motor);
 static void full_brake_hw(motor_all_state_t *motor);
 static void terminal_plot_hfi(int argc, const char **argv);
 static void timer_update(motor_all_state_t *motor, float dt);
-static void hfi_update(volatile motor_all_state_t *motor, float dt);
+static void hfi_update(motor_all_state_t *motor, float dt);
 
 // Threads
+
 static THD_WORKING_AREA(timer_thread_wa, 512);
 static THD_FUNCTION(timer_thread, arg);
 static volatile bool timer_thd_stop;
 
+
 static THD_WORKING_AREA(hfi_thread_wa, 512);
 static THD_FUNCTION(hfi_thread, arg);
 static volatile bool hfi_thd_stop;
+
 
 static THD_WORKING_AREA(pid_thread_wa, 256);
 static THD_FUNCTION(pid_thread, arg);
@@ -132,7 +135,7 @@ static volatile bool pid_thd_stop;
 #define M_MOTOR(is_second_motor)  (((void)is_second_motor), &m_motor_1)
 #endif
 
-static void update_hfi_samples(foc_hfi_samples samples, volatile motor_all_state_t *motor) {
+static void update_hfi_samples(foc_hfi_samples samples, motor_all_state_t *motor) {
 	utils_sys_lock_cnt();
 
 	memset((void*)&motor->m_hfi, 0, sizeof(motor->m_hfi));
@@ -338,7 +341,7 @@ static void timer_reinit(int f_zv) {
 	nvicEnableVector(TIM2_IRQn, 6);
 }
 
-static void init_audio_state(volatile mc_audio_state *s) {
+static void init_audio_state(mc_audio_state *s) {
 	memset((void*)s, 0, sizeof(mc_audio_state));
 
 	s->mode = MC_AUDIO_OFF;
@@ -700,7 +703,8 @@ void mcpwm_foc_deinit(void) {
 	nvicDisableVector(ADC_IRQn);
 }
 
-static volatile motor_all_state_t *get_motor_now(void) {
+__attribute__((section(".itcm_text")))
+static motor_all_state_t *get_motor_now(void) {
 #ifdef HW_HAS_DUAL_MOTORS
 	return mc_interface_motor_now() == 1 ? &m_motor_1 : &m_motor_2;
 #else
@@ -1350,6 +1354,7 @@ float mcpwm_foc_get_id(void) {
  * @return
  * The Q axis current.
  */
+__attribute__((section(".itcm_text")))
 float mcpwm_foc_get_iq(void) {
 	return get_motor_now()->m_motor_state.iq;
 }
@@ -1529,7 +1534,7 @@ float mcpwm_foc_get_est_ind(void) {
 	return (Ld_est + Lq_est) / 2.0;
 }
 
-volatile const hfi_state_t *mcpwm_foc_get_hfi_state(void) {
+const hfi_state_t *mcpwm_foc_get_hfi_state(void) {
 	return &get_motor_now()->m_hfi;
 }
 
@@ -2223,6 +2228,7 @@ bool mcpwm_foc_beep(float freq, float time, float voltage) {
 	return true;
 }
 
+
 bool mcpwm_foc_play_tone(int channel, float freq, float voltage) {
 	if (mc_interface_get_fault() != FAULT_CODE_NONE) {
 		return false;
@@ -2894,10 +2900,11 @@ void mcpwm_foc_tim_sample_int_handler(void) {
 		// When CCPC bit is set, it allows to update CCxE, CCxNE and OCxM bits
 		TIM1->EGR = TIM_EGR_COMG;
 		TIM8->EGR = TIM_EGR_COMG;
-
+#ifdef ENABLE_VIRTUAL_MOTOR
 		virtual_motor_int_handler(
 				m_motor_1.m_motor_state.v_alpha,
 				m_motor_1.m_motor_state.v_beta);
+#endif
 	}
 }
 
@@ -2922,14 +2929,14 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 	motor_all_state_t *motor_other = is_second_motor ? (motor_all_state_t*)&m_motor_1 : (motor_all_state_t*)&m_motor_2;
 	m_isr_motor = is_second_motor ? 2 : 1;
 #ifdef HW_HAS_3_SHUNTS
-	volatile TIM_TypeDef *tim = is_second_motor ? TIM8 : TIM1;
+	TIM_TypeDef *tim = is_second_motor ? TIM8 : TIM1;
 #endif
 #else
 	motor_all_state_t *motor_other = (motor_all_state_t*)&m_motor_1;
 	motor_all_state_t *motor_now = (motor_all_state_t*)&m_motor_1;;
 	m_isr_motor = 1;
 #ifdef HW_HAS_3_SHUNTS
-	volatile TIM_TypeDef *tim = TIM1;
+	TIM_TypeDef *tim = TIM1;
 #endif
 #endif
 
@@ -3001,7 +3008,7 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 		float s, c;
 		utils_fast_sincos_better(interpolated_phase, &s, &c);
 
-		volatile motor_state_t *state_m = &(motor_other->m_motor_state);
+		motor_state_t *state_m = &(motor_other->m_motor_state);
 		state_m->phase_sin = s;
 		state_m->phase_cos = c;
 		state_m->mod_alpha_raw = c * state_m->mod_d - s * state_m->mod_q;
@@ -3194,8 +3201,8 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 
 	UTILS_LP_FAST(motor_now->m_motor_state.v_bus, GET_INPUT_VOLTAGE(), 0.1);
 
-	volatile float enc_ang = 0;
-	volatile bool encoder_is_being_used = false;
+	float enc_ang = 0;
+	bool encoder_is_being_used = false;
 
 	if (virtual_motor_is_connected()) {
 		if (conf_now->foc_sensor_mode == FOC_SENSOR_MODE_ENCODER ) {
@@ -3786,6 +3793,7 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 
 // Private functions
 
+__attribute__((section(".itcm_text")))
 static void timer_update(motor_all_state_t *motor, float dt) {
 	foc_run_fw(motor, dt);
 
@@ -3989,10 +3997,10 @@ static void timer_update(motor_all_state_t *motor, float dt) {
 
 	// Samples
 	if (motor->m_state == MC_STATE_RUNNING) {
-		const volatile float vd_tmp = motor->m_motor_state.vd;
-		const volatile float vq_tmp = motor->m_motor_state.vq;
-		const volatile float id_tmp = motor->m_motor_state.id;
-		const volatile float iq_tmp = motor->m_motor_state.iq;
+		const float vd_tmp = motor->m_motor_state.vd;
+		const float vq_tmp = motor->m_motor_state.vq;
+		const float id_tmp = motor->m_motor_state.id;
+		const float iq_tmp = motor->m_motor_state.iq;
 
 		motor->m_samples.avg_current_tot += NORM2_f(id_tmp, iq_tmp);
 		motor->m_samples.avg_voltage_tot += NORM2_f(vd_tmp, vq_tmp);
@@ -4033,6 +4041,7 @@ static void timer_update(motor_all_state_t *motor, float dt) {
 	}
 }
 
+__attribute__((section(".itcm_text")))
 static THD_FUNCTION(timer_thread, arg) {
 	(void)arg;
 
@@ -4068,7 +4077,7 @@ static THD_FUNCTION(timer_thread, arg) {
 	}
 }
 
-static void hfi_update(volatile motor_all_state_t *motor, float dt) {
+static void hfi_update(motor_all_state_t *motor, float dt) {
 	(void)dt;
 	float rpm_abs = fabsf(RADPS2RPM_f(motor->m_speed_est_fast));
 
@@ -4328,6 +4337,7 @@ static void hfi_update(volatile motor_all_state_t *motor, float dt) {
 	}
 }
 
+__attribute__((section(".itcm_text")))
 static THD_FUNCTION(hfi_thread, arg) {
 	(void)arg;
 
@@ -4353,6 +4363,7 @@ static THD_FUNCTION(hfi_thread, arg) {
 	}
 }
 
+__attribute__((section(".itcm_text")))
 static THD_FUNCTION(pid_thread, arg) {
 	(void)arg;
 
@@ -4429,8 +4440,8 @@ static THD_FUNCTION(pid_thread, arg) {
  */
 __attribute__((section(".itcm_text")))
 static void control_current(motor_all_state_t *motor, float dt) {
-	volatile motor_state_t *state_m = &motor->m_motor_state;
-	volatile mc_configuration *conf_now = motor->m_conf;
+	motor_state_t *state_m = &motor->m_motor_state;
+	mc_configuration *conf_now = motor->m_conf;
 
 	float s = state_m->phase_sin;
 	float c = state_m->phase_cos;
@@ -4911,7 +4922,7 @@ static void update_valpha_vbeta(motor_all_state_t *motor, float mod_alpha, float
 	mc_configuration *conf_now = motor->m_conf;
 	float Va, Vb, Vc;
 
-	volatile float *ofs_volt = conf_now->foc_offsets_voltage_undriven;
+	 float *ofs_volt = conf_now->foc_offsets_voltage_undriven;
 	if (motor->m_state == MC_STATE_RUNNING) {
 		ofs_volt = conf_now->foc_offsets_voltage;
 	}
@@ -5062,6 +5073,7 @@ static void update_valpha_vbeta(motor_all_state_t *motor, float mod_alpha, float
 	}
 }
 
+__attribute__((section(".itcm_text")))
 static void stop_pwm_hw(motor_all_state_t *motor) {
 	motor->m_id_set = 0.0;
 	motor->m_iq_set = 0.0;

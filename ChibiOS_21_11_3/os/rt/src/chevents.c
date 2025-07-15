@@ -335,6 +335,7 @@ eventflags_t chEvtGetAndClearFlags(event_listener_t *elp) {
  *
  * @iclass
  */
+__attribute__((section(".itcm_text")))
 void chEvtSignalI(thread_t *tp, eventmask_t events) {
 
   chDbgCheckClassI();
@@ -502,6 +503,7 @@ eventmask_t chEvtWaitOne(eventmask_t events) {
  *
  * @api
  */
+__attribute__((section(".itcm_text")))
 eventmask_t chEvtWaitAny(eventmask_t events) {
   thread_t *currtp = chThdGetSelfX();
   eventmask_t m;

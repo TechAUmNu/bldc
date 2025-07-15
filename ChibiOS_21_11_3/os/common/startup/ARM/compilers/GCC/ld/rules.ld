@@ -75,6 +75,8 @@ SECTIONS
        __text_base__ = .;
         *(.text)
         *(.text.*)
+        /* Exclude file(s) from NewLib libc.a from .text.* section  */     
+     *(EXCLUDE_FILE (*libc.a:lib_a-memcpy-stub.o) .text*)   
         *(.glue_7t)
         *(.glue_7)
         *(.gcc*)

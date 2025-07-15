@@ -25,6 +25,7 @@
 #include "hw.h"
 #include "encoder/encoder.h"
 
+__attribute__((section(".itcm_text")))
 CH_IRQ_HANDLER(ADC1_2_3_IRQHandler) {
 	CH_IRQ_PROLOGUE();
 	// Clear the IT pending bit
@@ -33,6 +34,7 @@ CH_IRQ_HANDLER(ADC1_2_3_IRQHandler) {
 	CH_IRQ_EPILOGUE();
 }
 
+__attribute__((section(".itcm_text")))
 CH_IRQ_HANDLER(TIM2_IRQHandler) {
 	if((TIM2->SR & TIM_SR_CC2IF) && (TIM2->DIER & TIM_DIER_CC2IE)){
 		mcpwm_foc_tim_sample_int_handler();
