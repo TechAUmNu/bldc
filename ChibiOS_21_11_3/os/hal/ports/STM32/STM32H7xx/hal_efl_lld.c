@@ -212,7 +212,7 @@ flash_error_t HAL_FLASH_Lock(void)
   return FLASH_NO_ERROR;
 }
 
-__attribute__((section(".itcm_text")))
+
 flash_error_t FLASH_WaitForLastOperation(uint8_t Bank) {
 	/* Wait for the FLASH operation to complete by polling on QW flag to be reset.
 	 Even if the FLASH operation fails, the QW flag will be reset and an error
@@ -261,7 +261,7 @@ flash_error_t FLASH_WaitForLastOperation(uint8_t Bank) {
 }
 
 
-__attribute__((section(".itcm_text")))
+
 void FLASH_Erase_Sector(uint32_t Sector, uint32_t Bank) {
 	if (Bank == FLASH_BANK_1) {
 		/* Reset Program/erase VoltageRange and Sector Number for Bank1 */
@@ -279,13 +279,9 @@ void FLASH_Erase_Sector(uint32_t Sector, uint32_t Bank) {
 }
 
 
-__attribute__((section(".itcm_text")))
+
 flash_error_t HAL_FLASH_Erase(uint8_t bank, uint8_t start_sector,
 		uint8_t num_sectors) {
-
-	SCB_DisableICache();
-	SCB_DisableDCache();
-
 	flash_error_t status = FLASH_NO_ERROR;
 
 	if (bank == FLASH_BANK_1) {
@@ -317,22 +313,14 @@ flash_error_t HAL_FLASH_Erase(uint8_t bank, uint8_t start_sector,
 			break;
 		}
 	}
-
-	SCB_EnableICache();
-	SCB_EnableDCache();
-
 	return status;
 }
 
 // Programs 8 bit
-__attribute__((section(".itcm_text")))
 flash_error_t HAL_FLASH_Program(uint32_t FlashAddress,
 		const uint8_t *DataPointer, uint32_t bytes) {
 	flash_error_t status;
 	uint32_t bank;
-
-	SCB_DisableICache();
-	SCB_DisableDCache();
 
 	if (IS_FLASH_PROGRAM_ADDRESS_BANK1(FlashAddress)) {
 		bank = FLASH_BANK_1;
@@ -414,10 +402,6 @@ flash_error_t HAL_FLASH_Program(uint32_t FlashAddress,
 			}
 		}
 	}
-
-	SCB_EnableICache();
-	SCB_EnableDCache();
-
 	return status;
 }
 

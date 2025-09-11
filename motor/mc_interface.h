@@ -29,7 +29,7 @@ void mc_interface_init(void);
 int mc_interface_motor_now(void);
 void mc_interface_select_motor_thread(int motor);
 int mc_interface_get_motor_thread(void);
-const mc_configuration* mc_interface_get_configuration(void);
+const volatile mc_configuration* mc_interface_get_configuration(void);
 void mc_interface_set_configuration(mc_configuration *configuration);
 unsigned mc_interface_calc_crc(mc_configuration* conf, bool is_motor_2);
 bool mc_interface_dccal_done(void);
@@ -138,9 +138,9 @@ void mc_interface_mc_timer_isr(bool is_second_motor);
 void mc_interface_adc_inj_int_handler(void);
 
 // External variables
-extern uint16_t ADC_Value[];
-extern float ADC_curr_norm_value[];
-extern float ADC_curr_raw[];
+extern volatile uint16_t ADC_Value[];
+extern volatile float ADC_curr_norm_value[];
+extern volatile float ADC_curr_raw[];
 
 
 // Common fixed parameters

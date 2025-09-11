@@ -41,10 +41,10 @@
 #define NRF_RESTART_TIMEOUT		500  // Restart the NRF if nothing has been received or acked for this time
 
 // Variables
-__attribute__((section(".ram4"))) static THD_WORKING_AREA(rx_thread_wa, 2048);
-__attribute__((section(".ram4"))) static THD_WORKING_AREA(tx_thread_wa, 256);
+static THD_WORKING_AREA(rx_thread_wa, 2048);
+static THD_WORKING_AREA(tx_thread_wa, 256);
 static mote_state mstate;
-__attribute__((section(".ram4"))) static uint8_t rx_buffer[RX_BUFFER_SIZE];
+static uint8_t rx_buffer[RX_BUFFER_SIZE];
 static int nosend_cnt;
 static int nrf_restart_rx_time;
 static int nrf_restart_tx_time;

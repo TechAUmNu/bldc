@@ -51,10 +51,10 @@
 
 // Global variables
 __attribute__((section(".nocache")))
-uint16_t ADC_Value[HW_ADC_CHANNELS + HW_ADC_CHANNELS_EXTRA] = {0};
+volatile uint16_t ADC_Value[HW_ADC_CHANNELS + HW_ADC_CHANNELS_EXTRA] = {0};
 
-float ADC_curr_norm_value[6];
-float ADC_curr_raw[6];
+volatile float ADC_curr_norm_value[6];
+volatile float ADC_curr_raw[6];
 
 typedef struct {
 	mc_configuration m_conf;
@@ -99,9 +99,9 @@ typedef struct {
 } motor_if_state_t;
 
 // Private variables
-__attribute__((section(".ram5"))) static motor_if_state_t m_motor_1;
+static volatile motor_if_state_t m_motor_1;
 #ifdef HW_HAS_DUAL_MOTORS
-__attribute__((section(".ram5"))) static motor_if_state_t m_motor_2;
+static volatile motor_if_state_t m_motor_2;
 #endif
 
 // Sampling variables
@@ -128,7 +128,7 @@ static volatile debug_sampling_mode m_sample_mode_last;
 static volatile int m_sample_offset_last;
 static volatile int m_sample_now;
 static volatile int m_sample_trigger;
-static float m_last_adc_duration_sample;
+static volatile float m_last_adc_duration_sample;
 static volatile bool m_sample_is_second_motor;
 static volatile gnss_data m_gnss = {0};
 
@@ -143,10 +143,10 @@ typedef struct {
 static volatile fault_data_local m_fault_data = {0, FAULT_CODE_NONE, 0, 0, {0, 0}};
 
 // Private functions
-static void update_override_limits(motor_if_state_t *motor, mc_configuration *conf);
-static void run_timer_tasks(motor_if_state_t *motor);
-static void update_stats(motor_if_state_t *motor);
-static motor_if_state_t *motor_now(void);
+static void update_override_limits(volatile motor_if_state_t *motor, volatile mc_configuration *conf);
+static void run_timer_tasks(volatile motor_if_state_t *motor);
+static void update_stats(volatile motor_if_state_t *motor);
+static volatile motor_if_state_t *motor_now(void);
 static void send_sample_block(int ind, int offset);
 
 // Function pointers
@@ -303,12 +303,12 @@ int mc_interface_get_motor_thread(void) {
 	return chThdGetSelfX()->motor_selected;
 }
 
-const mc_configuration* mc_interface_get_configuration(void) {
+const volatile mc_configuration* mc_interface_get_configuration(void) {
 	return &motor_now()->m_conf;
 }
 
 void mc_interface_set_configuration(mc_configuration *configuration) {
-	motor_if_state_t *motor = motor_now();
+	volatile motor_if_state_t *motor = motor_now();
 
 #if defined HW_HAS_DUAL_PARALLEL
 	configuration->motor_type = MOTOR_TYPE_FOC;
@@ -2211,8 +2211,7 @@ void mc_interface_adc_inj_int_handler(void) {
  * @param conf
  * The configaration to update.
  */
-__attribute__((section(".itcm_text")))
-static void update_override_limits(motor_if_state_t *motor, mc_configuration *conf) {
+static void update_override_limits(volatile motor_if_state_t *motor, volatile mc_configuration *conf) {
 	bool is_motor_1 = motor == &m_motor_1;
 
 	const float v_in = motor->m_input_voltage_filtered;
@@ -2501,7 +2500,7 @@ static void update_override_limits(motor_if_state_t *motor, mc_configuration *co
 	conf->lo_current_min = lo_min;
 }
 
-static motor_if_state_t *motor_now(void) {
+static volatile motor_if_state_t *motor_now(void) {
 #ifdef HW_HAS_DUAL_MOTORS
 	return mc_interface_motor_now() == 1 ? &m_motor_1 : &m_motor_2;
 #else
@@ -2509,7 +2508,7 @@ static motor_if_state_t *motor_now(void) {
 #endif
 }
 
-static void run_timer_tasks(motor_if_state_t *motor) {
+static void run_timer_tasks(volatile motor_if_state_t *motor) {
 	bool is_motor_1 = motor == &m_motor_1;
 	mc_interface_select_motor_thread(is_motor_1 ? 1 : 2);
 
@@ -2701,7 +2700,7 @@ static THD_FUNCTION(timer_thread, arg) {
 	}
 }
 
-static void update_stats(motor_if_state_t *motor) {
+static void update_stats(volatile motor_if_state_t *motor) {
 	mc_interface_select_motor_thread(motor == (&m_motor_1) ? 1 : 2);
 
 	setup_values val = mc_interface_get_setup_values();

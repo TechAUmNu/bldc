@@ -243,9 +243,6 @@ char *lbm_dec_str(lbm_value val) {
   return res;
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 lbm_array_header_t *lbm_dec_array_r(lbm_value val) {
   lbm_array_header_t *array = NULL;
   if (lbm_is_array_r(val)) {
@@ -994,9 +991,6 @@ lbm_value lbm_cons(lbm_value car, lbm_value cdr) {
   return lbm_heap_allocate_cell(LBM_TYPE_CONS, car, cdr);
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 lbm_value lbm_car(lbm_value c){
   if (lbm_is_ptr(c) ){
     lbm_cons_t *cell = lbm_ref_cell(c);

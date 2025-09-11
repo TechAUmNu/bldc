@@ -514,7 +514,6 @@ sysinterval_t chVTGetRemainingIntervalI(virtual_timer_t *vtp) {
  *
  * @iclass
  */
-__attribute__((section(".itcm_text")))
 void chVTDoTickI(void) {
   virtual_timers_list_t *vtlp = &currcore->vtlist;
 

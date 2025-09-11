@@ -1753,9 +1753,7 @@ int lbm_perform_gc(void) {
 /****************************************************/
 /* Evaluation functions                             */
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
+
 static void eval_symbol(eval_context_t *ctx) {
   lbm_uint s = lbm_dec_sym(ctx->curr_exp);
   if (s >= RUNTIME_SYMBOLS_START) {
@@ -1809,27 +1807,18 @@ static void eval_symbol(eval_context_t *ctx) {
 }
 
 // (quote e) => e
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_quote(eval_context_t *ctx) {
   ctx->r = get_cadr(ctx->curr_exp);
   ctx->app_cont = true;
 }
 
 // a => a
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_selfevaluating(eval_context_t *ctx) {
   ctx->r = ctx->curr_exp;
   ctx->app_cont = true;
 }
 
 // (progn e1 ... en)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_progn(eval_context_t *ctx) {
   lbm_value exps = get_cdr(ctx->curr_exp);
 
@@ -1852,9 +1841,6 @@ static void eval_progn(eval_context_t *ctx) {
 }
 
 // (atomic e1 ... en)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_atomic(eval_context_t *ctx) {
   if (is_atomic) atomic_error();
   stack_reserve(ctx, 1)[0] = EXIT_ATOMIC;
@@ -1863,9 +1849,6 @@ static void eval_atomic(eval_context_t *ctx) {
 }
 
 // (call-cc (lambda (k) .... ))
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_callcc(eval_context_t *ctx) {
   lbm_value cont_array;
   lbm_uint *sptr0 = stack_reserve(ctx, 1);
@@ -1902,9 +1885,6 @@ static void eval_callcc(eval_context_t *ctx) {
 // invoking the continuation must check that target SP holds a continuation that
 // can be applied using app_cont, otherwise error. The continuation need not be correct
 // in case user globally bound the continuation, but it may rule out disastrous failure.
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_call_cc_unsafe(eval_context_t *ctx) {
   lbm_uint sp = ctx->K.sp;
   // The stored stack contains the is_atomic flag.
@@ -1948,9 +1928,6 @@ static void eval_define(eval_context_t *ctx) {
 /* Allocate closure is only used in eval_lambda currently.
    Inlining it should use no extra storage.
  */
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static inline lbm_value allocate_closure(lbm_value params, lbm_value body, lbm_value env) {
 
 #ifdef LBM_ALWAYS_GC
@@ -1998,9 +1975,6 @@ static inline lbm_value allocate_closure(lbm_value params, lbm_value body, lbm_v
    work properly due to this cheating.
  */
 // (lambda param-list body-exp) -> (closure param-list body-exp env)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_lambda(eval_context_t *ctx) {
   lbm_value vals[3];
   extract_n(ctx->curr_exp, vals, 3);
@@ -2025,9 +1999,6 @@ static void eval_lambda(eval_context_t *ctx) {
 }
 
 // (if cond-expr then-expr else-expr)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_if(eval_context_t *ctx) {
   lbm_value cdr = get_cdr(ctx->curr_exp);
   lbm_value *sptr = stack_reserve(ctx, 3);
@@ -2040,9 +2011,6 @@ static void eval_if(eval_context_t *ctx) {
 // (cond (cond-expr-1 expr-1)
 //         ...
 //       (cond-expr-N expr-N))
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_cond(eval_context_t *ctx) {
   lbm_value cond1[2];
   lbm_value rest_conds = extract_n(ctx->curr_exp, cond1, 2);
@@ -2073,9 +2041,6 @@ static void eval_cond(eval_context_t *ctx) {
   }
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_app_cont(eval_context_t *ctx) {
   lbm_stack_drop(&ctx->K, 1);
   ctx->app_cont = true;
@@ -2083,9 +2048,6 @@ static void eval_app_cont(eval_context_t *ctx) {
 
 // Create a named location in an environment to later receive a value.
 // Protects env from GC, other data is the obligation of the called.
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void create_binding_location(lbm_value key, lbm_value *env) {
   if (lbm_type_of(key) == LBM_TYPE_SYMBOL) { // default case
     if (key == ENC_SYM_NIL || key == ENC_SYM_DONTCARE) return;
@@ -2117,9 +2079,6 @@ static void create_binding_location(lbm_value key, lbm_value *env) {
   }
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void let_bind_values_eval(lbm_value binds, lbm_value exp, lbm_value env, eval_context_t *ctx) {
   if (lbm_is_cons(binds)) {
       // Preallocate binding locations.
@@ -2164,9 +2123,6 @@ static void let_bind_values_eval(lbm_value binds, lbm_value exp, lbm_value env, 
    sp-2 : rest
    sp-1 : PROGN_REST
 */
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_var(eval_context_t *ctx) {
   if (ctx->K.sp >= 4) { // Possibly in progn
     lbm_value sv = ctx->K.data[ctx->K.sp - 1];
@@ -2208,9 +2164,6 @@ static void eval_var(eval_context_t *ctx) {
 
 // (setq x (...)) - same as (set 'x (...)) or (setvar 'x (...))
 // does not error when given incorrect number of arguments.
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_setq(eval_context_t *ctx) {
   lbm_value parts[3];
   extract_n(ctx->curr_exp, parts, 3);
@@ -2221,9 +2174,6 @@ static void eval_setq(eval_context_t *ctx) {
   ctx->curr_exp = parts[2];
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_move_to_flash(eval_context_t *ctx) {
   lbm_value args = get_cdr(ctx->curr_exp);
   lbm_value *sptr = stack_reserve(ctx,2);
@@ -2235,9 +2185,6 @@ static void eval_move_to_flash(eval_context_t *ctx) {
 // (loop list-of-local-bindings
 //       condition-exp
 //       body-exp)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_loop(eval_context_t *ctx) {
   lbm_value env              = ctx->curr_env;
   lbm_value parts[3];
@@ -2256,9 +2203,6 @@ static void eval_loop(eval_context_t *ctx) {
  *   ((exit-error (? err)) (error-handler err))
  *   ((exit-ok    (? v))   (value-handler v)))
  */
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_trap(eval_context_t *ctx) {
 
   lbm_value expr = get_cadr(ctx->curr_exp);
@@ -2275,9 +2219,6 @@ static void eval_trap(eval_context_t *ctx) {
 
 // (let list-of-binding s
 //      body-exp)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_let(eval_context_t *ctx) {
   lbm_value env      = ctx->curr_env;
   lbm_value parts[3];
@@ -2286,9 +2227,6 @@ static void eval_let(eval_context_t *ctx) {
 }
 
 // (and exp0 ... expN)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_and(eval_context_t *ctx) {
   lbm_value rest = get_cdr(ctx->curr_exp);
   if (lbm_is_symbol_nil(rest)) {
@@ -2304,9 +2242,6 @@ static void eval_and(eval_context_t *ctx) {
 }
 
 // (or exp0 ... expN)
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_or(eval_context_t *ctx) {
   lbm_value rest = get_cdr(ctx->curr_exp);
   if (lbm_is_symbol_nil(rest)) {
@@ -2334,9 +2269,6 @@ static void eval_or(eval_context_t *ctx) {
 // Guards make match, pattern matching more complicated
 // than the recv pattern matching and requires staged execution
 // via the continuation system rather than a while loop over a list.
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_match(eval_context_t *ctx) {
 
   lbm_value rest = get_cdr(ctx->curr_exp);
@@ -2357,9 +2289,6 @@ static void eval_match(eval_context_t *ctx) {
 // Receive-timeout
 // (recv-to timeout (pattern expr)
 //                  (pattern expr))
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_receive_timeout(eval_context_t *ctx) {
   if (is_atomic) atomic_error();
   lbm_value timeout_val = get_cadr(ctx->curr_exp);
@@ -2378,9 +2307,6 @@ static void eval_receive_timeout(eval_context_t *ctx) {
 // Receive
 // (recv (pattern expr)
 //       (pattern expr))
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void eval_receive(eval_context_t *ctx) {
   if (is_atomic) atomic_error();
   lbm_value pats = get_cdr(ctx->curr_exp);
@@ -2417,9 +2343,6 @@ static void eval_receive(eval_context_t *ctx) {
 //   s[sp-1] = Key-symbol
 //
 //   ctx->r = Value
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void cont_set_global_env(eval_context_t *ctx){
 
   lbm_value key;
@@ -2448,9 +2371,6 @@ static void cont_set_global_env(eval_context_t *ctx){
 // s[sp-1] = Environment
 //
 // ctx->r = Irrelevant.
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void cont_resume(eval_context_t *ctx) {
   lbm_pop_2(&ctx->K, &ctx->curr_env, &ctx->curr_exp);
 }
@@ -2462,9 +2382,6 @@ static void cont_resume(eval_context_t *ctx) {
 // s[sp-1] = list of expressions to evaluate.
 //
 // ctx->r = Result of last evaluated expression.
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void cont_progn_rest(eval_context_t *ctx) {
   lbm_value *sptr = get_stack_ptr(ctx, 3);
 
@@ -2485,9 +2402,6 @@ static void cont_progn_rest(eval_context_t *ctx) {
   }
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void cont_wait(eval_context_t *ctx) {
 
   lbm_value cid_val;
@@ -2515,9 +2429,7 @@ static void cont_wait(eval_context_t *ctx) {
     ctx->app_cont = true;
   }
 }
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
+
 static lbm_value perform_setvar(lbm_value key, lbm_value val, lbm_value env) {
 
   lbm_uint s = lbm_dec_sym(key);
@@ -2539,9 +2451,6 @@ static lbm_value perform_setvar(lbm_value key, lbm_value val, lbm_value env) {
   return ENC_SYM_NIL; // unreachable
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void apply_setvar(lbm_value *args, lbm_uint nargs, eval_context_t *ctx) {
   if (nargs == 2 && lbm_is_symbol(args[0])) {
     lbm_value res;
@@ -3292,9 +3201,6 @@ static const apply_fun fun_table[] =
 /* Application of function that takes arguments    */
 /* passed over the stack.                          */
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void application(eval_context_t *ctx, lbm_value *fun_args, lbm_uint arg_count) {
   /* If arriving here, we know that the fun is a symbol.
    *  and can be a built in operation or an extension.
@@ -5538,9 +5444,6 @@ static const evaluator_fun evaluators[] =
 /*********************************************************/
 /* Evaluator step function                               */
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static void evaluation_step(void){
   eval_context_t *ctx = ctx_running;
 #ifdef VISUALIZE_HEAP
@@ -5708,12 +5611,7 @@ static void process_events(void) {
    I think it would be better use a mailbox for
    communication between other threads and the run_eval
    but for now a set of variables will be used. */
-
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
-void lbm_run_eval(void)
-{
+void lbm_run_eval(void){
 
   if (setjmp(critical_error_jmp_buf) > 0) {
     printf_callback("GC stack overflow!\n");

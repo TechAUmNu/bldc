@@ -39,9 +39,7 @@ static char print_val_buffer[256];
 static lbm_uint sym_left;
 static lbm_uint sym_case_insensitive;
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
+
 static size_t strlen_max(const char *s, size_t maxlen) {
   size_t i;
   for (i = 0; i < maxlen; i ++) {
@@ -50,9 +48,6 @@ static size_t strlen_max(const char *s, size_t maxlen) {
   return i;
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static bool dec_str_size(lbm_value v, char **data, size_t *size) {
   bool result = false;
   lbm_array_header_t *array = lbm_dec_array_r(v);
@@ -545,9 +540,6 @@ static lbm_value ext_to_str_delim(lbm_value *args, lbm_uint argn) {
   return to_str(delim, args + 1, argn - 1);
 }
 
-#ifdef LISP_IN_ITCM
-__attribute__((section(".itcm_text")))
-#endif
 static lbm_value ext_str_len(lbm_value *args, lbm_uint argn) {
   LBM_CHECK_ARGN(1);
 

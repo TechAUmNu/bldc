@@ -32,13 +32,13 @@ typedef struct {
 } appconf_container_t;
 
 // Private variables
-__attribute__((section(".ram4"))) static mcconf_container_t m_mc_confs[MEMPOOLS_MCCONF_NUM] = {{0}};
-__attribute__((section(".ram4"))) static appconf_container_t m_app_confs[MEMPOOLS_APPCONF_NUM] = {{0}};
+static mcconf_container_t m_mc_confs[MEMPOOLS_MCCONF_NUM] = {{0}};
+static appconf_container_t m_app_confs[MEMPOOLS_APPCONF_NUM] = {{0}};
 static int m_mcconf_highest = 0;
 static int m_appconf_highest = 0;
 
-__attribute__((section(".ram4"))) static uint8_t packet_buffer[PACKET_MAX_PL_LEN];
-__attribute__((section(".ram4"))) static uint8_t lbm_packet_buffer[PACKET_MAX_PL_LEN];
+static uint8_t packet_buffer[PACKET_MAX_PL_LEN];
+static uint8_t lbm_packet_buffer[PACKET_MAX_PL_LEN];
 static mutex_t packet_buffer_mutex;
 static mutex_t lbm_packet_buffer_mutex;
 
