@@ -111,6 +111,13 @@ REGION_ALIAS("ETH_RAM", ram3);
 
 SECTIONS
 {
+	/* Vector table at beginning of flash */
+    .isr_vector :
+    {
+        KEEP(*(.vectors))     /* ChibiOS calls it .vectors */
+        KEEP(*(.isr_vector))  /* In case some libs use .isr_vector */
+    } > VECTORS_FLASH
+
     .text : ALIGN_WITH_INPUT
     {
         __text_base__ = .;
