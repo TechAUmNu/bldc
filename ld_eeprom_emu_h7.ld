@@ -21,8 +21,8 @@
  * SRAM1+SRAM2  - None.
  * SRAM3        - NOCACHE, ETH.
  * SRAM4        - Slow data.
- * DTCM-RAM     - Main Stack, Process Stack, lisp data.
- * ITCM-RAM     - FOC interrupt handler, lisp eval.
+ * DTCM-RAM     - Main Stack, Process Stack.
+ * ITCM-RAM     - FOC interrupt handler.
  * BCKP SRAM    - None.
  */
 MEMORY
