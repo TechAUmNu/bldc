@@ -492,15 +492,18 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	ADC3->CR |= ADC_CR_BOOST;
 
 //	// First calibrate
-//	ADC1->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
-//	ADC1->CR |= ADC_CR_ADCAL;                           // start calibration
-//	while(ADC1->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
-//	ADC2->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
-//	ADC2->CR |= ADC_CR_ADCAL;                           // start calibration
-//	while(ADC2->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
-//	ADC3->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
-//	ADC3->CR |= ADC_CR_ADCAL;                           // start calibration
-//	while(ADC3->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
+	ADC1->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
+	ADC1->CR |= ADC_CR_ADCALLIN;						// calibrate linearity at the same time
+	ADC1->CR |= ADC_CR_ADCAL;                           // start calibration
+	while(ADC1->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
+	ADC2->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
+	ADC2->CR |= ADC_CR_ADCALLIN;						// calibrate linearity at the same time
+	ADC2->CR |= ADC_CR_ADCAL;                           // start calibration
+	while(ADC2->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
+	ADC3->CR &= ~ADC_CR_ADEN;                           // ensure that the ADC is off
+	ADC3->CR |= ADC_CR_ADCALLIN;						// calibrate linearity at the same time
+	ADC3->CR |= ADC_CR_ADCAL;                           // start calibration
+	while(ADC3->CR & ADC_CR_ADCAL);                    // wait until ADCAL is 0 and cal is complete
 
 	// Enable DMA access 11: DMA Circular Mode selected
 	ADC1->CFGR = ADC_CFGR_DMNGT_1 | ADC_CFGR_DMNGT_0;
