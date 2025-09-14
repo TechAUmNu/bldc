@@ -147,7 +147,7 @@ void hw_setup_adc_channels(void) {
 
 	palSetPadMode(GPIOA, 2, PAL_MODE_INPUT_ANALOG);      // PA2 - IN14 - SENS2		- SLOW - Reacts to PA2
 	palSetPadMode(GPIOA, 3, PAL_MODE_INPUT_ANALOG);      // PA3 - IN15 - CURR2		- SLOW - Reacts to PA3
-	palSetPadMode(GPIOB, 0, PAL_MODE_INPUT_ANALOG);      // PB0 - IN9 - TEMP_MOS	- SLOW - Reacts to ?
+	palSetPadMode(GPIOB, 0, PAL_MODE_INPUT_ANALOG);      // PB0 - IN9 - TEMP_MOS	- SLOW - Reacts to PB0
 	palSetPadMode(GPIOC, 4, PAL_MODE_INPUT_ANALOG);      // PC4 - IN4 - EXT2 		- FAST - Reacts to PC4
 
 	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG);      // PC0 - IN10 - SENS3		- SLOW - Reacts to PC0
