@@ -125,36 +125,33 @@
  * 17 (3):  IN3		SENS3
  */
 
-#define HW_ADC_CHANNELS			18
-#define HW_ADC_INJ_CHANNELS		3
-#define HW_ADC_NBR_CONV			6
+// ADC setup
+#define HW_ADC_NBR_CONV      4
+#define HW_ADC_CHANNELS      16
+#define HW_ADC_INJ_CHANNELS  3
 
-#define HW_ADC_IND_DMA_1 0
-#define HW_ADC_IND_DMA_2 6
-#define HW_ADC_IND_DMA_3 12
-
-// ADC Indexes
-
-
-// ADC1
-#define ADC_IND_CURR1			0
-#define ADC_IND_SENS1			1
-#define ADC_IND_VIN_SENS		2
-#define ADC_IND_EXT				3
-#define ADC_IND_EXT2			4
-#define ADC_IND_SHUTDOWN		5
-
-// ADC2
-#define ADC_IND_CURR2			6
-#define ADC_IND_SENS2			7
-#define ADC_IND_TEMP_MOS		8
-#define ADC_IND_TEMP_MOTOR		9
-#define ADC_IND_VREFINT			10
+// DMA base offsets
+#define HW_ADC_IND_DMA_1     0
+#define HW_ADC_IND_DMA_2     6
+#define HW_ADC_IND_DMA_3     12
 
 
-// ADC3
-#define ADC_IND_CURR3			12
-#define ADC_IND_SENS3			13
+#define ADC_IND_SENS1        0   // ADC1 (IN5)
+#define ADC_IND_CURR1        1   // ADC1 (IN7)
+#define ADC_IND_TEMP_MOTOR   3   // ADC1 (IN8)
+#define ADC_IND_EXT          4   // ADC1 (IN3)
+
+
+#define ADC_IND_SENS2        6   // ADC2 (IN14)
+#define ADC_IND_CURR2        7   // ADC2 (IN15)
+#define ADC_IND_TEMP_MOS     8   // ADC2 (IN9)
+#define ADC_IND_EXT2         9   // ADC2 (IN4)
+
+
+#define ADC_IND_SENS3        12   // ADC3 (IN10)
+#define ADC_IND_CURR3        13   // ADC3 (IN11)
+#define ADC_IND_VIN_SENS     14  // ADC3 (IN0)
+#define ADC_IND_EXT3         15  // ADC3 (IN1)
 
 
 

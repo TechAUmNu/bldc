@@ -140,75 +140,52 @@ void hw_init_gpio(void) {
 
 // TODO EM: need to work out the correct sample times
 void hw_setup_adc_channels(void) {
-	// ADC1 regular channels
-	palSetPadMode(GPIOB, 1, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC1, 5, 0, ADC_SMPR_SMP_1P5); // 5 - PB1 - A3
+	palSetPadMode(GPIOB, 1, PAL_MODE_INPUT_ANALOG);      // PB1 - IN5 - SENS1 		- FAST - Reacts to PB1
+	palSetPadMode(GPIOA, 7, PAL_MODE_INPUT_ANALOG);      // PA7 - IN7 - CURR1 		- SLOW - Reacts to PA7
+	palSetPadMode(GPIOA, 6, PAL_MODE_INPUT_ANALOG);      // PA6 - IN3 - EXT1 		- FAST - Reacts to PA6
+	palSetPadMode(GPIOC, 5, PAL_MODE_INPUT_ANALOG);      // PC5 - IN8 - TEMP_MOTOR	- SLOW - Reacts to PC5
+
+	palSetPadMode(GPIOA, 2, PAL_MODE_INPUT_ANALOG);      // PA2 - IN14 - SENS2		- SLOW - Reacts to PA2
+	palSetPadMode(GPIOA, 3, PAL_MODE_INPUT_ANALOG);      // PA3 - IN15 - CURR2		- SLOW - Reacts to PA3
+	palSetPadMode(GPIOB, 0, PAL_MODE_INPUT_ANALOG);      // PB0 - IN9 - TEMP_MOS	- SLOW - Reacts to ?
+	palSetPadMode(GPIOC, 4, PAL_MODE_INPUT_ANALOG);      // PC4 - IN4 - EXT2 		- FAST - Reacts to PC4
+
+	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG);      // PC0 - IN10 - SENS3		- SLOW - Reacts to PC0
+	palSetPadMode(GPIOC, 1, PAL_MODE_INPUT_ANALOG);      // PC1 - IN11 - CURR3		- SLOW - Reacts to PC1
+	palSetPadMode(GPIOC, 2, PAL_MODE_INPUT_ANALOG);      // PC2 - IN0 - VIN			- FAST - Reacts to PC2
+	palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG);      // PC3 - IN1 - EXT3		- FAST - Reacts to PC3
+
+	// ADC1
+	hw_setup_adc_channel_helper(ADC1, 5, 1, ADC_SMPR_SMP_16P5); // SENS1
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_5;
-
-	palSetPadMode(GPIOA, 3, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC1, 15, 1, ADC_SMPR_SMP_1P5); // 15 - PA3 - A0
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_15;
-	// Preselect channel
-
-
-
+	hw_setup_adc_channel_helper(ADC1, 7, 2, ADC_SMPR_SMP_16P5); // CURR1
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_7;
+	hw_setup_adc_channel_helper(ADC1, 8, 3, ADC_SMPR_SMP_16P5); // TEMP MOT
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_8;
+	hw_setup_adc_channel_helper(ADC1, 3, 4, ADC_SMPR_SMP_16P5); // EXT
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;
 
 
-	//fakes
-	hw_setup_adc_channel_helper(ADC1, 0, 3, ADC_SMPR_SMP_1P5);
-	hw_setup_adc_channel_helper(ADC1, 1, 4, ADC_SMPR_SMP_1P5);
-	hw_setup_adc_channel_helper(ADC1, 2, 5, ADC_SMPR_SMP_1P5);
-	hw_setup_adc_channel_helper(ADC1, 3, 6, ADC_SMPR_SMP_1P5);
+	// ADC2
+	hw_setup_adc_channel_helper(ADC2, 14, 1, ADC_SMPR_SMP_16P5); // SENS2
+	ADC2->PCSEL |= ADC_PCSEL_PCSEL_14;
+	hw_setup_adc_channel_helper(ADC2, 15, 2, ADC_SMPR_SMP_16P5); // CURR2
+	ADC2->PCSEL |= ADC_PCSEL_PCSEL_15;
+	hw_setup_adc_channel_helper(ADC2, 9, 3, ADC_SMPR_SMP_16P5); // TEMP MOS
+	ADC2->PCSEL |= ADC_PCSEL_PCSEL_9;
+	hw_setup_adc_channel_helper(ADC2, 4, 4, ADC_SMPR_SMP_16P5); // EXT2
+	ADC2->PCSEL |= ADC_PCSEL_PCSEL_4;
 
 
-	// ADC2 regular channels
-	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC2, 10, 1, ADC_SMPR_SMP_16P5); // 10 - PC0 - A1
-	ADC2->PCSEL |= ADC_PCSEL_PCSEL_10;
-
-	palSetPadMode(GPIOA, 4, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC2, 18, 2, ADC_SMPR_SMP_16P5); // 18 - PA4 - D24
-	ADC2->PCSEL |= ADC_PCSEL_PCSEL_18;
-
-	// fakes
-	hw_setup_adc_channel_helper(ADC2, 4, 3, ADC_SMPR_SMP_16P5);
-	hw_setup_adc_channel_helper(ADC2, 6, 4, ADC_SMPR_SMP_16P5);
-	hw_setup_adc_channel_helper(ADC2, 7, 5, ADC_SMPR_SMP_16P5);
-	hw_setup_adc_channel_helper(ADC2, 8, 6, ADC_SMPR_SMP_16P5);
-
-
-	// ADC3 regular channels
-	palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC3, 1, 1, ADC_SMPR_SMP_16P5); // 1 - PC3 - A2
-	ADC3->PCSEL |= ADC_PCSEL_PCSEL_1;
-
-	palSetPadMode(GPIOC, 2, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC3, 0, 2, ADC_SMPR_SMP_16P5); // 0 - PC2 - A4
+	// ADC3
+	hw_setup_adc_channel_helper(ADC3, 10, 1, ADC_SMPR_SMP_16P5); // SENS3
+	ADC3->PCSEL |= ADC_PCSEL_PCSEL_10;
+	hw_setup_adc_channel_helper(ADC3, 11, 2, ADC_SMPR_SMP_16P5); // CURR3
+	ADC3->PCSEL |= ADC_PCSEL_PCSEL_11;
+	hw_setup_adc_channel_helper(ADC3, 0, 3, ADC_SMPR_SMP_16P5); // VIN
 	ADC3->PCSEL |= ADC_PCSEL_PCSEL_0;
-
-	palSetPadMode(GPIOF, 10, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC3, 6, 3, ADC_SMPR_SMP_16P5); // 6 - PF10 - A5
-	ADC3->PCSEL |= ADC_PCSEL_PCSEL_6;
-
-	palSetPadMode(GPIOF, 4, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC3, 9, 4, ADC_SMPR_SMP_16P5); // 9 - PF4 - A6
-	ADC3->PCSEL |= ADC_PCSEL_PCSEL_9;
-
-	palSetPadMode(GPIOF, 5, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC3, 4, 5, ADC_SMPR_SMP_16P5); // 4 - PF5 - A7
-	ADC3->PCSEL |= ADC_PCSEL_PCSEL_4;
-
-	palSetPadMode(GPIOF, 6, PAL_MODE_INPUT_ANALOG);
-	hw_setup_adc_channel_helper(ADC3, 8, 6, ADC_SMPR_SMP_16P5); // 8 - PF6 - A8
-	ADC3->PCSEL |= ADC_PCSEL_PCSEL_8;
-
-	// Injected channels
-//	hw_setup_inj_adc_channel_helper(ADC1, 10, 1, ADC_SMPR_SMP_8P5);
-//	hw_setup_inj_adc_channel_helper(ADC2, 11, 1, ADC_SMPR_SMP_8P5);
-//	hw_setup_inj_adc_channel_helper(ADC3, 12, 1, ADC_SMPR_SMP_8P5);
-//	hw_setup_inj_adc_channel_helper(ADC1, 10, 2, ADC_SMPR_SMP_8P5);
-//	hw_setup_inj_adc_channel_helper(ADC2, 11, 2, ADC_SMPR_SMP_8P5);
-//	hw_setup_inj_adc_channel_helper(ADC3, 12, 2, ADC_SMPR_SMP_8P5);
+	hw_setup_adc_channel_helper(ADC3, 1, 4, ADC_SMPR_SMP_16P5); // EXT3
+	ADC3->PCSEL |= ADC_PCSEL_PCSEL_1;
 }
 
 void hw_start_i2c(void) {

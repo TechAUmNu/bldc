@@ -415,38 +415,38 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	// Peripheral Increment (default)
 	// Memory Increment
 	DMA1_Stream1->CR |= DMA_SxCR_MINC;
-	//DMA1_Stream2->CR |= DMA_SxCR_MINC;
-	//DMA1_Stream3->CR |= DMA_SxCR_MINC;
+	DMA1_Stream2->CR |= DMA_SxCR_MINC;
+	DMA1_Stream3->CR |= DMA_SxCR_MINC;
 	// Peripheral Data size - half word
 	DMA1_Stream1->CR |= DMA_SxCR_PSIZE_0;
-	//DMA1_Stream2->CR |= DMA_SxCR_PSIZE_0;
-	//DMA1_Stream3->CR |= DMA_SxCR_PSIZE_0;
+	DMA1_Stream2->CR |= DMA_SxCR_PSIZE_0;
+	DMA1_Stream3->CR |= DMA_SxCR_PSIZE_0;
 	// Memory data size - half word
 	DMA1_Stream1->CR |= DMA_SxCR_MSIZE_0;
-	//DMA1_Stream2->CR |= DMA_SxCR_MSIZE_0;
-	//DMA1_Stream3->CR |= DMA_SxCR_MSIZE_0;
+	DMA1_Stream2->CR |= DMA_SxCR_MSIZE_0;
+	DMA1_Stream3->CR |= DMA_SxCR_MSIZE_0;
 	// Mode - circular
 	DMA1_Stream1->CR |= DMA_SxCR_CIRC;
-	//DMA1_Stream2->CR |= DMA_SxCR_CIRC;
-	//DMA1_Stream3->CR |= DMA_SxCR_CIRC;
+	DMA1_Stream2->CR |= DMA_SxCR_CIRC;
+	DMA1_Stream3->CR |= DMA_SxCR_CIRC;
 	// Priority - high
 	DMA1_Stream1->CR |= DMA_SxCR_PL_1;
-	//DMA1_Stream2->CR |= DMA_SxCR_PL_1;
-	//DMA1_Stream3->CR |= DMA_SxCR_PL_1;
+	DMA1_Stream2->CR |= DMA_SxCR_PL_1;
+	DMA1_Stream3->CR |= DMA_SxCR_PL_1;
 	// Memory Burst - single (default)
 	// Peripheral Burst - single (default)
 	// Memory base address
 	DMA1_Stream1->M0AR = (uint32_t)&ADC_Value;
-	//DMA1_Stream2->M0AR = (uint32_t)&ADC_Value[HW_ADC_IND_DMA_2];
-	//DMA1_Stream3->M0AR = (uint32_t)&ADC_Value[HW_ADC_IND_DMA_3];
+	DMA1_Stream2->M0AR = (uint32_t)&ADC_Value[HW_ADC_IND_DMA_2];
+	DMA1_Stream3->M0AR = (uint32_t)&ADC_Value[HW_ADC_IND_DMA_3];
 	// Peripheral base address
 	DMA1_Stream1->PAR = (uint32_t)&ADC1->DR;
-	//DMA1_Stream2->PAR = (uint32_t)&ADC2->DR;
-	//DMA1_Stream3->PAR = (uint32_t)&ADC3->DR;
+	DMA1_Stream2->PAR = (uint32_t)&ADC2->DR;
+	DMA1_Stream3->PAR = (uint32_t)&ADC3->DR;
 	// Buffer Size
 	DMA1_Stream1->NDTR = HW_ADC_NBR_CONV;
-	//DMA1_Stream2->NDTR = HW_ADC_NBR_CONV;
-	//DMA1_Stream3->NDTR = HW_ADC_NBR_CONV;
+	DMA1_Stream2->NDTR = HW_ADC_NBR_CONV;
+	DMA1_Stream3->NDTR = HW_ADC_NBR_CONV;
 	// Note: The half transfer interrupt is used as we already have all current and voltage
 	// samples by then and we can start processing them. Entering the interrupt earlier gives
 	// more cycles to finish it and update the timer before the next zero vector. This helps
@@ -457,8 +457,8 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 //	DMA1_Stream3->CR |= DMA_SxCR_HTIE;
 //#else
 	DMA1_Stream1->CR |= DMA_SxCR_TCIE;
-	//DMA1_Stream2->CR |= DMA_SxCR_TCIE;
-	//DMA1_Stream3->CR |= DMA_SxCR_TCIE;
+	DMA1_Stream2->CR |= DMA_SxCR_TCIE;
+	DMA1_Stream3->CR |= DMA_SxCR_TCIE;
 //#endif
 
 	// Connect ADCs to the DMAs using the DMAMUX
@@ -467,13 +467,13 @@ void mcpwm_foc_init(mc_configuration *conf_m1, mc_configuration *conf_m2) {
 	// 10 = adc2_dma
 	// 115 =  adc3_dma
 	DMAMUX1_Channel1->CCR = 9;
-	//DMAMUX1_Channel2->CCR = 10;
-	//DMAMUX1_Channel3->CCR = 115;
+	DMAMUX1_Channel2->CCR = 10;
+	DMAMUX1_Channel3->CCR = 115;
 
 	// Enable stream
 	DMA1_Stream1->CR |= DMA_SxCR_EN;
-	//DMA1_Stream2->CR |= DMA_SxCR_EN;
-	//DMA1_Stream3->CR |= DMA_SxCR_EN;
+	DMA1_Stream2->CR |= DMA_SxCR_EN;
+	DMA1_Stream3->CR |= DMA_SxCR_EN;
 
 	// ADC Common Init
 	// Enable ADC Voltage regulator?
@@ -3075,6 +3075,10 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 		curr2 = GET_CURRENT3();
 	}
 
+	//for(int i = 0; i < HW_ADC_CHANNELS; i++)
+	//{
+	//	ADC_Value[i] = 0;
+	//}
 #ifdef HW_HAS_DUAL_PARALLEL
 	// Add both currents together
 	curr0 += GET_CURRENT1_M2();
